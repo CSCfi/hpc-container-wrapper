@@ -46,34 +46,41 @@ for k,v in shared_conf["force"].items():
 
 # Handle the different modes
 if(full_conf["mode"] == "conda"):
+    template_script="conda.sh"
     full_conf["installation_file_paths"]=[full_conf["env_file"]]
     if "requirements_file" in full_conf:
         full_conf["installation_file_paths"].append(full_conf["requirements_file"])
     else:
         full_conf["requirements_file"]=""
 
-tmp_dir=full_conf["build_tmpdir_base"]+name_generator()
-myenv=os.environ.copy()
-g=subprocess.run(["mkdir",tmp_dir,"echo "+tmp_dir],env=myenv)
-print(g)
+build_dir=os.path.expandvars(full_conf["build_tmpdir_base"]+"/cw-"+name_generator())
+subprocess.run(["mkdir",build_dir])
+full_conf["build_tmpdir"]=build_dir
 
 
 
 
 # The follwing keys require special handling can not be dumped as is
+#FIXME implement this !
 specials=["pre_install","post_install","extra_env"]
+with open(build_dir+"/_sing_inst_script.sh",'a+') as f:
+    f.write("#!/bin/bash\n")
+    f.write("source "+tool_root_dir+"/templates/"+ template_script +"\n")
+with open(build_dir+"/_pre_install.sh",'a+') as f:
+    f.write("")
+with open(build_dir+"/_post_install.sh",'a+') as f:
+    f.write("")
+    
 # Other lists are dumped directly into bash arrays
 c={True:"yes",False:"no"}
-for k,v in full_conf.items():
-    if not isinstance(v,list):
-        if isinstance(v,bool):
-            print("CW_{}=\"{}\"".format(k.upper(),c[v]))
-        else:
-            print("CW_{}=\"{}\"".format(k.upper(),v))
-    
-    elif k not in specials:
-        print("CW_{}=({})".format(k.upper()," ".join(['"'+elem+'"' for elem in v ] )))
-
-
-
+with open(build_dir+"/_vars.sh",'a+') as f:
+    for k,v in full_conf.items():
+        if not isinstance(v,list):
+            if isinstance(v,bool):
+                f.write("CW_{}=\"{}\"\n".format(k.upper(),c[v]))
+            else:
+                f.write("CW_{}=\"{}\"\n".format(k.upper(),v))
+        
+        elif k not in specials:
+                f.write("CW_{}=({})\n".format(k.upper()," ".join(['"'+elem+'"' for elem in v ] )))
 

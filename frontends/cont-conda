@@ -1,2 +1,15 @@
 #!/bin/bash
-
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+source $SCRIPT_DIR/../common_functions.sh
+# Here some stuff for more robust python
+export _usr_yaml="$(mktemp)";
+python3 $SCRIPT_DIR/scripts/cont-conda.py "$@" 
+if [[ ! "$?" -eq "0" ]];then
+    echo "parsers failed"
+    exit 1
+fi
+if [[ ! -s "$_usr_yaml" ]];then
+    # Probably printed the help message
+    exit 0
+fi
+python3 $SCRIPT_DIR/../construct.py $SCRIPT_DIR/../default_config/config.yaml  $_usr_yaml
