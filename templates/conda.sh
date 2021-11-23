@@ -1,10 +1,10 @@
 #!/bin/bash
-cd $CW_WORKDIR
-source _pre_install.sh
 cd $CW_INSTALLATION_PATH
 curl https://repo.anaconda.com/miniconda/Miniconda3-$CW_CONDA_VERSION-$CW_CONDA_ARCH.sh --output Miniconda_inst.sh
 bash Miniconda_inst.sh -b -p $CW_INSTALLATION_PATH/miniconda
 eval "$($CW_INSTALLATION_PATH/miniconda/bin/conda shell.bash hook)"
+cd $CW_WORKDIR
+source _pre_install.sh
 if [[ -z "$(echo "$CW_ENV_FILE" | grep "*\.yaml\|*\.yml")" ]];then 
     _EC="env"
     _FF="-f"

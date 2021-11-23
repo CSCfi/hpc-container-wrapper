@@ -1,5 +1,13 @@
 #!/bin/bash
-if [[ -t 1 && "$USE_COLOR" = "yes" ]];then
+
+if [[ ! ${USER_COLOR+defined} ]];then
+    USE_COLOR="yes"
+fi
+if [[ ! ${CW_LOG_LEVEL+defined} ]];then
+    CW_LOG_LEVEL="100"
+fi
+
+if [[ -t 1 &&  "$USE_COLOR" = "yes" ]];then
     _RED='\033[0;31m'
     _GREEN='\033[0;32m'
     _YELLOW='\033[1;33m'

@@ -11,10 +11,10 @@ cd $CW_BUILD_TMPDIR
 mkdir _inst_dir
 
 cp ./_sing_inst_script.sh $CW_INSTALLATION_PATH 
-cp -a "${CW_INSTALLATION_FILES_PATHS[@]}" $CW_INSTALLATION_PATH
+cp -a "${CW_INSTALLATION_FILE_PATHS[@]}" $CW_INSTALLATION_PATH
 
 if [[ "$CW_ISOLATE" == "yes" ]]; then
-    _DIRS=(${CW_MOUNTPOINTS[@]})
+    _DIRS=(${CW_MOUNT_POINTS[@]})
 else
     _DIRS=($(ls -1 / | awk '!/dev/' | sed 's/^/\//g' ))
 fi
@@ -31,6 +31,9 @@ export SINGULARITY_BIND
 if [[ "$CW_UPDATE_INSTALLATION" == "yes" ]];then
     _CONTAINER_EXEC="singularity --silent exec -B $PWD/_inst_dir:$CW_INSTALLATION_PATH,$CW_SQFS_SRC:$CW_SOURCE_MOUNT_POINT:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
     _CONTAINER_EXEC cp -a $CW_SOURCE_MOUNT_POINT $CW_INSTALLATION_PATH
+elif [[ "$CW_MODE" == "wrap"]];then
+    _CONTAINER_EXEC="singularity --silent exec -B $PWD/_inst_dir:$CW_INSTALLATION_PATH,$CW_WRAP_SRC:$CW_SOURCE_MOUNT_POINT:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
+    
 else
     _CONTAINER_EXEC="singularity --silent exec -B $PWD/_inst_dir:$CW_INSTALLATION_PATH _deploy/$CW_CONTAINER_IMAGE "
 fi

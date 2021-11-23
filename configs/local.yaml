@@ -30,7 +30,7 @@ defaults:
     update_mode: new
 force:
     # I will create some random dir under here 
-    build_tmpdir_base: $TMPDIR
+    build_tmpdir_base: $PWD
     conda_arch: 'Linux-x86_64'
     # No logic currently to refer to other variables here
     # So either implement that, throw them to $TMPDIR

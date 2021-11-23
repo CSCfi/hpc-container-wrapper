@@ -1,8 +1,8 @@
 #!/bin/bash
 cd $CW_WORKDIR
-source _pre_install.sh
 cd $CW_INSTALLATION_PATH
 eval "$($CW_INSTALLATION_PATH/miniconda/bin/conda shell.bash hook)"
+source _pre_install.sh
 conda activate $CW_ENV_NAME
 if [[ ! -z $CW_REQUIREMENTS_FILE  ]];then
     pip install -r "$CW_REQUIREMENTS_FILE"

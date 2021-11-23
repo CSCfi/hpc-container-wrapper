@@ -15,34 +15,6 @@ fi
 cd $CW_BUILD_TMPDIR
 mkdir _deploy/bin
 
-_REAL_PATH_CMD='DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"'
-_PRE_COMMAND="source \$DIR/../common.sh"
-echo "#!/bin/bash
-CONTAINER_IMAGE=$CW_CONTAINER_IMAGE
-INSTALLATION_PATH=$CW_INSTALLATION_PATH
-SINGULARITYENV_PATH=\"SINGULARITYENV_PATH:$(echo "${CW_WRAPPER_PATHS[@]}" | tr ' ' ':' )\"
-SINGULARITYENV_LD_LIBRARY_PATH=\"SINGULARITYENV_LD_LIBRARY_PATH:$(echo "${CW_WRAPPER_LD_LIBRARY_PATHS[@]}" | tr ' ' ':' )\"
-
-" >> _deploy/common.sh
-
-if [[ "$CW_ISOLATE" == "yes" ]]; then
-    # 
-    echo "_DIRS=(${CW_MOUNTPOINTS[@]})"
-else
-    echo "_DIRS=(\$(ls -1 / | awk '!/dev/' | sed 's/^/\//g' ))" >> deploy/common.sh
-fi
-echo "
-for d in \"\${_DIRS[@]}\"; do
-    if [[ -z \"\$SINGULARITY_BIND\" ]];then
-        test -d \$d && export SINGULARITY_BIND=\"\$d\"
-    else
-        test -d \$d && export SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$d\"
-    fi
-done
-SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$TMPDIR,\$TMPDIR:/tmp\"
-export SINGULARITY_BIND" >> deploy/common.sh
-
-
 if [[ "$CW_NO_SQFS" == "yes" ]];then
     _CONTAINER_EXEC="singularity --silent exec  _deploy/$CW_CONTAINER_IMAGE"
     _RUN_CMD="singularity --silent exec \$DIR/../\$CONTAINER_IMAGE"
@@ -51,6 +23,39 @@ else
     echo "SQFS_IMAGE=$CW_SQFS_IMAGE" >> common.sh
     _RUN_CMD="singularity --silent exec -B \$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/ \$DIR/../\$CONTAINER_IMAGE"
 fi
+
+_REAL_PATH_CMD='DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"'
+_PRE_COMMAND="source \$DIR/../common.sh"
+echo "#!/bin/bash
+CONTAINER_IMAGE=$CW_CONTAINER_IMAGE
+INSTALLATION_PATH=$CW_INSTALLATION_PATH
+SINGULARITYENV_PATH=\"$($_CONTAINER_EXEC bash -c 'echo $PATH')\"
+SINGULARITYENV_LD_LIBRARY_PATH=\"$($_CONTAINER_EXEC bash -c 'echo $LD_LIBRARY_PATH')\"
+SINGULARITYENV_PATH=\"\$SINGULARITYENV_PATH:$(echo "${CW_WRAPPER_PATHS[@]}" | tr ' ' ':' )\"
+SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:$(echo "${CW_WRAPPER_LD_LIBRARY_PATHS[@]}" | tr ' ' ':' )\"
+">> _deploy/common.sh
+
+if [[ "$CW_ISOLATE" == "yes" ]]; then
+    # 
+    echo "_DIRS=(${CW_MOUNT_POINTS[@]})"
+else
+    echo "_DIRS=(\$(ls -1 / | awk '!/dev/' | sed 's/^/\//g' ))" >> deploy/common.sh
+    echo "SINGULARITYENV_PATH=\"\$SINGULARITYENV_PATH:\$PATH\"
+SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\"
+    " >> _deploy/common.sh
+fi
+echo "
+for d in \"\${_DIRS[@]}\"; do
+    if [[ -z \"\$SINGULARITY_BIND\" ]];then
+`        `test -d \$d && export SINGULARITY_BIND=\"\$d\"
+    else
+        test -d \$d && export SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$d\"
+    fi
+done
+SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$TMPDIR,\$TMPDIR:/tmp\"
+export SINGULARITY_BIND" >> deploy/common.sh
+
+
 
 
 _SING_LIB_PATHS=()
@@ -63,7 +68,7 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         targets=($(_CONTAINER_EXEC ls -F $wrapper_path | grep "\*\|@" | sed 's/.$//g'))
     fi
     if [[ "$CW_ADD_LD" == "yes" ]]; then
-        lib_dirs=($(_CONTAINER_EXEC ls $wrapper_path/..))
+        lib_dirs=($(_CONTAINER_EXEC ls $wrapper_path/.. | grep "lib[64]*$" ))
         for d in "${lib_dirs[@]}"; do
             _SING_LIB_PATHS+=("$(dirname $wrapper_path)/$d")
         done
@@ -104,9 +109,9 @@ chmod +x _deploy/bin/$target
 
 if [[ "$CW_ADD_LD" == "yes" ]]; then
 echo"
-SINGULARITYENV_LD_LIBRARY_PATH=\"SINGULARITYENV_LD_LIBRARY_PATH:$(echo "${_SING_LIB_PATHS[@]}" | tr ' ' ':' )\"
+SINGULARITYENV_LD_LIBRARY_PATH=\"$(echo "${_SING_LIB_PATHS[@]}" | tr ' ' ':' ):\$SINGULARITYENV_LD_LIBRARY_PATH\"
 " >> deploy/common.sh
-    fi
-cat extra_envs.sh >> deploy/common.sh
+fi
+cat _extra_envs.sh >> deploy/common.sh
 chmod o+r _deploy
 chmod o+x _deploy

@@ -1,0 +1,12 @@
+
+
+all:
+    - name: mode
+      required: true
+
+
+conda:
+    - name: env_file
+      required: true
+    - name
+    
