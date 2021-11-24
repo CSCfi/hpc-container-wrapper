@@ -40,4 +40,5 @@ force, defaults
 prepend
 
 yaml -> resolve path -> caps -> prepend CW
+set CACHE_DIR and TMPDIR also to this BUILD TMPDIR
 

@@ -56,7 +56,7 @@ if(full_conf["mode"] == "conda"):
 build_dir=os.path.expandvars(full_conf["build_tmpdir_base"]+"/cw-"+name_generator())
 subprocess.run(["mkdir",build_dir])
 full_conf["build_tmpdir"]=build_dir
-
+print(build_dir)
 
 
 
@@ -68,6 +68,8 @@ with open(build_dir+"/_sing_inst_script.sh",'a+') as f:
     f.write("source "+tool_root_dir+"/templates/"+ template_script +"\n")
 with open(build_dir+"/_pre_install.sh",'a+') as f:
     f.write("")
+with open(build_dir+"/_extra_envs.sh",'a+') as f:
+    f.write("")
 with open(build_dir+"/_post_install.sh",'a+') as f:
     f.write("")
     
@@ -77,10 +79,14 @@ with open(build_dir+"/_vars.sh",'a+') as f:
     for k,v in full_conf.items():
         if not isinstance(v,list):
             if isinstance(v,bool):
-                f.write("CW_{}=\"{}\"\n".format(k.upper(),c[v]))
+                f.write("export CW_{}=\"{}\"\n".format(k.upper(),c[v]))
             else:
-                f.write("CW_{}=\"{}\"\n".format(k.upper(),v))
+                f.write("export CW_{}=\"{}\"\n".format(k.upper(),os.path.expandvars(str(v))))
         
         elif k not in specials:
-                f.write("CW_{}=({})\n".format(k.upper()," ".join(['"'+elem+'"' for elem in v ] )))
+                f.write("export CW_{}=({})\n".format(k.upper()," ".join(['"'+os.path.expandvars(str(elem))+'"' for elem in v ] )))
+    f.write("export SINGULARITY_TMPDIR={}\n".format(build_dir))
+    f.write("export SINGULARITY_CACHEDIR={}\n".format(os.path.expandvars(full_conf["build_tmpdir_base"])))
+
+# Setting some extra envs
 

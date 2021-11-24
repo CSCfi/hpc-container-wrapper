@@ -2,7 +2,7 @@
 # Value will be selected if no user provided value
 # Otherwise ignored
 defaults:
-    log_level: 1
+    log_level: 2
     env_name: env1 
     conda_version: latest
     installation_prefix: $PWD
@@ -23,7 +23,7 @@ defaults:
     isolate: no
     create_wrappers: yes
     wrap_all: no
-    keep_tmpdir: no
+    num_cpus: 4
     sqfs_options: ""
     add_ld: yes
     # new vs inplace
@@ -32,6 +32,7 @@ force:
     # I will create some random dir under here 
     build_tmpdir_base: $PWD
     conda_arch: 'Linux-x86_64'
+    max_num_cpus: 4
     # No logic currently to refer to other variables here
     # So either implement that, throw them to $TMPDIR
     #

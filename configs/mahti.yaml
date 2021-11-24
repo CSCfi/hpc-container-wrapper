@@ -2,7 +2,7 @@
 # Value will be selected if no user provided value
 # Otherwise ignored
 defaults:
-    log_level: 1
+    log_level: 2
     env_name: env1 
     conda_version: latest
     installation_prefix: $PWD
@@ -23,7 +23,6 @@ defaults:
     isolate: no
     create_wrappers: yes
     wrap_all: no
-    keep_tmpdir: no
     sqfs_options: ""
     add_ld: yes
     # new vs inplace

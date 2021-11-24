@@ -4,7 +4,7 @@ if [[ ! ${USER_COLOR+defined} ]];then
     USE_COLOR="yes"
 fi
 if [[ ! ${CW_LOG_LEVEL+defined} ]];then
-    CW_LOG_LEVEL="100"
+    CW_LOG_LEVEL="2"
 fi
 
 if [[ -t 1 &&  "$USE_COLOR" = "yes" ]];then
@@ -33,9 +33,8 @@ print_warn(){
         >&1 echo -e "[ ${_YELLOW}WARNING${_NC} ] $1 " | sed '2,$s/^/         /g'
     fi
 }
+# Errors are always printed
 print_err(){
-    if [[ $CW_LOG_LEVEL -gt -1  ]];then
         >&1 echo -e "[ ${_RED}ERROR${_NC} ] $1 " | sed '2,$s/^/         /g'
-    fi
 }
 
