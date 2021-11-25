@@ -14,7 +14,7 @@ follow_log $! $CW_BUILD_TMPDIR/_inst_miniconda.log 10
 eval "$($CW_INSTALLATION_PATH/miniconda/bin/conda shell.bash hook)"
 cd $CW_WORKDIR
 source $CW_INSTALLATION_PATH/_pre_install.sh
-if [[ -z "$(echo "$CW_ENV_FILE" | grep "*\.yaml\|*\.yml")" ]];then 
+if [[ ! -z "$(echo "$CW_ENV_FILE" | grep ".*\.yaml\|.*\.yml")" ]];then 
     _EC="env"
     _FF="-f"
 else
@@ -22,6 +22,7 @@ else
 fi
 cd $CW_INSTALLATION_PATH
 print_info "Creating env, full log in $CW_BUILD_TMPDIR/build.log" 1
+print_info "Command: conda $_EC create --name $CW_ENV_NAME $_FF $CW_ENV_FILE"
 conda $_EC create --name $CW_ENV_NAME $_FF $CW_ENV_FILE >> $CW_BUILD_TMPDIR/build.log &
 follow_log $! $CW_BUILD_TMPDIR/build.log 10  
 conda activate $CW_ENV_NAME
