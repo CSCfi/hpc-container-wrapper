@@ -15,7 +15,7 @@ fi
 cd $CW_BUILD_TMPDIR
 mkdir _deploy/bin
 touch _deploy/common.sh
-
+echo "#!/bin/bash" > _deploy/common.sh
 if [[ ! "${CW_SQFS_IMAGE+defined}" ]];then
     _CONTAINER_EXEC="singularity --silent exec  _deploy/$CW_CONTAINER_IMAGE"
     _RUN_CMD="singularity --silent exec \$DIR/../\$CONTAINER_IMAGE"
@@ -27,8 +27,7 @@ fi
 
 _REAL_PATH_CMD='DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"'
 _PRE_COMMAND="source \$DIR/../common.sh"
-echo "#!/bin/bash
-CONTAINER_IMAGE=$CW_CONTAINER_IMAGE
+echo "CONTAINER_IMAGE=$CW_CONTAINER_IMAGE
 INSTALLATION_PATH=$CW_INSTALLATION_PATH
 SINGULARITYENV_PATH=\"$($_CONTAINER_EXEC bash -c 'echo $PATH')\"
 SINGULARITYENV_LD_LIBRARY_PATH=\"$($_CONTAINER_EXEC bash -c 'echo $LD_LIBRARY_PATH')\"
