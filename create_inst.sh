@@ -42,7 +42,10 @@ $_CONTAINER_EXEC bash -c "cd $CW_INSTALLATION_PATH && ./_sing_inst_script.sh"
 chmod o+rx -R _inst_dir/
 print_info "Creating sqfs image" 1 
 if [[ $CW_NUM_CPUS -gt $CW_MAX_NUM_CPUS ]]; then
-    mksquashfs _inst_dir/ _deploy/$CW_SQFS_IMAGE  -processors $CW_MAX_NUM_CPUS $CW_SQFS_OPTIONS
+    _cpus=$CW_MAX_NUM_CPUS
 else
-    mksquashfs _inst_dir/ _deploy/$CW_SQFS_IMAGE  -processors $CW_NUM_CPUS $CW_SQFS_OPTIONS 
+    _cpus=$CW_NUM_CPUS
 fi
+touch $CW_BUILD_TMPDIR/sqfs.log
+stdbuf -i0 -o0 -e0 mksquashfs _inst_dir/ _deploy/$CW_SQFS_IMAGE  -processors $_cpus $CW_SQFS_OPTIONS > $CW_BUILD_TMPDIR/sqfs.log & 
+follow_log $! $CW_BUILD_TMPDIR/sqfs.log 4

@@ -1,3 +1,56 @@
-defaults:
 
+# Value will be selected if no user provided value
+# Otherwise ignored
+defaults:
+    log_level: 2
+    env_name: env1 
+    conda_version: latest
+    installation_prefix: $PWD
+    installation_path: "/LUMI_CONTAINER"
+    # if this is not a thing which exist
+    # I will do a singularity pull
+    container_src: 'docker://opensuse/leap:15.2'
+    # name of the container image when on disk
+    container_image: container.sif 
+    sqfs_image: img.sqfs 
+    source_mount_point: /TMP_MP 
+    mount_points:
+            - /projappl
+            - /tmp
+            - /scratch
+            - /users
+            - /pfs/lustref1
+            - /pfs/lustrep1
+            - /pfs/lustrep2
+            - /pfs/lustrep3
+            - /pfs/lustrep4
+    isolate: no
+    create_wrappers: yes
+    wrap_all: no
+    num_cpus: 8
+    sqfs_options: ""
+    add_ld: yes
+    # new vs inplace
+    update_mode: new
 force:
+    # I will create some random dir under here 
+    build_tmpdir_base: /tmp/$USER
+    conda_arch: 'Linux-x86_64'
+    max_num_cpus: 16
+    # No logic currently to refer to other variables here
+    # So either implement that, throw them to $TMPDIR
+    #
+    work_dir: /tmp/$USER 
+    
+# Value will override any user set value
+
+# Value will be appendend to user defined list 
+appends:
+
+# Value will be prepended to user defined list
+prepends:
+    post_install:
+                - echo used mahti conf
+
+
+

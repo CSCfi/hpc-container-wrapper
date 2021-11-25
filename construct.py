@@ -54,7 +54,7 @@ if(full_conf["mode"] == "conda"):
         full_conf["requirements_file"]=""
 
 build_dir=os.path.expandvars(full_conf["build_tmpdir_base"]+"/cw-"+name_generator())
-subprocess.run(["mkdir",build_dir])
+subprocess.run(["mkdir","-p",build_dir])
 full_conf["build_tmpdir"]=build_dir
 print(build_dir)
 

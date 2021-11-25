@@ -15,7 +15,7 @@ mkdir -p  $CW_BUILD_TMPDIR/_deploy/
 if [[ ! -f $CW_CONTAINER_SRC ]]; then 
     print_info "Fetching container $CW_CONTAINER_SRC"  1
     singularity --silent pull $CW_BUILD_TMPDIR/_deploy/$CW_CONTAINER_IMAGE $CW_CONTAINER_SRC || \
-    print_err "Failed fetching container"
+    { print_err "Failed fetching container"; exit 1 ;}
 else
     print_info "Copying container $CW_CONTAINER_SRC" 1
     cp "$CW_CONTAINER_SRC" "$CW_BUILD_TMPDIR/_deploy/$CW_CONTAINER_IMAGE"
@@ -23,6 +23,7 @@ fi
 if [[  "${CW_SQFS_SRC+defined}" ]];then 
     if [[ ! -f $CW_SQFS_SRC ]]; then
         print_err "SQFS image $CW_SQFS_SRC does not exist"
+        exit 1
     else
         print_info "Copying image $CW_SQFS_SRC"
     fi

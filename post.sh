@@ -6,3 +6,4 @@ source $CW_BUILD_TMPDIR/_vars.sh
 
 print_info "Installing to $CW_INSTALLATION_PREFIX" 1
 cp -a $CW_BUILD_TMPDIR/_deploy/* $CW_INSTALLATION_PREFIX/
+rm -rf $CW_BUILD_TMPDIR

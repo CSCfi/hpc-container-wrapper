@@ -62,6 +62,7 @@ export SINGULARITY_BIND" >> _deploy/common.sh
 _SING_LIB_PATHS=()
 _GENERATED_WRAPPERS=""
 
+print_info "Creating wrappers" 1
 for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
     if [[ "$CW_WRAP_ALL" == "yes" ]];then
         targets=($($_CONTAINER_EXEC ls -F $wrapper_path | grep -v "/"  | sed 's/.$//g' ))

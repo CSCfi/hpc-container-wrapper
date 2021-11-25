@@ -15,6 +15,7 @@ clean_up () {
         test -d "$_tmpdir_location" && rm -r "$_tmpdir_location"
         print_err "Set _CW_DEBUG_KEEP_FILES env variable to keep build files"
     fi
+    kill  -- -$$ &>/dev/null
     exit $ARG
 }
 # Here some stuff for more robust python
@@ -30,7 +31,7 @@ if [[ ! -s "$_usr_yaml" ]];then
 fi
 print_info "Parsing input" 1
 print_info "Calling frontend $M_SCRIPT_DIR/$0" 2
-trap clean_up ERR
+trap clean_up err
 print_info "Parsing user and default configs " 2
 _tmpdir_location=$(python3 $M_SCRIPT_DIR/../construct.py $M_SCRIPT_DIR/../default_config/config.yaml $_usr_yaml) \
     || { print_err "Configuration construction failed" ; false ;}
@@ -46,10 +47,10 @@ fi
 test -f "$_usr_yaml" && rm "$_usr_yaml"
 export CW_BUILD_TMPDIR=$_tmpdir_location
 $M_SCRIPT_DIR/../pre.sh || { print_err "Failed getting container image"; false ;}
-end=`date +%s`
 $M_SCRIPT_DIR/../create_inst.sh || { print_err "Installation failed" ; false ;}
 source $M_SCRIPT_DIR/../generate_wrappers.sh || { print_err "Wrapper generation failed"; false ;}
 cd $CURR_DIR
 $M_SCRIPT_DIR/../post.sh || { print_err "Failed to move to install dir"; false ; }
+end=`date +%s`
 print_info "Done, duration: $((end-start))s" 1
 
