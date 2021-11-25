@@ -22,7 +22,6 @@ else
 fi
 cd $CW_INSTALLATION_PATH
 print_info "Creating env, full log in $CW_BUILD_TMPDIR/build.log" 1
-print_info "Command: conda $_EC create --name $CW_ENV_NAME $_FF $CW_ENV_FILE"
 conda $_EC create --name $CW_ENV_NAME $_FF $CW_ENV_FILE >> $CW_BUILD_TMPDIR/build.log &
 follow_log $! $CW_BUILD_TMPDIR/build.log 10  
 conda activate $CW_ENV_NAME
