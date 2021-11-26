@@ -43,7 +43,6 @@ for k,v in shared_conf["appends"].items():
 for k,v in shared_conf["force"].items():
     full_conf[k] = v
 
-
 # Handle the different modes
 if(full_conf["mode"] == "conda"):
     template_script="conda.sh"
@@ -62,29 +61,61 @@ print(build_dir)
 
 # The follwing keys require special handling can not be dumped as is
 #FIXME implement this !
-specials=["pre_install","post_install","extra_env"]
+specials=["pre_install","post_install","extra_envs"]
 with open(build_dir+"/_sing_inst_script.sh",'a+') as f:
     f.write("#!/bin/bash\n")
     f.write("source "+tool_root_dir+"/templates/"+ template_script +"\n")
 with open(build_dir+"/_pre_install.sh",'a+') as f:
-    f.write("")
-with open(build_dir+"/_extra_envs.sh",'a+') as f:
-    f.write("")
+    f.write("#!/bin/bash\n")
+    if "pre_install" in full_conf:
+        for e in full_conf["pre_install"]:
+            if "file" in e:
+                with open(e["file"],'r') as src_f:
+                    f.write(src_f.read())
+            else:
+                f.write(e+"\n")
+with open(build_dir+"/_extra_user_envs.sh",'a+') as f:
+    for e in full_conf["extra_envs"]:
+        # A file, fairly small -> fits in memory
+        if isinstance(e,dict) and "file" in e:
+            with open(e["file"],'r') as src_f:
+                f.write(src_f.read())
+        # Individual env var
+        # No explicit support for arrays
+        # but using set both fixed value and appending possible
+        else:
+            if e["type"] == "set":
+                f.write('export {}="{}"\n'.format(e["name"],e["value"]))
+            elif e["type"] == "append":
+                f.write('export {}="${}:{}"\n'.format(e["name"],e["name"],e["value"]))
+            else:
+                f.write('export {}="{}:${}"\n'.format(e["name"],e["value"],e["name"]))
+            
+
+        f.write("")
 with open(build_dir+"/_post_install.sh",'a+') as f:
-    f.write("")
+    f.write("#!/bin/bash\n")
+    if "post_install" in full_conf:
+        for e in full_conf["post_install"]:
+            if "file" in e:
+                with open(e["file"],'r') as src_f:
+                    f.write(src_f.read())
+            else:
+                f.write(e+"\n")
     
 # Other lists are dumped directly into bash arrays
 c={True:"yes",False:"no"}
 with open(build_dir+"/_vars.sh",'a+') as f:
     for k,v in full_conf.items():
-        if not isinstance(v,list):
-            if isinstance(v,bool):
-                f.write("export CW_{}=\"{}\"\n".format(k.upper(),c[v]))
-            else:
-                f.write("export CW_{}=\"{}\"\n".format(k.upper(),os.path.expandvars(str(v))))
-        
-        elif k not in specials:
+        if k not in specials:
+            if not isinstance(v,list):
+                if isinstance(v,bool):
+                    f.write("export CW_{}=\"{}\"\n".format(k.upper(),c[v]))
+                else:
+                    f.write("export CW_{}=\"{}\"\n".format(k.upper(),os.path.expandvars(str(v))))
+            else: 
                 f.write("export CW_{}=({})\n".format(k.upper()," ".join(['"'+os.path.expandvars(str(elem))+'"' for elem in v ] )))
+
     f.write("export SINGULARITY_TMPDIR={}\n".format(build_dir))
     f.write("export SINGULARITY_CACHEDIR={}\n".format(os.path.expandvars(full_conf["build_tmpdir_base"])))
 

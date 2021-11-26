@@ -26,9 +26,12 @@ for d in "${_DIRS[@]}"; do
 done
 SINGULARITY_BIND="$SINGULARITY_BIND,/tmp"
 export SINGULARITY_BIND
+echo "export install_root=$CW_INSTALLATION_PATH" >> _extra_envs.sh
+echo "export install_root=$CW_INSTALLATION_PATH" >> _vars.sh
 
 if [[ "$CW_UPDATE_INSTALLATION" == "yes" ]];then
     _CONTAINER_EXEC="singularity --silent exec -B $PWD/_inst_dir:$CW_INSTALLATION_PATH,$CW_SQFS_SRC:$CW_SOURCE_MOUNT_POINT:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
+    print_info "Copying installation to writable area, might take a while"
     _CONTAINER_EXEC cp -a $CW_SOURCE_MOUNT_POINT $CW_INSTALLATION_PATH
 elif [[ "$CW_MODE" == "wrap" ]];then
     _CONTAINER_EXEC="singularity --silent exec -B $PWD/_inst_dir:$CW_INSTALLATION_PATH,$CW_WRAP_SRC:$CW_SOURCE_MOUNT_POINT:image-src=/ _deploy/$CW_CONTAINER_IMAGE"

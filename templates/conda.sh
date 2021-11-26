@@ -2,8 +2,12 @@
 set -e
 
 
+cd  $CW_BUILD_TMPDIR
+echo "export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/" >> _extra_envs.sh
+echo "export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/" >> _vars.sh
 
 cd $CW_INSTALLATION_PATH
+
 
 print_info "Using miniconda version Miniconda3-$CW_CONDA_VERSION-$CW_CONDA_ARCH" 1
 print_info "Downloading miniconda " 2
@@ -29,10 +33,16 @@ if [[ ! -z $CW_REQUIREMENTS_FILE  ]];then
     pip install -r "$CW_REQUIREMENTS_FILE"
 fi
 cd $CW_WORKDIR
+print_info "Running user supplied commands" 1
 source $CW_INSTALLATION_PATH/_post_install.sh
 echo 'echo "' > $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages
 conda list >> $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages 
 echo '"' >> $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages 
 chmod +x $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages 
 
+
 # Set here as they are dynamic
+# Could also set them in construct.py...
+echo "CW_WRAPPER_PATHS+=( \"$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/\" )
+CW_WRAPPER_LD_LIBRARY_PATHS+=( \"$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/lib/\" )
+" >>  $CW_BUILD_TMPDIR/_vars.sh

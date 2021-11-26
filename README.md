@@ -11,11 +11,19 @@
 - Wrap on disk
 -   
 
-Need to be robust to people changing the python environment!
+- Need to be robust to people changing the python environment!
+- Need way to get info of existing env
+
+
+Add var for conda path! -> can be added to CW_WRAPPER_PATHS
+if pre/post enabled add some default wrapper path!
 
 _CW_DEBUG_KEEP_FILES
 0 only error
 1 only warnings
 2 general
 3 verbose
+
+
+
 

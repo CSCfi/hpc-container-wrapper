@@ -114,6 +114,7 @@ chmod +x _deploy/bin/$target
 if [[ "$CW_ADD_LD" == "yes" ]]; then
     echo "SINGULARITYENV_LD_LIBRARY_PATH=\"$(echo "${_SING_LIB_PATHS[@]}" | tr ' ' ':' ):\$SINGULARITYENV_LD_LIBRARY_PATH\"" >> _deploy/common.sh
 fi
-cat _extra_envs.sh >> _deploy/common.sh
+cat _extra_envs.sh >> _deploy/common.sh || true
+cat _extra_user_envs.sh >> _deploy/common.sh
 chmod o+r _deploy
 chmod o+x _deploy

@@ -38,8 +38,6 @@ _tmpdir_location=$(python3 $M_SCRIPT_DIR/../construct.py $M_SCRIPT_DIR/../defaul
 export _tmpdir_location
 
 source $_tmpdir_location/_vars.sh
-export CW_WRAPPER_PATHS=( "$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/" )
-export CW_WRAPPER_LD_LIBRARY_PATHS=( "$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/lib/" )
 if [[ ! -d "$CW_INSTALLATION_PREFIX" ]];then
     print_err "Installation dir $CW_INSTALLATION_PREFIX does not exist"  ; false
 fi
@@ -48,7 +46,7 @@ test -f "$_usr_yaml" && rm "$_usr_yaml"
 export CW_BUILD_TMPDIR=$_tmpdir_location
 $M_SCRIPT_DIR/../pre.sh || { print_err "Failed getting container image"; false ;}
 $M_SCRIPT_DIR/../create_inst.sh || { print_err "Installation failed" ; false ;}
-source $M_SCRIPT_DIR/../generate_wrappers.sh || { print_err "Wrapper generation failed"; false ;}
+$M_SCRIPT_DIR/../generate_wrappers.sh || { print_err "Wrapper generation failed"; false ;}
 cd $CURR_DIR
 $M_SCRIPT_DIR/../post.sh || { print_err "Failed to move to install dir"; false ; }
 end=`date +%s`
