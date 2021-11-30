@@ -19,10 +19,12 @@ echo "#!/bin/bash" > _deploy/common.sh
 if [[ ! "${CW_SQFS_IMAGE+defined}" ]];then
     _CONTAINER_EXEC="singularity --silent exec  _deploy/$CW_CONTAINER_IMAGE"
     _RUN_CMD="singularity --silent exec \$DIR/../\$CONTAINER_IMAGE"
+    _SHELL_CMD="singularity --silent shell \$DIR/../\$CONTAINER_IMAGE"
 else
     _CONTAINER_EXEC="singularity --silent exec -B _deploy/$CW_SQFS_IMAGE:$CW_INSTALLATION_PATH:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
     echo "SQFS_IMAGE=$CW_SQFS_IMAGE" >> _deploy/common.sh
     _RUN_CMD="singularity --silent exec -B \$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/ \$DIR/../\$CONTAINER_IMAGE"
+    _SHELL_CMD="singularity --silent shell -B \$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/ \$DIR/../\$CONTAINER_IMAGE"
 fi
 
 _REAL_PATH_CMD='DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"'
@@ -96,7 +98,7 @@ echo "$_REAL_PATH_CMD" >> _deploy/bin/$target
 echo "$_PRE_COMMAND" >> _deploy/bin/$target
 echo "
 if [[ -z \"\$SINGULARITY_NAME\" ]];then
-    $_RUN_CMD  bash \"\$@\" 
+    $_SHELL_CMD  \"\$@\" 
 fi" >> _deploy/bin/$target
 chmod +x _deploy/bin/$target
 
@@ -106,7 +108,7 @@ echo "$_REAL_PATH_CMD" >> _deploy/bin/$target
 echo "$_PRE_COMMAND" >> _deploy/bin/$target
 echo "
 if [[ -z \"\$SINGULARITY_NAME\" ]];then
-    $_RUN_CMD  bash \"\$@\" 
+    $_RUN_CMD \"\$@\" 
 fi" >> _deploy/bin/$target
 chmod +x _deploy/bin/$target
 
@@ -114,6 +116,9 @@ chmod +x _deploy/bin/$target
 if [[ "$CW_ADD_LD" == "yes" ]]; then
     echo "SINGULARITYENV_LD_LIBRARY_PATH=\"$(echo "${_SING_LIB_PATHS[@]}" | tr ' ' ':' ):\$SINGULARITYENV_LD_LIBRARY_PATH\"" >> _deploy/common.sh
 fi
+set +H
+printf -- '%s\n' "SINGULARITYENV_LD_LIBRARY_PATH=\$(echo \$SINGULARITYENV_LD_LIBRARY_PATH | tr ':' '\n' | awk '!a[\$0]++' | tr '\n' ':')" >> _deploy/common.sh
+printf -- '%s\n' "SINGULARITYENV_PATH=\$(echo \$SINGULARITYENV_PATH | tr ':' '\n' | awk '!a[\$0]++' | tr '\n' ':')" >> _deploy/common.sh
 cat _extra_envs.sh >> _deploy/common.sh || true
 cat _extra_user_envs.sh >> _deploy/common.sh
 chmod o+r _deploy

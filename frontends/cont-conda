@@ -47,7 +47,6 @@ export CW_BUILD_TMPDIR=$_tmpdir_location
 $M_SCRIPT_DIR/../pre.sh || { print_err "Failed getting container image"; false ;}
 $M_SCRIPT_DIR/../create_inst.sh || { print_err "Installation failed" ; false ;}
 $M_SCRIPT_DIR/../generate_wrappers.sh || { print_err "Wrapper generation failed"; false ;}
-cd $CURR_DIR
 $M_SCRIPT_DIR/../post.sh || { print_err "Failed to move to install dir"; false ; }
 end=`date +%s`
 print_info "Done, duration: $((end-start))s" 1
