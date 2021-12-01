@@ -61,6 +61,9 @@ follow_log(){
     trap "kill $p_pid 2> /dev/null" ERR
     echo "========================="
     while kill -0 $p_pid 2> /dev/null; do
+        if [[ ! -f $log_file ]];then
+            continue
+        fi
         res="$(tail -n $output_length $log_file)"
         res_lines="$(echo -e "$res" | wc -l )"
         echo -e "$res"

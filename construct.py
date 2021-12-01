@@ -112,5 +112,6 @@ with open(build_dir+"/_vars.sh",'a+') as f:
     f.write("export SINGULARITY_TMPDIR={}\n".format(build_dir))
     f.write("export SINGULARITY_CACHEDIR={}\n".format(os.path.expandvars(full_conf["build_tmpdir_base"])))
 
-# Setting some extra envs
+with open(build_dir+"/conf.yaml",'a+') as f:
+    yaml.dump(full_conf,f)
 

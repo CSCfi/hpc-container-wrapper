@@ -1,7 +1,9 @@
 #!/bin/bash
-cd $CW_WORKDIR
 cd $CW_INSTALLATION_PATH
+echo "export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/" >> _extra_envs.sh
+echo "export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/" >> _vars.sh
 eval "$($CW_INSTALLATION_PATH/miniconda/bin/conda shell.bash hook)"
+cd $CW_WORKDIR
 source _pre_install.sh
 conda activate $CW_ENV_NAME
 if [[ ! -z $CW_REQUIREMENTS_FILE  ]];then
