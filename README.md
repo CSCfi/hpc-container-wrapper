@@ -12,6 +12,7 @@
 -   
 
 - Need to be robust to people changing the python environment!
+    - Tool install scripts needs to 
 - Need way to get info of existing env
 
 

@@ -11,7 +11,7 @@ cd $CW_INSTALLATION_PATH
 
 print_info "Using miniconda version Miniconda3-$CW_CONDA_VERSION-$CW_CONDA_ARCH" 1
 print_info "Downloading miniconda " 2
-curl https://repo.anaconda.com/miniconda/Miniconda3-$CW_CONDA_VERSION-$CW_CONDA_ARCH.sh --output Miniconda_inst.sh &> /dev/null
+curl https://repo.anaconda.com/miniconda/Miniconda3-$CW_CONDA_VERSION-$CW_CONDA_ARCH.sh --output Miniconda_inst.sh &>/dev/null 
 print_info "Installing miniconda " 1 
 bash Miniconda_inst.sh -b -p $CW_INSTALLATION_PATH/miniconda  > $CW_BUILD_TMPDIR/_inst_miniconda.log &   
 follow_log $! $CW_BUILD_TMPDIR/_inst_miniconda.log 10

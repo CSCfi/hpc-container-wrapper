@@ -2,28 +2,33 @@
 M_SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 CURR_DIR=$PWD
 source $M_SCRIPT_DIR/../common_functions.sh
+start=`date +%s`
 clean_up () {
     ARG=$?
-    if [[ ${_CW_DEBUG_KEEP_FILES+defined} ]];then 
-        if [[ ${_tmpdir_location+defined} ]];then
-            print_err "Build files can be found at $_tmpdir_location"
+    if [[ ${CW_DEBUG_KEEP_FILES+defined} ]];then 
+        if [[ ${CW_BUILD_TMPDIR+defined} ]];then
+            print_err "Build files can be found at $CW_BUILD_TMPDIR, and $_usr_yaml"
         else
             print_err "Program failed before any build files were created"    
         fi
     else
         test -f "$_usr_yaml" && rm "$_usr_yaml"
-        test -d "$_tmpdir_location" && rm -r "$_tmpdir_location"
-        print_err "Set _CW_DEBUG_KEEP_FILES env variable to keep build files"
+        test -d "$CW_BUILD_TMPDIR" && rm -r "$CW_BUILD_TMPDIR"
+        print_err "Set CW_DEBUG_KEEP_FILES env variable to keep build files"
     fi
     kill  -- -$$ &>/dev/null
     exit $ARG
 }
+trap clean_up err
+trap clean_up INT
 # Here some stuff for more robust python
-start=`date +%s`
 export _usr_yaml="$(mktemp)";
+if [[ ! ${CW_GLOBAL_YAML+defined} ]];then
+    export CW_GLOBAL_YAML=$M_SCRIPT_DIR/../default_config/config.yaml
+fi
 
 # We might need to dynamically set values
-python3 $M_SCRIPT_DIR/scripts/cont-conda.py "$@" || exit $?
+python3 $M_SCRIPT_DIR/scripts/cont-conda.py "$@" || { print_err "Failed parsing input" ; false ;}
 if [[ ! -s "$_usr_yaml" ]];then
     test -f $_usr_yaml && rm $_usr_yaml
     # Probably printed the help message
@@ -31,23 +36,22 @@ if [[ ! -s "$_usr_yaml" ]];then
 fi
 print_info "Parsing input" 1
 print_info "Calling frontend $M_SCRIPT_DIR/$0" 2
-trap clean_up err
 print_info "Parsing user and default configs " 2
-_tmpdir_location=$(python3 $M_SCRIPT_DIR/../construct.py $M_SCRIPT_DIR/../default_config/config.yaml $_usr_yaml) \
+CW_BUILD_TMPDIR=$(python3 $M_SCRIPT_DIR/../construct.py $CW_GLOBAL_YAML $_usr_yaml) \
     || { print_err "Configuration construction failed" ; false ;}
-export _tmpdir_location
+export CW_BUILD_TMPDIR
 
-source $_tmpdir_location/_vars.sh
+
+source $CW_BUILD_TMPDIR/_vars.sh
 if [[ ! -d "$CW_INSTALLATION_PREFIX" ]];then
     print_err "Installation dir $CW_INSTALLATION_PREFIX does not exist"  ; false
 fi
 
-test -f "$_usr_yaml" && rm "$_usr_yaml"
-export CW_BUILD_TMPDIR=$_tmpdir_location
 $M_SCRIPT_DIR/../pre.sh || { print_err "Failed getting container image"; false ;}
-$M_SCRIPT_DIR/../create_inst.sh || { print_err "Installation failed" ; false ;}
+$M_SCRIPT_DIR/../create_inst.sh || { print_err "Installation failed" ; false ;} 
 $M_SCRIPT_DIR/../generate_wrappers.sh || { print_err "Wrapper generation failed"; false ;}
 $M_SCRIPT_DIR/../post.sh || { print_err "Failed to move to install dir"; false ; }
+test -f "$_usr_yaml" && rm "$_usr_yaml"
 end=`date +%s`
 print_info "Done, duration: $((end-start))s" 1
 

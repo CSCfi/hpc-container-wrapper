@@ -4,7 +4,7 @@ if [[ ! ${USE_COLOR+defined} ]];then
    export USE_COLOR="yes"
 fi
 if [[ ! ${CW_LOG_LEVEL+defined} ]];then
-    CW_LOG_LEVEL="2"
+   export CW_LOG_LEVEL="2"
 fi
 
 if [[ -t 1 &&  "$USE_COLOR" = "yes" ]];then

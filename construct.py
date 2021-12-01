@@ -43,7 +43,8 @@ for k,v in shared_conf["appends"].items():
         full_conf[k] = v
 full_conf.update(shared_conf["force"])
 
-# Handle the different modes
+if os.getenv("CW_LOG_LEVEL"):
+    full_conf["log_level"]=os.getenv("CW_LOG_LEVEL")
 
 build_dir=os.path.expandvars(full_conf["build_tmpdir_base"]+"/cw-"+name_generator())
 subprocess.run(["mkdir","-p",build_dir])
