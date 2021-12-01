@@ -25,6 +25,7 @@ if [[  "${CW_SQFS_SRC+defined}" ]];then
         print_err "SQFS image $CW_SQFS_SRC does not exist"
         exit 1
     else
-        print_info "Copying image $CW_SQFS_SRC"
+        print_info "Copying image $CW_SQFS_SRC" 1
+        cp "$CW_SQFS_SRC" "$CW_BUILD_TMPDIR/_deploy/$CW_SQFS_IMAGE"
     fi
 fi

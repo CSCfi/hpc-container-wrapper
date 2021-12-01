@@ -29,7 +29,7 @@ print_info "Creating env, full log in $CW_BUILD_TMPDIR/build.log" 1
 conda $_EC create --name $CW_ENV_NAME $_FF $CW_ENV_FILE >> $CW_BUILD_TMPDIR/build.log &
 follow_log $! $CW_BUILD_TMPDIR/build.log 10  
 conda activate $CW_ENV_NAME
-if [[ ! -z $CW_REQUIREMENTS_FILE  ]];then
+if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
     pip install -r "$CW_REQUIREMENTS_FILE"
 fi
 cd $CW_WORKDIR

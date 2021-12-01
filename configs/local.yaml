@@ -24,7 +24,7 @@ defaults:
     create_wrappers: yes
     wrap_all: no
     num_cpus: 4
-    sqfs_options: ""
+    sqfs_options: "-noappend"
     add_ld: yes
     # new vs inplace
     update_mode: new
@@ -36,7 +36,7 @@ force:
     # No logic currently to refer to other variables here
     # So either implement that, throw them to $TMPDIR
     #
-    work_dir: $PWD   
+    workdir: $PWD   
     
 # Value will override any user set value
 
@@ -49,5 +49,3 @@ prepends:
         - name: PYTHONPATH
           value: $env_root/share
           type: prepend 
-    post_install:
-        - "pip install pyyaml"

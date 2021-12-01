@@ -57,6 +57,7 @@ print(build_dir)
 specials=["pre_install","post_install","extra_envs"]
 with open(build_dir+"/_sing_inst_script.sh",'a+') as f:
     f.write("#!/bin/bash\n")
+    f.write("set -e\n")
     f.write("source "+tool_root_dir+"/templates/"+ full_conf["template_script"] +"\n")
 with open(build_dir+"/_pre_install.sh",'a+') as f:
     f.write("#!/bin/bash\n")

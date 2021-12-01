@@ -8,12 +8,11 @@ root_dir=pathlib.Path(curr_dir).parent.parent.resolve()
 sys.path+=[str(root_dir)]
 from cw_common import *
 
-sys.argv[0]="cont-conda"
+sys.argv[0]="pycont"
 parser = argparse.ArgumentParser()
 subparsers = parser.add_subparsers(help='subcommands',dest='command')
 parser_new = subparsers.add_parser('new', help='Create new installation')
-parser_new.add_argument("env_file",help="conda env file")
-parser.add_argument("-r", "--requirement", type=lambda x: is_valid_file(parser, x),help="requirements file for pip")
+parser_new.add_argument("requirements_file", type=lambda x: is_valid_file(parser, x),help="requirements file for pip")
 parser_new.add_argument("--prefix",type=str,help="Installation location")
 parser.add_argument("--post-install",help="Script to run after conda env activation",type=lambda x: is_valid_file(parser, x))
 parser.add_argument("--environ",help="Script to run before each program launch ",type=lambda x: is_valid_file(parser, x))
@@ -29,12 +28,12 @@ if len(sys.argv) < 2:
 args = parser.parse_args()
 conf={}
 if args.command == "new":
-    conf["env_file"]=args.env_file
+    conf["requirements_file"]=args.env_file
     if args.prefix:
         conf["installation_prefix"]=args.prefix
-    conf["mode"]="conda"
+    conf["mode"]="venv"
 elif args.command == "update":
-    conf["mode"]="conda_modify"
+    conf["mode"]="venv_modify"
     old_conf={}
     try:
         with open(args.dir+"/share/conf.yaml",'r') as c:
@@ -68,15 +67,13 @@ global_conf={}
 with open(os.getenv("CW_GLOBAL_YAML"),'r') as g:
     global_conf=yaml.safe_load(g)
     
-if conf["mode"] == "conda":
+if conf["mode"] == "venv":
     conf["update_installation"]="no"
-    conf["template_script"]="conda.sh"
-    conf["installation_file_paths"]=[conf["env_file"]]
+    conf["template_script"]="venv.sh"
 else:
     conf["update_installation"]="yes"
-    conf["template_script"]="conda_modify.sh"
-if "requirements_file" in conf:
-    conf["installation_file_paths"].append(conf["requirements_file"])
+    conf["template_script"]="venv_modify.sh"
+conf["installation_file_paths"]=[conf["requirements_file"]]
 
 with open(os.getenv("_usr_yaml"),'a+') as f:
     yaml.dump(conf,f)

@@ -1,9 +1,18 @@
 #!/bin/bash
-M_SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+M_SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+
+calling_name=$(basename $0)
 CURR_DIR=$PWD
 source $M_SCRIPT_DIR/../common_functions.sh
 start=`date +%s`
 clean_up () {
+    trap '' 2
     ARG=$?
     if [[ ${CW_DEBUG_KEEP_FILES+defined} ]];then 
         if [[ ${CW_BUILD_TMPDIR+defined} ]];then
@@ -13,9 +22,10 @@ clean_up () {
         fi
     else
         test -f "$_usr_yaml" && rm "$_usr_yaml"
-        test -d "$CW_BUILD_TMPDIR" && rm -r "$CW_BUILD_TMPDIR"
+        rm -r "$CW_BUILD_TMPDIR"
         print_err "Set CW_DEBUG_KEEP_FILES env variable to keep build files"
     fi
+    trap 2
     kill  -- -$$ &>/dev/null
     exit $ARG
 }
@@ -26,7 +36,7 @@ if [[ ! ${CW_GLOBAL_YAML+defined} ]];then
 fi
 
 # We might need to dynamically set values
-python3 $M_SCRIPT_DIR/scripts/cont-conda.py "$@" || exit $? 
+python3 $M_SCRIPT_DIR/scripts/$calling_name.py "$@" || exit $? 
 if [[ ! -s "$_usr_yaml" ]];then
     test -f $_usr_yaml && rm $_usr_yaml
     # Probably printed the help message
@@ -35,7 +45,7 @@ fi
 trap clean_up err
 trap clean_up INT
 print_info "Parsing input" 1
-print_info "Calling frontend $M_SCRIPT_DIR/$0" 2
+print_info "Calling frontend $M_SCRIPT_DIR/$SOURCE" 2
 print_info "Parsing user and default configs " 2
 CW_BUILD_TMPDIR=$(python3 $M_SCRIPT_DIR/../construct.py $CW_GLOBAL_YAML $_usr_yaml) \
     || { print_err "Configuration construction failed" ; false ;}
