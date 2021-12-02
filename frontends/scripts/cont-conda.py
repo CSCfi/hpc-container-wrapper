@@ -7,20 +7,17 @@ curr_dir=pathlib.Path(__file__).parent.resolve()
 root_dir=pathlib.Path(curr_dir).parent.parent.resolve()
 sys.path+=[str(root_dir)]
 from cw_common import *
+from script_shared import *
 
 sys.argv[0]="cont-conda"
 parser = argparse.ArgumentParser()
 subparsers = parser.add_subparsers(help='subcommands',dest='command')
-parser_new = subparsers.add_parser('new', help='Create new installation')
+parser_new=add_new_pars(subparsers)
 parser_new.add_argument("env_file",help="conda env file")
 parser.add_argument("-r", "--requirement", type=lambda x: is_valid_file(parser, x),help="requirements file for pip")
-parser_new.add_argument("--prefix",type=str,help="Installation location")
-parser.add_argument("--post-install",help="Script to run after conda env activation",type=lambda x: is_valid_file(parser, x))
-parser.add_argument("--environ",help="Script to run before each program launch ",type=lambda x: is_valid_file(parser, x))
-parser_update = subparsers.add_parser('update', help='update an existing installation')
-parser_update.add_argument('dir', type=str, help='Installation to update')
-parser_advanced = subparsers.add_parser('advanced', help='')
-parser_advanced.add_argument('yaml',type=str,help='yaml file with tool config')
+add_upd_pars(subparsers)
+add_adv_pars(subparsers)
+add_base_pars(parser)
 
 
 if len(sys.argv) < 2:
@@ -35,20 +32,7 @@ if args.command == "new":
     conf["mode"]="conda"
 elif args.command == "update":
     conf["mode"]="conda_modify"
-    old_conf={}
-    try:
-        with open(args.dir+"/share/conf.yaml",'r') as c:
-            old_conf=yaml.safe_load(c)
-    except FileNotFoundError:
-        print_err("Directory {} does not exist or is not a valid installation".format(args.dir))
-        sys.exit(1)
-        
-    conf["container_src"]=args.dir+"/"+old_conf["container_image"]
-    conf["sqfs_src"]=args.dir+"/"+old_conf["sqfs_image"]
-    conf["installation_path"]=old_conf["installation_path"]
-    conf["installation_prefix"]=args.dir
-    conf["sqfs_image"]=old_conf["sqfs_image"]
-    conf["container_image"]=old_conf["container_image"]
+    get_old_conf(args.dir,conf)
 else:
     with open(args.yaml,'r') as y:
         conf=yaml.safe_load(y)

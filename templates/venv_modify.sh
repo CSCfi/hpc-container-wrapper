@@ -13,7 +13,6 @@ cd $CW_INSTALLATION_PATH
 cd $CW_WORKDIR
 source $CW_INSTALLATION_PATH/_pre_install.sh
 cd $CW_INSTALLATION_PATH
-python3 -m venv $CW_ENV_NAME
 print_info "Installing requirements file" 1
 source $CW_INSTALLATION_PATH/$CW_ENV_NAME/bin/activate
 if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then

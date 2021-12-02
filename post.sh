@@ -12,7 +12,7 @@ if [[ "$CW_UPDATE_INSTALLATION" == "yes" ]];then
     rm -r $CW_INSTALLATION_PREFIX/share
 fi
     cp -a $CW_BUILD_TMPDIR/_deploy/* $CW_INSTALLATION_PREFIX/
-    mkdir $CW_INSTALLATION_PREFIX/share
+    mkdir -p $CW_INSTALLATION_PREFIX/share
     # Not actually used at this point.
     cp -a $CW_BUILD_TMPDIR/*.sh $CW_INSTALLATION_PREFIX/share
     cp -a $CW_BUILD_TMPDIR/*.yaml  $CW_INSTALLATION_PREFIX/share

@@ -9,9 +9,3 @@ class colors:
 def print_err(txt):
     print("["+colors._RED+" ERROR "+colors._NC+"] "+txt)
 
-def is_valid_file(parser, arg):
-    if not os.path.exists(arg):
-        print_err("The file %s does not exist!" % arg)
-        sys.exit(1)
-    else:
-        return arg  

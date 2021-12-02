@@ -45,7 +45,3 @@ appends:
 
 # Value will be prepended to user defined list
 prepends:
-    extra_envs:
-        - name: PYTHONPATH
-          value: $env_root/share
-          type: prepend 

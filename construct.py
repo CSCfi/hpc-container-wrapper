@@ -58,6 +58,7 @@ specials=["pre_install","post_install","extra_envs"]
 with open(build_dir+"/_sing_inst_script.sh",'a+') as f:
     f.write("#!/bin/bash\n")
     f.write("set -e\n")
+    f.write("source $CW_INSTALLATION_PATH/common_functions.sh\n")
     f.write("source "+tool_root_dir+"/templates/"+ full_conf["template_script"] +"\n")
 with open(build_dir+"/_pre_install.sh",'a+') as f:
     f.write("#!/bin/bash\n")
@@ -69,21 +70,22 @@ with open(build_dir+"/_pre_install.sh",'a+') as f:
             else:
                 f.write(e+"\n")
 with open(build_dir+"/_extra_user_envs.sh",'a+') as f:
-    for e in full_conf["extra_envs"]:
-        # A file, fairly small -> fits in memory
-        if isinstance(e,dict) and "file" in e:
-            with open(e["file"],'r') as src_f:
-                f.write(src_f.read())
-        # Individual env var
-        # No explicit support for arrays
-        # but using set both fixed value and appending possible
-        else:
-            if e["type"] == "set":
-                f.write('export {}="{}"\n'.format(e["name"],e["value"]))
-            elif e["type"] == "append":
-                f.write('export {}="${}:{}"\n'.format(e["name"],e["name"],e["value"]))
+    if "extra_envs" in full_conf:
+        for e in full_conf["extra_envs"]:
+            # A file, fairly small -> fits in memory
+            if isinstance(e,dict) and "file" in e:
+                with open(e["file"],'r') as src_f:
+                    f.write(src_f.read())
+            # Individual env var
+            # No explicit support for arrays
+            # but using set both fixed value and appending possible
             else:
-                f.write('export {}="{}:${}"\n'.format(e["name"],e["value"],e["name"]))
+                if e["type"] == "set":
+                    f.write('export {}="{}"\n'.format(e["name"],e["value"]))
+                elif e["type"] == "append":
+                    f.write('export {}="${}:{}"\n'.format(e["name"],e["name"],e["value"]))
+                else:
+                    f.write('export {}="{}:${}"\n'.format(e["name"],e["value"],e["name"]))
             
 
         f.write("")
@@ -108,7 +110,8 @@ with open(build_dir+"/_vars.sh",'a+') as f:
                 else:
                     f.write("export CW_{}=\"{}\"\n".format(k.upper(),os.path.expandvars(str(v))))
             else: 
-                f.write("export CW_{}=({})\n".format(k.upper()," ".join(['"'+os.path.expandvars(str(elem))+'"' for elem in v ] )))
+                # no point in exporting arrays
+                f.write("CW_{}=({})\n".format(k.upper()," ".join(['"'+os.path.expandvars(str(elem))+'"' for elem in v ] )))
 
     f.write("export SINGULARITY_TMPDIR={}\n".format(build_dir))
     f.write("export SINGULARITY_CACHEDIR={}\n".format(os.path.expandvars(full_conf["build_tmpdir_base"])))

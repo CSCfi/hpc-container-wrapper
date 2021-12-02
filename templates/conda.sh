@@ -5,6 +5,7 @@ set -e
 cd  $CW_BUILD_TMPDIR
 echo "export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/" >> _extra_envs.sh
 echo "export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/" >> _vars.sh
+export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/
 
 cd $CW_INSTALLATION_PATH
 

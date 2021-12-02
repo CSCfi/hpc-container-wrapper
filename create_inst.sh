@@ -10,6 +10,7 @@ mkdir $CW_BUILD_TMPDIR/_inst_dir
 if [[ ${CW_INSTALLATION_FILE_PATHS+defined} ]];then
     cp -a "${CW_INSTALLATION_FILE_PATHS[@]}" $CW_BUILD_TMPDIR/_inst_dir
 fi
+cp $SCRIPT_DIR/common_functions.sh $CW_BUILD_TMPDIR/_inst_dir
 
 cd $CW_BUILD_TMPDIR
 chmod +x ./_sing_inst_script.sh
@@ -30,6 +31,7 @@ SINGULARITY_BIND="$SINGULARITY_BIND,/tmp"
 export SINGULARITY_BIND
 echo "export install_root=$CW_INSTALLATION_PATH" >> _extra_envs.sh
 echo "export install_root=$CW_INSTALLATION_PATH" >> _vars.sh
+export install_root=$CW_INSTALLATION_PATH
 
 if [[ "$CW_UPDATE_INSTALLATION" == "yes" ]];then
     _CONTAINER_EXEC="singularity --silent exec -B $PWD/_inst_dir:$CW_INSTALLATION_PATH,_deploy/$CW_SQFS_IMAGE:$CW_SOURCE_MOUNT_POINT:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
