@@ -58,9 +58,12 @@ if conf["mode"] == "conda":
     conf["update_installation"]="no"
     conf["template_script"]="conda.sh"
     conf["installation_file_paths"]=[conf["env_file"]]
-else:
+elif conf["mode"]="conda_modify":
     conf["update_installation"]="yes"
     conf["template_script"]="conda_modify.sh"
+else:
+    print_err("No or incorrent mode set, [conda,conda_modify]")
+    sys.exit(1)
 if "requirements_file" in conf:
     conf["installation_file_paths"].append(conf["requirements_file"])
 

@@ -12,6 +12,9 @@ mkdir $CW_BUILD_TMPDIR/_inst_dir
 if [[ ${CW_INSTALLATION_FILE_PATHS+defined} ]];then
     cp -a "${CW_INSTALLATION_FILE_PATHS[@]}" $CW_BUILD_TMPDIR/_inst_dir
 fi
+if [[ ${CW_TEMPLATE_SCRIPT+defined} ]];then
+    cp $SCRIPT_DIR/templates/$CW_TEMPLATE_SCRIPT $CW_BUILD_TMPDIR/_inst_dir
+fi
 cp $SCRIPT_DIR/common_functions.sh $CW_BUILD_TMPDIR/_inst_dir
 
 cd $CW_BUILD_TMPDIR
@@ -41,7 +44,8 @@ if [[ "$CW_UPDATE_INSTALLATION" == "yes" ]];then
     $_CONTAINER_EXEC cp -a $CW_SOURCE_MOUNT_POINT/. $CW_INSTALLATION_PATH
     (cd _inst_dir && rm _sing_inst_script.sh _pre_install.sh _post_install.sh)
 elif [[ "$CW_MODE" == "wrapdisk" ]];then
-    _CONTAINER_EXEC="singularity --silent exec -B $PWD/_inst_dir:$CW_INSTALLATION_PATH,$CW_WRAP_SRC:$CW_SOURCE_MOUNT_POINT:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
+    _CONTAINER_EXEC="singularity --silent exec -B $PWD/_inst_dir:$CW_INSTALLATION_PATH,$CW_WRAP_SRC:$CW_SOURCE_MOUNT_POINT _deploy/$CW_CONTAINER_IMAGE"
+    SINGULARITY_BIND=""
     
 else
     _CONTAINER_EXEC="singularity --silent exec -B $PWD/_inst_dir:$CW_INSTALLATION_PATH _deploy/$CW_CONTAINER_IMAGE "

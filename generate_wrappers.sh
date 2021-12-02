@@ -122,7 +122,7 @@ fi" >> _deploy/bin/$target
 chmod +x _deploy/bin/$target
 
 
-if [[ "$CW_ADD_LD" == "yes" ]]; then
+if [[ "$CW_ADD_LD" == "yes" && ${_SING_LIB_PATHS+defined} ]]; then
     echo "SINGULARITYENV_LD_LIBRARY_PATH=\"$(echo "${_SING_LIB_PATHS[@]}" | tr ' ' ':' ):\$SINGULARITYENV_LD_LIBRARY_PATH\"" >> _deploy/common.sh
 fi
 set +H

@@ -1,4 +1,6 @@
 
+SINGULARITY_BIND is after -B
+ordering within both matter!
 
 
 ## Frontends
@@ -27,3 +29,7 @@ _CW_DEBUG_KEEP_FILES
 
 ## TODO
 - installation script
+- Check that only executables are wrapped
+
+
+

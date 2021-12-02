@@ -12,7 +12,7 @@ def add_prefix_flag(p):
     p.add_argument("--prefix",type=str,help="Installation location")
 
 def add_post_flag(p):
-    p.add_argument("--post-install",help="Script to run after conda env activation",type=lambda x: is_valid_file(par,x))
+    p.add_argument("--post-install",help="Script to run after initial setup",type=lambda x: is_valid_file(par,x))
 def add_env_flag(p):
     p.add_argument("--environ",help="Script to run before each program launch ",type=lambda x: is_valid_file(par,x))
 
