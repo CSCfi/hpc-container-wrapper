@@ -59,7 +59,9 @@ with open(build_dir+"/_sing_inst_script.sh",'a+') as f:
     f.write("#!/bin/bash\n")
     f.write("set -e\n")
     f.write("source $CW_INSTALLATION_PATH/common_functions.sh\n")
-    f.write("source "+tool_root_dir+"/templates/"+ full_conf["template_script"] +"\n")
+    if "template_script" in full_conf:
+        f.write("source "+tool_root_dir+"/templates/"+ full_conf["template_script"] +"\n")
+
 with open(build_dir+"/_pre_install.sh",'a+') as f:
     f.write("#!/bin/bash\n")
     if "pre_install" in full_conf:

@@ -34,6 +34,8 @@ export _usr_yaml="$(mktemp)";
 if [[ ! ${CW_GLOBAL_YAML+defined} ]];then
     export CW_GLOBAL_YAML=$M_SCRIPT_DIR/../default_config/config.yaml
 fi
+print_info "Calling frontend $( basename $SOURCE )" 2
+print_info "Calling parsers script $calling_name " 2
 
 # We might need to dynamically set values
 python3 $M_SCRIPT_DIR/scripts/$calling_name.py "$@" || exit $? 
@@ -45,7 +47,6 @@ fi
 trap clean_up err
 trap clean_up INT
 print_info "Parsing input" 1
-print_info "Calling frontend $M_SCRIPT_DIR/$SOURCE" 2
 print_info "Parsing user and default configs " 2
 CW_BUILD_TMPDIR=$(python3 $M_SCRIPT_DIR/../construct.py $CW_GLOBAL_YAML $_usr_yaml) \
     || { print_err "Configuration construction failed" ; false ;}
@@ -58,8 +59,14 @@ if [[ ! -d "$CW_INSTALLATION_PREFIX" ]];then
 fi
 
 $M_SCRIPT_DIR/../pre.sh || { print_err "Failed getting container image"; false ;}
-$M_SCRIPT_DIR/../create_inst.sh || { print_err "Installation failed" ; false ;} 
-$M_SCRIPT_DIR/../generate_wrappers.sh || { print_err "Wrapper generation failed"; false ;}
+# Nothing to do if we are just wrapping a container
+if [[ ! "$CW_MODE" == "wrapcont" ]];then
+    $M_SCRIPT_DIR/../create_inst.sh || { print_err "Installation failed" ; false ;} 
+fi
+
+if [[ "$CW_CREATE_WRAPPERS" == "yes"  ]]; then
+    $M_SCRIPT_DIR/../generate_wrappers.sh || { print_err "Wrapper generation failed"; false ;}
+fi
 $M_SCRIPT_DIR/../post.sh || { print_err "Failed to move to install dir"; false ; }
 test -f "$_usr_yaml" && rm "$_usr_yaml"
 end=`date +%s`

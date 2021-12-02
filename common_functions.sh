@@ -12,12 +12,15 @@ if [[ -t 1 &&  "$USE_COLOR" = "yes" ]];then
   export   _GREEN='\033[0;32m'
   export   _YELLOW='\033[1;33m'
   export   _BLUE="\e[1;34m"
+  export   _PURPLE='\033[0;35m'
   export   _NC='\033[0m' # No Color
+
 else
   export   _RED=""
   export   _GREEN=""
   export   _YELLOW=""
   export   _BLUE=""
+  export   _PURPLE=""
   export   _NC=""
 fi
 
@@ -25,7 +28,13 @@ fi
 # _print_info <log level threshold>
 print_info(){
     if [[ $CW_LOG_LEVEL -gt $2 ]];then
-        >&1 echo -e "[ ${_BLUE}INFO${_NC} ] $1 " | sed '2,$s/^/         /g'
+        if [[ "$2" == 1 ]]; then 
+            >&1 echo -e "[ ${_BLUE}INFO${_NC} ] $1 " | sed '2,$s/^/         /g'
+        else
+            >&1 echo -e "[ ${_PURPLE}DEBUG${_NC} ] $1 " | sed '2,$s/^/         /g'
+        fi
+
+
     fi
 }
 print_warn(){

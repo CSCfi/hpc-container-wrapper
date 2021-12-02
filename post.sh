@@ -6,7 +6,7 @@ source $CW_BUILD_TMPDIR/_vars.sh
 
 print_info "Installing to $CW_INSTALLATION_PREFIX" 1
 
-if [[ "$CW_UPDATE_INSTALLATION" == "yes" ]];then
+if [[ ${CW_UPDATE_INSTALLATION+defined } && "$CW_UPDATE_INSTALLATION" == "yes" ]];then
     print_warn "Updating an existing installation "
     rm -r $CW_INSTALLATION_PREFIX/bin
     rm -r $CW_INSTALLATION_PREFIX/share

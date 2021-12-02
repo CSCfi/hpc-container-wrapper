@@ -8,6 +8,14 @@ def is_valid_file(par,arg):
     else:
         return arg  
 
+def add_prefix_flag(p):
+    p.add_argument("--prefix",type=str,help="Installation location")
+
+def add_post_flag(p):
+    p.add_argument("--post-install",help="Script to run after conda env activation",type=lambda x: is_valid_file(par,x))
+def add_env_flag(p):
+    p.add_argument("--environ",help="Script to run before each program launch ",type=lambda x: is_valid_file(par,x))
+
 def add_wrapper_flag(par):
     par.add_argument("-w","--wrapper-paths",help='Comma separated list of paths')
 
@@ -21,11 +29,11 @@ def add_upd_pars(subpar):
     return parser_update
 def add_new_pars(subpar):
     parser_new = subpar.add_parser('new', help='Create new installation')
-    parser_new.add_argument("--prefix",type=str,help="Installation location")
+    add_prefix_flag(parser_new)
     return parser_new
 def add_base_pars(par):
-    par.add_argument("--post-install",help="Script to run after conda env activation",type=lambda x: is_valid_file(par,x))
-    par.add_argument("--environ",help="Script to run before each program launch ",type=lambda x: is_valid_file(par,x))
+    add_post_flag(par)
+    add_env_flag(par)
 
 # non absolute paths are relative to the installation dir
 def parse_wrapper(conf,g_conf,a,req_abs):

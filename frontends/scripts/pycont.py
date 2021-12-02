@@ -42,7 +42,7 @@ elif args.command == "update":
     get_old_conf(args.dir,conf)
 else:
     with open(args.yaml,'r') as y:
-        conf=yaml.safe_load(y)
+        conf.update(yaml.safe_load(y))
 
 
 

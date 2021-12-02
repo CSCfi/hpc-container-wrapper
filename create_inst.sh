@@ -6,6 +6,8 @@ source $SCRIPT_DIR/common_functions.sh
 source $CW_BUILD_TMPDIR/_vars.sh
 SINGULARITY_BIND=""
 
+
+
 mkdir $CW_BUILD_TMPDIR/_inst_dir
 if [[ ${CW_INSTALLATION_FILE_PATHS+defined} ]];then
     cp -a "${CW_INSTALLATION_FILE_PATHS[@]}" $CW_BUILD_TMPDIR/_inst_dir
@@ -38,7 +40,7 @@ if [[ "$CW_UPDATE_INSTALLATION" == "yes" ]];then
     print_info "Copying installation to writable area, might take a while" 1
     $_CONTAINER_EXEC cp -a $CW_SOURCE_MOUNT_POINT/. $CW_INSTALLATION_PATH
     (cd _inst_dir && rm _sing_inst_script.sh _pre_install.sh _post_install.sh)
-elif [[ "$CW_MODE" == "wrap" ]];then
+elif [[ "$CW_MODE" == "wrapdisk" ]];then
     _CONTAINER_EXEC="singularity --silent exec -B $PWD/_inst_dir:$CW_INSTALLATION_PATH,$CW_WRAP_SRC:$CW_SOURCE_MOUNT_POINT:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
     
 else

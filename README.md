@@ -25,7 +25,5 @@ _CW_DEBUG_KEEP_FILES
 2 general
 3 verbose
 
-
-
-ARGUMENT FOR WRAPPER PATH needed!
-
+## TODO
+- installation script

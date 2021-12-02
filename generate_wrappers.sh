@@ -8,15 +8,12 @@ SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/common_functions.sh
 source $CW_BUILD_TMPDIR/_vars.sh
 
-if [[ "$CW_CREATE_WRAPPERS" == "no"  ]]; then
-    exit 0
-fi
 
 cd $CW_BUILD_TMPDIR
 mkdir _deploy/bin
 touch _deploy/common.sh
 echo "#!/bin/bash" > _deploy/common.sh
-if [[ ! "${CW_SQFS_IMAGE+defined}" ]];then
+if [[ "$CW_MODE" == "wrapcont" ]];then
     _CONTAINER_EXEC="singularity --silent exec  _deploy/$CW_CONTAINER_IMAGE"
     _RUN_CMD="singularity --silent exec \$DIR/../\$CONTAINER_IMAGE"
     _SHELL_CMD="singularity --silent shell \$DIR/../\$CONTAINER_IMAGE"
@@ -68,18 +65,27 @@ _GENERATED_WRAPPERS=""
 
 print_info "Creating wrappers" 1
 for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
+    print_info "Generating wrappers for $wrapper_path" 2
     if [[ "$CW_WRAP_ALL" == "yes" ]];then
+        print_info "Wrapping all files" 3
         targets=($($_CONTAINER_EXEC ls -F $wrapper_path | grep -v "/"  | sed 's/.$//g' ))
     else
+        print_info "Only wrapping executables" 3
         targets=($($_CONTAINER_EXEC ls -F $wrapper_path | grep "\*\|@" | sed 's/.$//g'))
     fi
     if [[ "$CW_ADD_LD" == "yes" ]]; then
-        lib_dirs=($($_CONTAINER_EXEC ls $wrapper_path/.. | grep "lib[64]*$" ))
-        for d in "${lib_dirs[@]}"; do
-            _SING_LIB_PATHS+=("$(dirname $wrapper_path)/$d")
-        done
+        # Nasty hack
+        # empty result -> no array defined
+
+        lib_dirs=($($_CONTAINER_EXEC ls $wrapper_path/.. | grep "lib[64]*$" || true ))
+        if [[ ${lib_dirs+defined} ]];then
+            for d in "${lib_dirs[@]}"; do
+                _SING_LIB_PATHS+=("$(dirname $wrapper_path)/$d")
+            done
+        fi
     fi
     for target in "${targets[@]}"; do
+        print_info "Creating wrapper for $target" 3
         echo -e "$_GENERATED_WRAPPERS" | grep "^$target$" &>/dev/null &&  print_warn "Multiple binaries with the same name" || true
     _GENERATED_WRAPPERS="$_GENERATED_WRAPPERS\n$target"
         echo "#!/bin/bash" > _deploy/bin/$target
@@ -122,7 +128,11 @@ fi
 set +H
 printf -- '%s\n' "SINGULARITYENV_LD_LIBRARY_PATH=\$(echo \$SINGULARITYENV_LD_LIBRARY_PATH | tr ':' '\n' | awk '!a[\$0]++' | tr '\n' ':')" >> _deploy/common.sh
 printf -- '%s\n' "SINGULARITYENV_PATH=\$(echo \$SINGULARITYENV_PATH | tr ':' '\n' | awk '!a[\$0]++' | tr '\n' ':')" >> _deploy/common.sh
-cat _extra_envs.sh >> _deploy/common.sh || true
-cat _extra_user_envs.sh >> _deploy/common.sh
+if [[ -f _extra_envs.sh ]];then
+    cat _extra_envs.sh >> _deploy/common.sh 
+fi
+if [[ -f _extra_user_envs.sh ]];then
+    cat _extra_user_envs.sh >> _deploy/common.sh 
+fi
 chmod o+r _deploy
 chmod o+x _deploy

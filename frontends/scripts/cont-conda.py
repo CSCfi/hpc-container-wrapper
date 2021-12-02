@@ -18,6 +18,7 @@ parser.add_argument("-r", "--requirement", type=lambda x: is_valid_file(parser, 
 add_upd_pars(subparsers)
 add_adv_pars(subparsers)
 add_base_pars(parser)
+add_wrapper_flag(parser)
 
 
 if len(sys.argv) < 2:
@@ -35,7 +36,7 @@ elif args.command == "update":
     get_old_conf(args.dir,conf)
 else:
     with open(args.yaml,'r') as y:
-        conf=yaml.safe_load(y)
+        conf.update(yaml.safe_load(y))
 
 
 
@@ -52,6 +53,7 @@ global_conf={}
 with open(os.getenv("CW_GLOBAL_YAML"),'r') as g:
     global_conf=yaml.safe_load(g)
     
+parse_wrapper(conf,global_conf,args,False)
 if conf["mode"] == "conda":
     conf["update_installation"]="no"
     conf["template_script"]="conda.sh"
