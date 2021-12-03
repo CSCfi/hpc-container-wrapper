@@ -42,6 +42,16 @@ if [[ "$CW_ISOLATE" == "yes" ]]; then
     echo "_DIRS=(${CW_MOUNT_POINTS[@]})" >> _deploy/common.sh
 else
     echo "_DIRS=(\$(ls -1 / | awk '!/dev/' | sed 's/^/\//g' ))" >> _deploy/common.sh
+
+if [[ "${CW_EXCLUDED_MOUNT_POINTS+defined}" ]];then
+    echo "
+        _excludes=( ${CW_EXCLUDED_MOUNT_POINTS[@]}  )
+        for mp in \"\${_excludes}\";do
+            _DIRS=( \"\${_DIRS[@]/\$mp}\")
+        done
+    ">> _deploy/common.sh
+
+fi
     echo "export SINGULARITYENV_PATH=\"\$SINGULARITYENV_PATH:\$PATH\"
 export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\"
 " >> _deploy/common.sh
@@ -84,6 +94,11 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
             done
         fi
     fi
+    if [[ ! ${targets+defined} ]];then
+        print_err "Path $wrapper_path does not exist in container or is empty"
+        false
+    fi
+
     for target in "${targets[@]}"; do
         print_info "Creating wrapper for $target" 3
         echo -e "$_GENERATED_WRAPPERS" | grep "^$target$" &>/dev/null &&  print_warn "Multiple binaries with the same name" || true

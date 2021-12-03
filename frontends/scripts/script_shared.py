@@ -1,6 +1,11 @@
 import os
 import sys
 import yaml
+import pathlib
+curr_dir=pathlib.Path(__file__).parent.resolve()
+root_dir=pathlib.Path(curr_dir).parent.parent.resolve()
+sys.path+=[str(root_dir)]
+from cw_common import *
 def is_valid_file(par,arg):
     if not os.path.exists(arg):
         print_err("The file %s does not exist!" % arg)
@@ -11,10 +16,10 @@ def is_valid_file(par,arg):
 def add_prefix_flag(p):
     p.add_argument("--prefix",type=str,help="Installation location")
 
-def add_post_flag(p):
-    p.add_argument("--post-install",help="Script to run after initial setup",type=lambda x: is_valid_file(par,x))
-def add_env_flag(p):
-    p.add_argument("--environ",help="Script to run before each program launch ",type=lambda x: is_valid_file(par,x))
+def add_post_flag(par):
+    par.add_argument("--post-install",help="Script to run after initial setup",type=lambda x: is_valid_file(par,x))
+def add_env_flag(par):
+    par.add_argument("--environ",help="Script to run before each program launch ",type=lambda x: is_valid_file(par,x))
 
 def add_wrapper_flag(par):
     par.add_argument("-w","--wrapper-paths",help='Comma separated list of paths')
@@ -39,7 +44,7 @@ def add_base_pars(par):
 def parse_wrapper(conf,g_conf,a,req_abs):
     if a.wrapper_paths:
         ip=""
-        if "installation_path "in conf:
+        if "installation_path" in conf:
             ip = conf["installation_path"]
         elif "installation_path" in g_conf["force"]:
             ip = g_conf["force"]["installation_path"]
@@ -48,7 +53,8 @@ def parse_wrapper(conf,g_conf,a,req_abs):
         elif not req_abs:
             print_err("Failed to parse wrapper paths, missing installation path")
             sys.exit(1)
-        conf["wrapper_paths"]=[]
+        if not "wrapper_paths" in conf:
+            conf["wrapper_paths"]=[]
         for p in a.wrapper_paths.split(','):
             if p[0] == "/":
                 conf["wrapper_paths"].append(p)
@@ -73,3 +79,5 @@ def get_old_conf(d,conf):
     conf["installation_prefix"]=d
     conf["sqfs_image"]=old_conf["sqfs_image"]
     conf["container_image"]=old_conf["container_image"]
+    if "wrapper_paths" in old_conf:
+        conf["wrapper_paths"] = old_conf["wrapper_paths"]

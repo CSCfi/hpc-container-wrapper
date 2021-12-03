@@ -29,8 +29,9 @@ clean_up () {
     kill  -- -$$ &>/dev/null
     exit $ARG
 }
-# Here some stuff for more robust python
-export _usr_yaml="$(mktemp)";
+export _usr_yaml="$(mktemp /tmp/cw-tmp.XXXXXX )";
+trap clean_up err
+trap clean_up INT
 if [[ ! ${CW_GLOBAL_YAML+defined} ]];then
     export CW_GLOBAL_YAML=$M_SCRIPT_DIR/../default_config/config.yaml
 fi
@@ -44,8 +45,6 @@ if [[ ! -s "$_usr_yaml" ]];then
     # Probably printed the help message
     exit 0
 fi
-trap clean_up err
-trap clean_up INT
 print_info "Parsing input" 1
 print_info "Parsing user and default configs " 2
 CW_BUILD_TMPDIR=$(python3 $M_SCRIPT_DIR/../construct.py $CW_GLOBAL_YAML $_usr_yaml) \

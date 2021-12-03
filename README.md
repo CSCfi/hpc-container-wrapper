@@ -15,21 +15,27 @@ ordering within both matter!
 
 - Need to be robust to people changing the python environment!
     - Tool install scripts needs to 
-- Need way to get info of existing env
 
 
-Add var for conda path! -> can be added to CW_WRAPPER_PATHS
-if pre/post enabled add some default wrapper path!
 
-_CW_DEBUG_KEEP_FILES
+CW_DEBUG_KEEP_FILES
+
+`CW_LOG_LEVEL`
 0 only error
 1 only warnings
 2 general
-3 verbose
+3 debug
 
 ## TODO
 - installation script
-- Check that only executables are wrapped
+- option to only allow relative paths.
 
 
+## instcont
 
+- It's not possible to mask an installation on disk
+using the 
+
+
+Technically updating masked disk installations
+is not an issue, but let's not do that...
