@@ -95,8 +95,9 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         fi
     fi
     if [[ ! ${targets+defined} ]];then
-        print_err "Path $wrapper_path does not exist in container or is empty"
-        false
+        # No method to remove wrapper paths when updating
+        # So don't fail here
+        print_warn "Path $wrapper_path does not exist in container or is empty \n\tif only wrapping executables, did you forget +x?"
     fi
 
     for target in "${targets[@]}"; do

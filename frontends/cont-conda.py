@@ -28,6 +28,7 @@ if len(sys.argv) < 2:
     sys.exit(0)
 args = parser.parse_args()
 conf={}
+conf["add_ld"]="no"
 if args.command == "new":
     conf["env_file"]=args.env_file
     if args.prefix:

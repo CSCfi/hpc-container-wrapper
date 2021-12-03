@@ -17,6 +17,4 @@ conda list >> $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-package
 echo '"' >> $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages 
 chmod +x $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages 
 
-echo "CW_WRAPPER_PATHS+=( \"$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/\" )
-CW_WRAPPER_LD_LIBRARY_PATHS+=( \"$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/lib/\" )
-" >>  $CW_BUILD_TMPDIR/_vars.sh
+echo "CW_WRAPPER_PATHS+=( \"$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/\" )" >>  $CW_BUILD_TMPDIR/_vars.sh

@@ -13,9 +13,9 @@ cd $CW_INSTALLATION_PATH
 cd $CW_WORKDIR
 source $CW_INSTALLATION_PATH/_pre_install.sh
 cd $CW_INSTALLATION_PATH
-print_info "Installing requirements file" 1
 source $CW_INSTALLATION_PATH/$CW_ENV_NAME/bin/activate
 if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
+    print_info "Installing requirements file" 1
     pip install --disable-pip-version-check -r "$CW_REQUIREMENTS_FILE" > $CW_BUILD_TMPDIR/_pip.log &
     follow_log $! $CW_BUILD_TMPDIR/_pip.log 10
 fi

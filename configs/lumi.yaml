@@ -28,7 +28,7 @@ defaults:
     create_wrappers: yes
     wrap_all: no
     num_cpus: 8
-    sqfs_options: ""
+    sqfs_options: "-noappend"
     add_ld: yes
     # new vs inplace
     update_mode: new
@@ -40,7 +40,7 @@ force:
     # No logic currently to refer to other variables here
     # So either implement that, throw them to $TMPDIR
     #
-    work_dir: /tmp/$USER 
+    workdir: $PWD 
     
 # Value will override any user set value
 
@@ -49,8 +49,6 @@ appends:
 
 # Value will be prepended to user defined list
 prepends:
-    post_install:
-                - echo used mahti conf
 
 
 

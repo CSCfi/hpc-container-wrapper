@@ -43,7 +43,6 @@ if [[ "$CW_UPDATE_INSTALLATION" == "yes" ]];then
     export SINGULARITY_BIND="$SINGULARITY_BIND,$PWD/_inst_dir:$CW_INSTALLATION_PATH"
     print_info "Copying installation to writable area, might take a while" 1
     $_CONTAINER_EXEC cp -a $CW_SOURCE_MOUNT_POINT/. $CW_INSTALLATION_PATH
-    (cd _inst_dir && rm _sing_inst_script.sh _pre_install.sh _post_install.sh)
 elif [[ "$CW_MODE" == "wrapdisk" ]];then
     export SINGULARITY_BIND="$SINGULARITY_BIND,$PWD/_inst_dir:$CW_INSTALLATION_PATH,$CW_WRAP_SRC:$CW_SOURCE_MOUNT_POINT"
     _CONTAINER_EXEC="singularity --silent exec _deploy/$CW_CONTAINER_IMAGE"
@@ -63,6 +62,8 @@ if [[ $CW_NUM_CPUS -gt $CW_MAX_NUM_CPUS ]]; then
 else
     _cpus=$CW_NUM_CPUS
 fi
+# There should be a separate folder so that removal is easier
+(cd _inst_dir && rm -f _vars.sh common_functions.sh ${CW_INSTALLATION_FILE_PATHS[@]} _sing_inst_script.sh _pre_install.sh _post_install.sh $CW_TEMPLATE_SCRIPT  _extra_user_envs.sh _extra_envs.sh )
 # unable to wrap the progress bar  
 mksquashfs _inst_dir/ _deploy/$CW_SQFS_IMAGE  -processors $_cpus $CW_SQFS_OPTIONS 
 

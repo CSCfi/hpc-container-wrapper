@@ -10,11 +10,11 @@ if [[ ! -f "configs/$1.yaml" ]];then
     echo "Specified config does not exists, options: $(ls configs | tr '\n' ' ' | sed 's/.yaml//g')"
 fi
 
-if [[ $( which --version &> /dev/null ) ]];then
+if [[  $( which python3 &> /dev/null ) ]];then
     echo "Could not find python3"
     exit 1 
 fi
-if [[ $(which pip3 &> /dev/null ) ]];then
+if [[  $(which pip3 &> /dev/null ) ]];then
     echo "Could not find pip3"
     exit 1 
 fi
