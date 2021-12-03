@@ -33,9 +33,6 @@ CW_DEBUG_KEEP_FILES
 
 ## instcont
 
-- It's not possible to mask an installation on disk
-using the 
-
-
 Technically updating masked disk installations
-is not an issue, but let's not do that...
+is not an issue, but let's not do that until there is a specific
+request. 

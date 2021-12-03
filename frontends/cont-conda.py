@@ -5,7 +5,7 @@ import sys
 import pathlib
 curr_dir=pathlib.Path(__file__).parent.resolve()
 root_dir=pathlib.Path(curr_dir).parent.resolve()
-sys.path+=[str(root_dir)]
+sys.path+=[str(root_dir),str(root_dir)+"/PyDeps"]
 from cw_common import *
 from script_shared import *
 
