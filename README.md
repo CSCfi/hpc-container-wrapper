@@ -1,9 +1,21 @@
+**Tool is very much WIP**
+
+- More error handling
+- Failing fast on illogical option combinations
+- Better descriptions 
+- Better syntax
+- Cleaning up the code
+
 ## Frontends
 
 - `cont-conda`
+ - Wrap new conda installation or edit existing
 - `pycont`
+ - Wrap new venv installation or edit existing
 - `wrapcont`
+ - Generate wrappers for existing container
 - `instcont`
+ - Wrap an installation on disk on to a container. 
 
 
 ## Special vars
