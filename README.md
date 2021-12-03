@@ -4,7 +4,9 @@
 - Failing fast on illogical option combinations
 - Better descriptions 
 - Better syntax
+- Argument ordering bad?
 - Cleaning up the code
+- Adding `--pre-install` flag?
 
 ## Frontends
 
@@ -12,11 +14,28 @@
  - Wrap new conda installation or edit existing
 - `pycont`
  - Wrap new venv installation or edit existing
+ - Defaults to slim python container
 - `wrapcont`
  - Generate wrappers for existing container
 - `instcont`
  - Wrap an installation on disk on to a container. 
 
+All tools support `-h/--help` for displaying info
+some have subcommands. 
+
+## Examples
+
+- `cont-conda new --prefix /path/to_install conda_env.yaml`
+- `cont-conda --post-install <(conda install scipy --channel conda-forge) update /path/to_install`
+- `pycont new --prefix /path/to_install requirements.txt`
+- `wrapcont --wrapper-paths /opt/prog/bin --prefix /path/to_install /path/to/container` 
+- `instcont --wrapper-paths bin --mask --prefix /path/to/install /program/on/disk`
+
+
+## Installation
+
+preferrably use system python + pip
+and run install.sh with the config as argument
 
 ## Special vars
 
