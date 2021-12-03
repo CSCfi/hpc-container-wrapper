@@ -1,6 +1,10 @@
 import os
 import sys
 import subprocess
+import pathlib
+curr_dir=pathlib.Path(__file__).parent.resolve()
+info=sys.version_info
+sys.path.insert(0,str(curr_dir)+"/PyDeps/lib/python{}.{}/site-packages".format(info[0],info[1]))
 import yaml
 
 import string

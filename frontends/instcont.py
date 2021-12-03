@@ -1,11 +1,13 @@
 import argparse
-import yaml
 import os
 import sys
 import pathlib
 curr_dir=pathlib.Path(__file__).parent.resolve()
 root_dir=pathlib.Path(curr_dir).parent.resolve()
-sys.path+=[str(root_dir),str(root_dir)+"/PyDeps"]
+info=sys.version_info
+sys.path.insert(0,str(root_dir))
+sys.path.insert(0,str(root_dir)+"/PyDeps/lib/python{}.{}/site-packages".format(info[0],info[1]))
+import yaml
 from cw_common import *
 from script_shared import *
 

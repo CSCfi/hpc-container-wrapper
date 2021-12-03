@@ -10,6 +10,7 @@ M_SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 calling_name=$(basename $0)
 CURR_DIR=$PWD
 source $M_SCRIPT_DIR/../common_functions.sh
+source $M_SCRIPT_DIR/inst_vars.sh
 start=`date +%s`
 clean_up () {
     trap '' 2
@@ -40,7 +41,7 @@ print_info "Calling parsers script $calling_name " 2
 print_info "Using $(readlink -f $CW_GLOBAL_YAML) as default config" 2
 
 # We might need to dynamically set values
-python3 $M_SCRIPT_DIR/$calling_name.py "$@" || exit $? 
+$PY_EXE $M_SCRIPT_DIR/$calling_name.py "$@" || exit $? 
 if [[ ! -s "$_usr_yaml" ]];then
     test -f $_usr_yaml && rm $_usr_yaml
     # Probably printed the help message
@@ -48,7 +49,7 @@ if [[ ! -s "$_usr_yaml" ]];then
 fi
 print_info "Parsing input" 1
 print_info "Parsing user and default configs " 2
-CW_BUILD_TMPDIR=$(python3 $M_SCRIPT_DIR/../construct.py $CW_GLOBAL_YAML $_usr_yaml) \
+CW_BUILD_TMPDIR=$($PY_EXE $M_SCRIPT_DIR/../construct.py $CW_GLOBAL_YAML $_usr_yaml) \
     || { print_err "Configuration construction failed" ; false ;}
 export CW_BUILD_TMPDIR
 

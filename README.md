@@ -27,9 +27,13 @@ CW_DEBUG_KEEP_FILES
 3 debug
 
 ## TODO
-- installation script
 - option to only allow relative paths.
 
+
+## Convoluted path modifications in py scripts
+The idea is that everything works even if a completely different python
+environment is active, we also avoid having any extra envs set while parsing
+the conf to allow for very "creative" usages of the tool
 
 ## instcont
 
