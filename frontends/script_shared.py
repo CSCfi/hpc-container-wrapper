@@ -3,7 +3,7 @@ import sys
 import yaml
 import pathlib
 curr_dir=pathlib.Path(__file__).parent.resolve()
-root_dir=pathlib.Path(curr_dir).parent.parent.resolve()
+root_dir=pathlib.Path(curr_dir).parent.resolve()
 sys.path+=[str(root_dir)]
 from cw_common import *
 def is_valid_file(par,arg):

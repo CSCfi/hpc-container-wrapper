@@ -37,9 +37,10 @@ if [[ ! ${CW_GLOBAL_YAML+defined} ]];then
 fi
 print_info "Calling frontend $( basename $SOURCE )" 2
 print_info "Calling parsers script $calling_name " 2
+print_info "Using $(readlink -f $CW_GLOBAL_YAML) as default config" 2
 
 # We might need to dynamically set values
-python3 $M_SCRIPT_DIR/scripts/$calling_name.py "$@" || exit $? 
+python3 $M_SCRIPT_DIR/$calling_name.py "$@" || exit $? 
 if [[ ! -s "$_usr_yaml" ]];then
     test -f $_usr_yaml && rm $_usr_yaml
     # Probably printed the help message
