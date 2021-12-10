@@ -63,7 +63,10 @@ else
     _cpus=$CW_NUM_CPUS
 fi
 # There should be a separate folder so that removal is easier
-(cd _inst_dir && rm -f _vars.sh common_functions.sh ${CW_INSTALLATION_FILE_PATHS[@]} _sing_inst_script.sh _pre_install.sh _post_install.sh $CW_TEMPLATE_SCRIPT  _extra_user_envs.sh _extra_envs.sh )
+(cd _inst_dir && rm -f _vars.sh common_functions.sh  _sing_inst_script.sh _pre_install.sh _post_install.sh $CW_TEMPLATE_SCRIPT  _extra_user_envs.sh _extra_envs.sh )
+if [[ ${CW_INSTALLATION_FILE_PATHS+defined} ]]; then
+    (cd _inst_dir && rm -f ${CW_INSTALLATION_FILE_PATHS[@]} )
+fi
 # unable to wrap the progress bar  
 mksquashfs _inst_dir/ _deploy/$CW_SQFS_IMAGE  -processors $_cpus $CW_SQFS_OPTIONS 
 
