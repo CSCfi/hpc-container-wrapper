@@ -23,6 +23,8 @@ chmod +x ./_sing_inst_script.sh
 if [[ "$CW_ISOLATE" == "yes" ]]; then
     _DIRS=(${CW_MOUNT_POINTS[@]})
 else
+    export SINGULARITYENV_PATH="$PATH"
+    export SINGULARITYENV_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
     _DIRS=($(ls -1 / | awk '!/dev/' | sed 's/^/\//g' ))
 fi
 for d in "${_DIRS[@]}"; do
