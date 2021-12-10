@@ -21,7 +21,7 @@ parser_upd.add_argument("-r","--requirements-file", type=lambda x: is_valid_file
 add_adv_pars(subparsers)
 add_base_pars(parser)
 add_wrapper_flag(parser)
-
+parser_new.add_argument("--slim",action='store_true',help="Use minimal base python container")
 
 if len(sys.argv) < 2:
     parser.print_help()
@@ -29,8 +29,12 @@ if len(sys.argv) < 2:
 args = parser.parse_args()
 conf={}
 pyver="3.10.0-slim-buster"
-conf["container_src"]="docker://python:{}".format(pyver)
-conf["isolate"]="yes"
+
+
+if args.slim:
+    conf["container_src"]="docker://python:{}".format(pyver)
+    conf["isolate"]="yes"
+
 if args.requirements_file:
     conf["requirements_file"]=args.requirements_file
     conf["installation_file_paths"]=[conf["requirements_file"]]
@@ -53,6 +57,8 @@ if args.command in ["update","new"]:
         conf["extra_envs"]=[{"file":args.environ}]
     if args.post_install:
         conf["post_install"]=[{"file":args.post_install}]
+    if args.pre_install:
+        conf["pre_install"]=[{"file":args.pre_install}]
 
 
 global_conf={}

@@ -20,6 +20,8 @@ def add_prefix_flag(p):
 
 def add_post_flag(par):
     par.add_argument("--post-install",help="Script to run after initial setup",type=lambda x: is_valid_file(par,x))
+def add_pre_flag(par):
+    par.add_argument("--pre-install",help="Script to run before initial setup",type=lambda x: is_valid_file(par,x))
 def add_env_flag(par):
     par.add_argument("--environ",help="Script to run before each program launch ",type=lambda x: is_valid_file(par,x))
 
@@ -40,6 +42,7 @@ def add_new_pars(subpar):
     return parser_new
 def add_base_pars(par):
     add_post_flag(par)
+    add_pre_flag(par)
     add_env_flag(par)
 
 # non absolute paths are relative to the installation dir

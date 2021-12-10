@@ -52,6 +52,8 @@ if args.environ:
     conf["extra_envs"]=[{"file":args.environ}]
 if args.post_install:
     conf["post_install"]=[{"file":args.post_install}]
+if args.pre_install:
+    conf["pre_install"]=[{"file":args.pre_install}]
 
 
 global_conf={}

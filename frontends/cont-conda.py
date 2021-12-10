@@ -50,6 +50,8 @@ if args.command in ["update","new"]:
         conf["post_install"]=[{"file":args.post_install}]
     if args.requirement:
         conf["requirements_file"]=args.requirement
+    if args.pre_install:
+        conf["pre_install"]=[{"file":args.pre_install}]
 
 
 global_conf={}
