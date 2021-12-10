@@ -17,11 +17,10 @@ python3 -m venv $CW_ENV_NAME
 print_info "Installing requirements file" 1
 source $CW_INSTALLATION_PATH/$CW_ENV_NAME/bin/activate
 if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
-    pip install --disable-pip-version-check -r "$CW_REQUIREMENTS_FILE" > $CW_BUILD_TMPDIR/_pip.log &
-    follow_log $! $CW_BUILD_TMPDIR/_pip.log 10
+    pip install --disable-pip-version-check -r "$CW_REQUIREMENTS_FILE"  
 fi
 cd $CW_WORKDIR
-#print_info "Running user supplied commands" 1
+print_info "Running user supplied commands" 1
 source $CW_INSTALLATION_PATH/_post_install.sh
 
 echo "CW_WRAPPER_PATHS+=( \"$CW_INSTALLATION_PATH/$CW_ENV_NAME/bin/\" )" >>  $CW_BUILD_TMPDIR/_vars.sh
