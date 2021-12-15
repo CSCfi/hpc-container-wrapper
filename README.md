@@ -6,7 +6,7 @@
 - Better syntax
 - Argument ordering bad?
 - Cleaning up the code
-- Adding `--pre-install` flag?
+- Custom python version for plain pip container
 
 ## Frontends
 
@@ -50,12 +50,12 @@ How verbosely to report program actions
 - 0 only error
 - 1 only warnings
 - 2 general (default)
-- >2 debug
+- `>2` debug
 
 ## Notes
 `SINGULARITY_BIND` handled after `-B`
 ordering within both matter! -> nested bind mounts possible.
-Not that while loop devices can be mounted on bind mounts,
+Note that while loop devices can be mounted on bind mounts,
 any extra bind mounts will be applied after extra loop device (image mounts) 
 so to mask dirs on disk with an image mount, the path can not be bind mounted.
 (exception is the default $HOME mount, which is applied before loop device mounts)
