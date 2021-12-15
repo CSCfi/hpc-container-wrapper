@@ -24,7 +24,9 @@ if [[ "$CW_ISOLATE" == "yes" ]]; then
     _DIRS=(${CW_MOUNT_POINTS[@]})
 else
     export SINGULARITYENV_PATH="$PATH"
-    export SINGULARITYENV_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+    if [[ ${LD_LIBRARY_PATH+defined} ]];then
+        export SINGULARITYENV_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+    fi
     _DIRS=($(ls -1 / | awk '!/dev/' | sed 's/^/\//g' ))
 fi
 for d in "${_DIRS[@]}"; do
