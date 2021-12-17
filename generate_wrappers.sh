@@ -57,6 +57,21 @@ export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$LD_LI
 " >> _deploy/common.sh
 fi
 echo "
+if [[ \"\$( cat /proc/self/mountinfo)\" == *\"singularity/mnt/session\"* ]];then
+    export _CW_IN_CONTAINER=Yes
+else
+    unset _CW_IN_CONTAINER
+fi
+if [[ ! \${_CW_IN_CONTAINER+defined} && \${SINGULARITY_NAME+defined} ]] ;then
+    unset SINGULARITY_NAME
+    unset SINGULARITY_COMMAND
+    unset SINGULARITY_NAME
+    unset SINGULARITY_ENVIRONMENT
+    unset SINGULARITY_BIND
+    unset SINGULARITY_CONTAINER
+fi
+" >> _deploy/common.sh
+echo "
 for d in \"\${_DIRS[@]}\"; do
     if [[ -z \"\$SINGULARITY_BIND\" ]];then
 `        `test -d \$d && export SINGULARITY_BIND=\"\$d\"
@@ -66,9 +81,6 @@ for d in \"\${_DIRS[@]}\"; do
 done
 SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$TMPDIR,\$TMPDIR:/tmp\"
 export SINGULARITY_BIND" >> _deploy/common.sh
-
-
-
 
 _SING_LIB_PATHS=()
 _GENERATED_WRAPPERS=""
@@ -98,6 +110,7 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         # No method to remove wrapper paths when updating
         # So don't fail here
         print_warn "Path $wrapper_path does not exist in container or is empty \n\tif only wrapping executables, did you forget +x?"
+        continue
     fi
 
     for target in "${targets[@]}"; do
@@ -108,10 +121,10 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         echo "$_REAL_PATH_CMD" >> _deploy/bin/$target
         echo "$_PRE_COMMAND" >> _deploy/bin/$target
         echo "
-        if [[ -z \"\$SINGULARITY_NAME\" ]];then
-            $_RUN_CMD  $wrapper_path/$target \"\$@\" 
-        else
+        if [[ \${_CW_IN_CONTAINER+defined} ]];then
             $wrapper_path/$target \"\$@\"
+        else
+            $_RUN_CMD  $wrapper_path/$target \"\$@\" 
         fi" >> _deploy/bin/$target
         chmod +x _deploy/bin/$target
     done
@@ -122,6 +135,7 @@ echo "#!/bin/bash" > _deploy/bin/$target
 echo "$_REAL_PATH_CMD" >> _deploy/bin/$target
 echo "$_PRE_COMMAND" >> _deploy/bin/$target
 echo "
+
 if [[ -z \"\$SINGULARITY_NAME\" ]];then
     $_SHELL_CMD  \"\$@\" 
 fi" >> _deploy/bin/$target

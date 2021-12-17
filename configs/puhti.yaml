@@ -1,0 +1,51 @@
+# Value will be selected if no user provided value
+# Otherwise ignored
+defaults:
+    log_level: 2
+    env_name: env1 
+    conda_version: latest
+    installation_prefix: $PWD
+    installation_path: "/CSC_CONTAINER"
+    # if this is not a thing which exist
+    # I will do a singularity pull
+    container_src: 'library://centos:7.9'
+    # name of the container image when on disk
+    container_image: container.sif 
+    sqfs_image: img.sqfs 
+    source_mount_point: /TMP_MP 
+    mount_points:
+            - /projappl
+            - /local_scratch
+            - /tmp
+            - /scratch
+            - /users
+            - /fmi
+            - /appl/data
+    isolate: no
+    create_wrappers: yes
+    wrap_all: no
+    num_cpus: 8
+    sqfs_options: "-noappend"
+    add_ld: yes
+    # new vs inplace
+    update_mode: new
+force:
+    # I will create some random dir under here 
+    build_tmpdir_base: $TMPDIR
+    conda_arch: 'Linux-x86_64'
+    max_num_cpus: 16
+    # No logic currently to refer to other variables here
+    # So either implement that, throw them to $TMPDIR
+    #
+    workdir: $PWD   
+    
+# Value will override any user set value
+
+# Value will be appendend to user defined list 
+appends:
+
+# Value will be prepended to user defined list
+prepends:
+
+
+

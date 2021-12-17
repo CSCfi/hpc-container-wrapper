@@ -7,6 +7,7 @@
 - Argument ordering bad?
 - Cleaning up the code
 - Custom python version for plain pip container
+- Keep wrapcont container names?
 
 ## Frontends
 
