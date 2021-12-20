@@ -27,7 +27,8 @@ fi
 
 _REAL_PATH_CMD='DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"'
 _PRE_COMMAND="source \$DIR/../common.sh"
-echo "CONTAINER_IMAGE=$CW_CONTAINER_IMAGE
+echo "_C_DIR=\"\$( cd \"\$( dirname \"\${BASH_SOURCE[0]}\" )\" >/dev/null 2>&1 && pwd )\"
+CONTAINER_IMAGE=$CW_CONTAINER_IMAGE
 INSTALLATION_PATH=$CW_INSTALLATION_PATH
 SINGULARITYENV_PATH=\"$($_CONTAINER_EXEC bash -c 'echo $PATH')\"
 SINGULARITYENV_LD_LIBRARY_PATH=\"$($_CONTAINER_EXEC bash -c 'echo $LD_LIBRARY_PATH')\"
@@ -80,10 +81,17 @@ for d in \"\${_DIRS[@]}\"; do
     fi
 done
 SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$TMPDIR,\$TMPDIR:/tmp\"
+SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$_C_DIR/_bin:\$_C_DIR/bin\"
 export SINGULARITY_BIND" >> _deploy/common.sh
 
 _SING_LIB_PATHS=()
 _GENERATED_WRAPPERS=""
+
+
+# Let's trick some software
+# which hardcode program paths for some generation
+# Will not work if symlinks are also resolved.
+mkdir _deploy/_bin
 
 print_info "Creating wrappers" 1
 for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
@@ -120,11 +128,12 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         echo "#!/bin/bash" > _deploy/bin/$target
         echo "$_REAL_PATH_CMD" >> _deploy/bin/$target
         echo "$_PRE_COMMAND" >> _deploy/bin/$target
+        ln -s $wrapper_path/$target _deploy/_bin/$target
         echo "
         if [[ \${_CW_IN_CONTAINER+defined} ]];then
-            $wrapper_path/$target \"\$@\"
+            \$DIR/$target \"\$@\"
         else
-            $_RUN_CMD  $wrapper_path/$target \"\$@\" 
+            $_RUN_CMD  \$DIR/$target \"\$@\" 
         fi" >> _deploy/bin/$target
         chmod +x _deploy/bin/$target
     done
@@ -150,6 +159,7 @@ if [[ -z \"\$SINGULARITY_NAME\" ]];then
     $_RUN_CMD \"\$@\" 
 fi" >> _deploy/bin/$target
 chmod +x _deploy/bin/$target
+
 
 
 if [[ "$CW_ADD_LD" == "yes" && ${_SING_LIB_PATHS+defined} ]]; then

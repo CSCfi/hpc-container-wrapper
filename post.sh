@@ -7,8 +7,9 @@ source $CW_BUILD_TMPDIR/_vars.sh
 print_info "Installing to $CW_INSTALLATION_PREFIX" 1
 
 if [[ ${CW_UPDATE_INSTALLATION+defined } && "$CW_UPDATE_INSTALLATION" == "yes" ]];then
-    rm -r $CW_INSTALLATION_PREFIX/bin
-    rm -r $CW_INSTALLATION_PREFIX/share
+    rm -fr $CW_INSTALLATION_PREFIX/bin
+    rm -fr $CW_INSTALLATION_PREFIX/_bin
+    rm -fr $CW_INSTALLATION_PREFIX/share
 fi
     cp -a $CW_BUILD_TMPDIR/_deploy/* $CW_INSTALLATION_PREFIX/
     mkdir -p $CW_INSTALLATION_PREFIX/share
