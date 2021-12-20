@@ -136,6 +136,17 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
             $_RUN_CMD  \$DIR/$target \"\$@\" 
         fi" >> _deploy/bin/$target
         chmod +x _deploy/bin/$target
+        if [[ "$target" == "python"  ]];then
+            print_info "Found python, checking if venv" 2
+            if [[ ! -z "$($_CONTAINER_EXEC ls $wrapper_path/../pyvenv.cfg 2>/dev/null )" ]]; then
+                print_info "Target is a venv" 2
+                $_CONTAINER_EXEC cat $wrapper_path/../pyvenv.cfg > _deploy/pyvenv.cfg
+                _pyd=$($_CONTAINER_EXEC ls $wrapper_path/../lib)
+                mkdir -p _deploy/lib/$_pyd/
+                (cd _deploy/lib/$_pyd && ln -s $wrapper_path/../lib/$_pyd/site-packages site-packages )
+                (cd _deploy && ln -s lib lib64 )
+            fi
+        fi
     done
 done
 
@@ -159,7 +170,6 @@ if [[ -z \"\$SINGULARITY_NAME\" ]];then
     $_RUN_CMD \"\$@\" 
 fi" >> _deploy/bin/$target
 chmod +x _deploy/bin/$target
-
 
 
 if [[ "$CW_ADD_LD" == "yes" && ${_SING_LIB_PATHS+defined} ]]; then
