@@ -15,7 +15,8 @@ print_info "Downloading miniconda " 2
 curl https://repo.anaconda.com/miniconda/Miniconda3-$CW_CONDA_VERSION-$CW_CONDA_ARCH.sh --output Miniconda_inst.sh &>/dev/null 
 print_info "Installing miniconda " 1 
 bash Miniconda_inst.sh -b -p $CW_INSTALLATION_PATH/miniconda  > $CW_BUILD_TMPDIR/_inst_miniconda.log &   
-follow_log $! $CW_BUILD_TMPDIR/_inst_miniconda.log 10
+inst_pid=$!
+follow_log $inst_pid $CW_BUILD_TMPDIR/_inst_miniconda.log 10
 rm Miniconda_inst.sh
 eval "$($CW_INSTALLATION_PATH/miniconda/bin/conda shell.bash hook)"
 cd $CW_WORKDIR
@@ -28,8 +29,10 @@ else
 fi
 cd $CW_INSTALLATION_PATH
 print_info "Creating env, full log in $CW_BUILD_TMPDIR/build.log" 1
-conda $_EC create --name $CW_ENV_NAME $_FF $CW_ENV_FILE >> $CW_BUILD_TMPDIR/build.log &
-follow_log $! $CW_BUILD_TMPDIR/build.log 10  
+conda $_EC create --name $CW_ENV_NAME $_FF $CW_ENV_FILE &>> $CW_BUILD_TMPDIR/build.log &
+inst_pid=$!
+follow_log $inst_pid $CW_BUILD_TMPDIR/build.log 10  
+wait $inst_pid
 conda activate $CW_ENV_NAME
 if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
     pip install -r "$CW_REQUIREMENTS_FILE"
