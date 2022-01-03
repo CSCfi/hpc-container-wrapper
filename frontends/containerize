@@ -41,6 +41,8 @@ print_info "Calling parsers script $calling_name " 2
 print_info "Using $(readlink -f $CW_GLOBAL_YAML) as default config" 2
 
 # We might need to dynamically set values
+export SAVE_PP=$PYTHONPATH
+unset PYTHONPATH
 $PY_EXE $M_SCRIPT_DIR/$calling_name.py "$@" || exit $? 
 if [[ ! -s "$_usr_yaml" ]];then
     test -f $_usr_yaml && rm $_usr_yaml
@@ -52,7 +54,7 @@ print_info "Parsing user and default configs " 2
 CW_BUILD_TMPDIR=$($PY_EXE $M_SCRIPT_DIR/../construct.py $CW_GLOBAL_YAML $_usr_yaml) \
     || { print_err "Configuration construction failed" ; false ;}
 export CW_BUILD_TMPDIR
-
+export PYTHONPATH=$SAVE_PP
 
 source $CW_BUILD_TMPDIR/_vars.sh
 if [[ ! -d "$CW_INSTALLATION_PREFIX" ]];then
