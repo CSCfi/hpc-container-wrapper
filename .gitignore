@@ -3,3 +3,5 @@ cache
 __pycache__
 inst_vars.sh
 PyDeps
+*.log
+
