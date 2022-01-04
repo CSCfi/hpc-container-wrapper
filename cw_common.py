@@ -7,5 +7,8 @@ class colors:
   _BLUE="\e[1;34m"
   _NC='\033[0m' # No Color
 def print_err(txt):
-    print("["+colors._RED+" ERROR "+colors._NC+"] "+txt)
+    if not sys.stdout.isatty():
+        print("[ ERROR ] "+txt)
+    else:    
+        print("["+colors._RED+" ERROR "+colors._NC+"] "+txt)
 
