@@ -98,10 +98,10 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
     print_info "Generating wrappers for $wrapper_path" 2
     if [[ "$CW_WRAP_ALL" == "yes" ]];then
         print_info "Wrapping all files" 3
-        targets=($($_CONTAINER_EXEC ls -F $wrapper_path | grep -v "/"  | sed 's/.$//g' ))
+        targets=($($_CONTAINER_EXEC ls -F $wrapper_path 2>/dev/null | grep -v "/"  | sed 's/.$//g' ))
     else
         print_info "Only wrapping executables" 3
-        targets=($($_CONTAINER_EXEC ls -F $wrapper_path | grep "\*\|@" | sed 's/.$//g'))
+        targets=($($_CONTAINER_EXEC ls -F $wrapper_path 2>/dev/null | grep "\*\|@" | sed 's/.$//g'))
     fi
     if [[ "$CW_ADD_LD" == "yes" ]]; then
         # Nasty hack

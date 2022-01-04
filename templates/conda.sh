@@ -40,10 +40,14 @@ fi
 cd $CW_WORKDIR
 print_info "Running user supplied commands" 1
 source $CW_INSTALLATION_PATH/_post_install.sh
-echo 'echo "' > $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages
-conda list >> $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages 
-echo '"' >> $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages 
-chmod +x $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages 
+if [[ -d $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/ ]];then
+    echo 'echo "' > $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages
+    conda list >> $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages 
+    echo '"' >> $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages 
+    chmod +x $CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/bin/list-packages 
+else
+    print_warn "Created env is empty"
+fi
 
 
 # Set here as they are dynamic
