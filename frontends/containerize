@@ -49,7 +49,7 @@ if [[ ! -s "$_usr_yaml" ]];then
     # Probably printed the help message
     exit 0
 fi
-print_info "Parsing input" 1
+print_info "Constructing configuration" 1
 print_info "Parsing user and default configs " 2
 CW_BUILD_TMPDIR=$($PY_EXE $M_SCRIPT_DIR/../construct.py $CW_GLOBAL_YAML $_usr_yaml) \
     || { print_err "Configuration construction failed" ; false ;}
