@@ -11,8 +11,8 @@ import yaml
 from cw_common import *
 from script_shared import *
 
-sys.argv[0]="pycont"
-parser = argparse.ArgumentParser()
+sys.argv[0]=sys.argv[0].split(".")[0]
+parser = argparse.ArgumentParser(description="Create or modify a python installation inside a container")
 subparsers = parser.add_subparsers(help='subcommands',dest='command')
 parser_new=add_new_pars(subparsers)
 parser_new.add_argument("requirements_file", type=lambda x: is_valid_file(parser, x),help="requirements file for pip")

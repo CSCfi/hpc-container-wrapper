@@ -11,8 +11,8 @@ import yaml
 from cw_common import *
 from script_shared import *
 
-sys.argv[0]="cont-conda"
-parser = argparse.ArgumentParser()
+sys.argv[0]=sys.argv[0].split(".")[0]
+parser = argparse.ArgumentParser(description="Create or modify a Conda installation inside a container")
 subparsers = parser.add_subparsers(help='subcommands',dest='command')
 parser_new=add_new_pars(subparsers)
 parser_new.add_argument("env_file",help="conda env file")
@@ -40,6 +40,10 @@ elif args.command == "update":
 else:
     with open(args.yaml,'r') as y:
         conf.update(yaml.safe_load(y))
+
+if not os.path.isfile(args.env_file):
+    print_err("Env file {} does not exist".format(args.env_file))
+    sys.exit(1)
 
 
 
