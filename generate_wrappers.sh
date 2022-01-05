@@ -83,8 +83,12 @@ done
 if [[ \"\${TMPDIR+defined}\" ]];then
     SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$TMPDIR,\$TMPDIR:/tmp\"
 fi
-SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$_C_DIR/_bin:\$_C_DIR/bin\"
+SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$( readlink -f \$_C_DIR/_bin):\$( readlink -f \$_C_DIR/bin)\"
 export SINGULARITY_BIND" >> _deploy/common.sh
+
+# The above readlink is only needed as a workaround for Lumi
+# where some folders are symlinked to lustre mount points
+
 
 _SING_LIB_PATHS=()
 _GENERATED_WRAPPERS=""
