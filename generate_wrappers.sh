@@ -80,7 +80,9 @@ for d in \"\${_DIRS[@]}\"; do
         test -d \$d && export SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$d\"
     fi
 done
-SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$TMPDIR,\$TMPDIR:/tmp\"
+if [[ \"\${TMPDIR+defined}\" ]];then
+    SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$TMPDIR,\$TMPDIR:/tmp\"
+fi
 SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$_C_DIR/_bin:\$_C_DIR/bin\"
 export SINGULARITY_BIND" >> _deploy/common.sh
 
