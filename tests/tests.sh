@@ -5,7 +5,7 @@ source $SCRIPT_DIR/setup.sh
 
 
 # Generic
-cmds=($(ls ../bin/))
+cmds=($(ls $SCRIPT_DIR/../bin/))
 
 for cmd in "${cmds[@]}"; do
     t_run "$cmd -h | grep 'show this help message' " help_msg_$cmd
@@ -24,5 +24,11 @@ t_run " conda-containerize new --prefix $temp_target $SCRIPT_DIR/basic_broken.ya
 t_run " conda-containerize new --prefix $temp_target $SCRIPT_DIR/basic.yaml " basic_install_1
 t_run " $temp_target/bin/python -c 'import numpy'" basic_install_2
 in_p=$($temp_target/bin/python3 -c 'import sys;print(sys.executable)')
-out_p=$(realpath $temp_target/bin/python3)
+out_p="$PWD/$temp_target/bin/python3"
 t_run "[[ $in_p == $out_p ]]" in_out_same
+[[ -d $temp_target  ]] && rm -fr $temp_target
+mkdir $temp_target
+t_run "pip-containerize new --prefix $temp_target <( echo 'pyyaml_typo')  2>&1 | grep 'No matching distribution' " pip_wrong_name
+t_run "pip-containerize new --prefix $temp_target <( echo 'pyyaml') " basic_pip_install
+t_run " $temp_target/bin/python -c 'import yaml'" basic_pip_install_2
+t_run "$temp_target/bin/python -c 'import sys;sys.exit(sys.prefix == sys.base_prefix)'" venv_works
