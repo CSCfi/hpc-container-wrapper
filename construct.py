@@ -2,13 +2,13 @@ import os
 import sys
 import subprocess
 import pathlib
+import string
+import random
 curr_dir=pathlib.Path(__file__).parent.resolve()
 info=sys.version_info
 sys.path.insert(0,str(curr_dir)+"/PyDeps/lib/python{}.{}/site-packages".format(info[0],info[1]))
 import yaml
 
-import string
-import random
 def name_generator(size=6, chars=string.ascii_uppercase + string.digits):
    return ''.join(random.choice(chars) for _ in range(size))
 
@@ -30,7 +30,7 @@ with open(sys.argv[2]) as user_conf_file:
     user_conf=yaml.safe_load(user_conf_file)
 
 for s in ["prepends","appends", "force"]:
-    if s not in shared_conf or shared_conf[s] == None:
+    if s not in shared_conf or shared_conf[s] is None:
        shared_conf[s] = {} 
 
 full_conf=shared_conf["defaults"]
