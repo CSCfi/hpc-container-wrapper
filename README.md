@@ -11,26 +11,26 @@
 
 ## Frontends
 
-- `cont-conda`
+- `conda-containerize`
  - Wrap new conda installation or edit existing
-- `pycont`
+- `pip-containerize`
  - Wrap new venv installation or edit existing
  - Defaults to slim python container
-- `wrapcont`
+- `wrap-container`
  - Generate wrappers for existing container
-- `instcont`
- - Wrap an installation on disk on to a container. 
+- `wrap-install`
+ - Wrap an installation on disk to a container. 
 
 All tools support `-h/--help` for displaying info
 some have subcommands. 
 
 ## Examples
 
-- `cont-conda new --prefix /path/to_install conda_env.yaml`
-- `cont-conda --post-install <(conda install scipy --channel conda-forge) update /path/to_install`
-- `pycont new --prefix /path/to_install requirements.txt`
-- `wrapcont --wrapper-paths /opt/prog/bin --prefix /path/to_install /path/to/container` 
-- `instcont --wrapper-paths bin --mask --prefix /path/to/install /program/on/disk`
+- `conda-containerize new --prefix /path/to_install conda_env.yaml`
+- `conda-containerize --post-install <(conda install scipy --channel conda-forge) update /path/to_install`
+- `pip-containerize new --prefix /path/to_install requirements.txt`
+- `wrap-container --wrapper-paths /opt/prog/bin --prefix /path/to_install /path/to/container` 
+- `wrap-install --wrapper-paths bin --mask --prefix /path/to/install /program/on/disk`
 
 
 ## Installation
@@ -62,14 +62,13 @@ so to mask dirs on disk with an image mount, the path can not be bind mounted.
 (exception is the default $HOME mount, which is applied before loop device mounts)
 
 
-
 ## Convoluted path modifications in py scripts
 
 The idea is that everything works even if a completely different python
 environment is active, we also avoid having any extra envs set while parsing
 the conf to allow for very "creative" usages of the tool
 
-## instcont
+## wrap-install
 
 Technically updating masked disk installations
 is not an issue, but let's not do that until there is a specific
