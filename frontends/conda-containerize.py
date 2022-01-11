@@ -41,7 +41,7 @@ else:
     with open(args.yaml,'r') as y:
         conf.update(yaml.safe_load(y))
 
-if not os.path.isfile(args.env_file):
+if args.command == "new" and not os.path.isfile(args.env_file):
     print_err("Env file {} does not exist".format(args.env_file))
     sys.exit(1)
 
