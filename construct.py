@@ -7,7 +7,9 @@ import random
 curr_dir=pathlib.Path(__file__).parent.resolve()
 info=sys.version_info
 sys.path.insert(0,str(curr_dir)+"/PyDeps/lib/python{}.{}/site-packages".format(info[0],info[1]))
+sys,path.insert(0,str(curr_dir))
 import yaml
+from cw_common import *
 
 def name_generator(size=6, chars=string.ascii_uppercase + string.digits):
    return ''.join(random.choice(chars) for _ in range(size))
@@ -121,6 +123,14 @@ with open(build_dir+"/_vars.sh",'a+') as f:
 
     f.write("export SINGULARITY_TMPDIR={}\n".format(build_dir))
     f.write("export SINGULARITY_CACHEDIR={}\n".format(os.path.expandvars(full_conf["build_tmpdir_base"])))
+
+if os.getenv("CW_BUILD_TMPDIR"):
+    full_conf["build_tmpdir_base"]=os.getenv("CW_BUILD_TMPDIR")
+tmpdir_base=full_conf[build_tmpdir_base]
+if not os.path.isdir(os.path.expandvars(str(tmpdir_base))):
+    print_err("Build directory {os.path.expandvars(str(tmpdir_base))} does not exist\n\tEither correct build_tmpdir_base in {sys.argv[1]}\n\t or set CW_BUILD_TMPDIR to a valid directory")
+    sys.exit(1)
+    
 
 with open(build_dir+"/conf.yaml",'a+') as f:
     yaml.dump(full_conf,f)
