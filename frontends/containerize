@@ -23,7 +23,7 @@ clean_up () {
         fi
     else
         test -f "$_usr_yaml" && rm "$_usr_yaml"
-        rm -r "$CW_BUILD_TMPDIR"
+        test -d "$CW_BUILD_TMPDIR" && rm -r "$CW_BUILD_TMPDIR"
         print_err "Set CW_DEBUG_KEEP_FILES env variable to keep build files"
     fi
     trap 2

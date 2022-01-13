@@ -7,9 +7,24 @@ import random
 curr_dir=pathlib.Path(__file__).parent.resolve()
 info=sys.version_info
 sys.path.insert(0,str(curr_dir)+"/PyDeps/lib/python{}.{}/site-packages".format(info[0],info[1]))
-sys,path.insert(0,str(curr_dir))
+sys.path.insert(0,str(curr_dir))
 import yaml
+from string import Template
 from cw_common import *
+
+
+def expand_vars(path,rec=0):
+    if(rec > 10):
+        sys.exit(1)
+    g=path
+    try: 
+        g=Template(g).substitute(os.environ)
+    except KeyError as E:
+        var=E.args[0]
+        return expand_vars(g.replace(f"${var}",''),rec+1)
+    return g
+
+
 
 def name_generator(size=6, chars=string.ascii_uppercase + string.digits):
    return ''.join(random.choice(chars) for _ in range(size))
@@ -107,6 +122,13 @@ with open(build_dir+"/_post_install.sh",'a+') as f:
             else:
                 f.write(e+"\n")
     
+
+if os.getenv("CW_BUILD_TMPDIR"):
+    full_conf["build_tmpdir_base"]=os.getenv("CW_BUILD_TMPDIR")
+tmpdir_base=full_conf["build_tmpdir_base"]
+if not os.path.isdir(expand_vars(tmpdir_base)):
+    print_err_stderr(f"Build directory {os.path.expandvars(str(tmpdir_base))} does not exist\n\t  Either correct build_tmpdir_base in {sys.argv[1]}\n\t  or set CW_BUILD_TMPDIR to a valid directory")
+    sys.exit(1)
 # Other lists are dumped directly into bash arrays
 c={True:"yes",False:"no"}
 with open(build_dir+"/_vars.sh",'a+') as f:
@@ -124,12 +146,6 @@ with open(build_dir+"/_vars.sh",'a+') as f:
     f.write("export SINGULARITY_TMPDIR={}\n".format(build_dir))
     f.write("export SINGULARITY_CACHEDIR={}\n".format(os.path.expandvars(full_conf["build_tmpdir_base"])))
 
-if os.getenv("CW_BUILD_TMPDIR"):
-    full_conf["build_tmpdir_base"]=os.getenv("CW_BUILD_TMPDIR")
-tmpdir_base=full_conf[build_tmpdir_base]
-if not os.path.isdir(os.path.expandvars(str(tmpdir_base))):
-    print_err("Build directory {os.path.expandvars(str(tmpdir_base))} does not exist\n\tEither correct build_tmpdir_base in {sys.argv[1]}\n\t or set CW_BUILD_TMPDIR to a valid directory")
-    sys.exit(1)
     
 
 with open(build_dir+"/conf.yaml",'a+') as f:
