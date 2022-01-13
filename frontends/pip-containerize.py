@@ -31,9 +31,6 @@ conf={}
 pyver="3.10.0-slim-buster"
 
 
-if args.slim:
-    conf["container_src"]="docker://python:{}".format(pyver)
-    conf["isolate"]="yes"
 
 if args.requirements_file:
     conf["requirements_file"]=args.requirements_file
@@ -43,6 +40,9 @@ if args.command == "new":
     if args.prefix:
         conf["installation_prefix"]=args.prefix
     conf["mode"]="venv"
+    if args.slim:
+        conf["container_src"]="docker://python:{}".format(pyver)
+        conf["isolate"]="yes"
 elif args.command == "update":
     conf["mode"]="venv_modify"
     get_old_conf(args.dir,conf)
