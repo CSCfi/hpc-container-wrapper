@@ -13,22 +13,6 @@ from string import Template
 from cw_common import *
 
 
-def expand_vars(path,rec=0):
-    if(rec > 10):
-        sys.exit(1)
-    g=path
-    try: 
-        g=Template(g).substitute(os.environ)
-    except KeyError as E:
-        var=E.args[0]
-        return expand_vars(g.replace(f"${var}",''),rec+1)
-    return g
-
-
-
-def name_generator(size=6, chars=string.ascii_uppercase + string.digits):
-   return ''.join(random.choice(chars) for _ in range(size))
-
 
 
 
@@ -66,6 +50,16 @@ full_conf.update(shared_conf["force"])
 
 if os.getenv("CW_LOG_LEVEL"):
     full_conf["log_level"]=os.getenv("CW_LOG_LEVEL")
+
+if os.getenv("CW_BUILD_TMPDIR"):
+    full_conf["build_tmpdir_base"]=os.getenv("CW_BUILD_TMPDIR")
+tmpdir_base=full_conf["build_tmpdir_base"]
+if not os.path.isdir(expand_vars(tmpdir_base)):
+    print_err(f"Build directory {tmpdir_base}='{expand_vars(tmpdir_base)}' does not exist\n\t  Either correct build_tmpdir_base in {sys.argv[1]}\n\t  or set CW_BUILD_TMPDIR to a valid directory",True)
+    sys.exit(1)
+if not os.access(expand_vars(tmpdir_base),os.W_OK):
+    print_err(f"Build directory {expand_vars(tmpdir_base)} is not writable",True)
+    sys.exit(1)
 
 build_dir=os.path.expandvars(full_conf["build_tmpdir_base"]+"/cw-"+name_generator())
 subprocess.run(["mkdir","-p",build_dir])
@@ -123,12 +117,6 @@ with open(build_dir+"/_post_install.sh",'a+') as f:
                 f.write(e+"\n")
     
 
-if os.getenv("CW_BUILD_TMPDIR"):
-    full_conf["build_tmpdir_base"]=os.getenv("CW_BUILD_TMPDIR")
-tmpdir_base=full_conf["build_tmpdir_base"]
-if not os.path.isdir(expand_vars(tmpdir_base)):
-    print_err_stderr(f"Build directory {os.path.expandvars(str(tmpdir_base))} does not exist\n\t  Either correct build_tmpdir_base in {sys.argv[1]}\n\t  or set CW_BUILD_TMPDIR to a valid directory")
-    sys.exit(1)
 # Other lists are dumped directly into bash arrays
 c={True:"yes",False:"no"}
 with open(build_dir+"/_vars.sh",'a+') as f:

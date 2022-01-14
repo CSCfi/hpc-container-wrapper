@@ -60,6 +60,9 @@ source $CW_BUILD_TMPDIR/_vars.sh
 if [[ ! -d "$CW_INSTALLATION_PREFIX" ]];then
     print_err "Installation dir $CW_INSTALLATION_PREFIX does not exist"  ; false
 fi
+if [[ ! -w "$CW_INSTALLATION_PREFIX" || ! -x "$CW_INSTALLATION_PREFIX" ]];then
+    print_err "Installation dir $CW_INSTALLATION_PREFIX is not writable"  ; false
+fi
 
 $M_SCRIPT_DIR/../pre.sh || { print_err "Failed getting container image"; false ;}
 # Nothing to do if we are just wrapping a container
