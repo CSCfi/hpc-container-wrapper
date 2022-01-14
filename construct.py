@@ -7,10 +7,11 @@ import random
 curr_dir=pathlib.Path(__file__).parent.resolve()
 info=sys.version_info
 sys.path.insert(0,str(curr_dir)+"/PyDeps/lib/python{}.{}/site-packages".format(info[0],info[1]))
+sys.path.insert(0,str(curr_dir))
 import yaml
+from string import Template
+from cw_common import *
 
-def name_generator(size=6, chars=string.ascii_uppercase + string.digits):
-   return ''.join(random.choice(chars) for _ in range(size))
 
 
 
@@ -49,6 +50,16 @@ full_conf.update(shared_conf["force"])
 
 if os.getenv("CW_LOG_LEVEL"):
     full_conf["log_level"]=os.getenv("CW_LOG_LEVEL")
+
+if os.getenv("CW_BUILD_TMPDIR"):
+    full_conf["build_tmpdir_base"]=os.getenv("CW_BUILD_TMPDIR")
+tmpdir_base=full_conf["build_tmpdir_base"]
+if not os.path.isdir(expand_vars(tmpdir_base)):
+    print_err(f"Build directory {tmpdir_base}='{expand_vars(tmpdir_base)}' does not exist\n\t  Either correct build_tmpdir_base in {sys.argv[1]}\n\t  or set CW_BUILD_TMPDIR to a valid directory",True)
+    sys.exit(1)
+if not os.access(expand_vars(tmpdir_base),os.W_OK):
+    print_err(f"Build directory {expand_vars(tmpdir_base)} is not writable",True)
+    sys.exit(1)
 
 build_dir=os.path.expandvars(full_conf["build_tmpdir_base"]+"/cw-"+name_generator())
 subprocess.run(["mkdir","-p",build_dir])
@@ -105,6 +116,7 @@ with open(build_dir+"/_post_install.sh",'a+') as f:
             else:
                 f.write(e+"\n")
     
+
 # Other lists are dumped directly into bash arrays
 c={True:"yes",False:"no"}
 with open(build_dir+"/_vars.sh",'a+') as f:
@@ -121,6 +133,8 @@ with open(build_dir+"/_vars.sh",'a+') as f:
 
     f.write("export SINGULARITY_TMPDIR={}\n".format(build_dir))
     f.write("export SINGULARITY_CACHEDIR={}\n".format(os.path.expandvars(full_conf["build_tmpdir_base"])))
+
+    
 
 with open(build_dir+"/conf.yaml",'a+') as f:
     yaml.dump(full_conf,f)

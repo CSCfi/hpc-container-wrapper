@@ -1,5 +1,4 @@
 #!/bin/bash
-umask 0002
 SINGULARITY_BIND=""
 set -e
 set -u 

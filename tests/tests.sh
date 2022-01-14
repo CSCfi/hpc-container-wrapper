@@ -17,6 +17,21 @@ t_run "conda-containerize new not_a_file.def 2>&1 | grep 'does not exist' " no_d
 
 export PYTHONNOUSERSITE="TRUE"
 unset PYTHONPATH
+t_run " pip-containerize new --prefix Not_Exist <( echo 'pyyaml') 2>&1 | grep 'does not exist' " missing_install_dir
+rm -rf TD
+mkdir TD
+export CW_BUILD_TMPDIR=/NOT_A_REAL_DIR
+t_run " pip-containerize new --prefix TD <( echo 'pyyaml') 2>&1 | grep 'does not exist' " missing_build_dir
+export CW_BUILD_TMPDIR=/
+t_run " pip-containerize new --prefix TD <( echo 'pyyaml') 2>&1 | grep 'not writable' " no_write_build_dir
+unset CW_BUILD_TMPDIR
+
+chmod -w TD
+t_run " pip-containerize new --prefix TD <( echo 'pyyaml') 2>&1 | grep 'not writable' " no_write_install_dir
+chmod +w TD
+chmod -x TD
+t_run " pip-containerize new --prefix TD <( echo 'pyyaml') 2>&1 | grep 'not writable' " no_exe_install_dir
+rm -fr TD
 temp_target=cwti_test_temp_dir
 [[ -d $temp_target  ]] && rm -fr $temp_target
 mkdir $temp_target
