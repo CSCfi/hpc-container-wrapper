@@ -27,7 +27,7 @@ some have subcommands.
 ## Examples
 
 - `conda-containerize new --prefix /path/to_install conda_env.yaml`
-- `conda-containerize --post-install <(conda install scipy --channel conda-forge) update /path/to_install`
+- `conda-containerize --post-install <(echo conda install scipy --channel conda-forge) update /path/to_install`
 - `pip-containerize new --prefix /path/to_install requirements.txt`
 - `wrap-container --wrapper-paths /opt/prog/bin --prefix /path/to_install /path/to/container` 
 - `wrap-install --wrapper-paths bin --mask --prefix /path/to/install /program/on/disk`
