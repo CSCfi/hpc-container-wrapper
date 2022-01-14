@@ -26,8 +26,6 @@ defaults:
     num_cpus: 4
     sqfs_options: "-noappend"
     add_ld: yes
-    # new vs inplace
-    update_mode: new
 force:
     # I will create some random dir under here 
     build_tmpdir_base: $PWD

@@ -49,6 +49,8 @@ if [[ ! -s "$_usr_yaml" ]];then
     # Probably printed the help message
     exit 0
 fi
+
+
 print_info "Constructing configuration" 1
 print_info "Parsing user and default configs " 2
 CW_BUILD_TMPDIR=$($PY_EXE $M_SCRIPT_DIR/../construct.py $CW_GLOBAL_YAML $_usr_yaml) \
@@ -63,6 +65,24 @@ fi
 if [[ ! -w "$CW_INSTALLATION_PREFIX" || ! -x "$CW_INSTALLATION_PREFIX" ]];then
     print_err "Installation dir $CW_INSTALLATION_PREFIX is not writable"  ; false
 fi
+
+if [[ "$(umask)" == "0007" ]];then
+    print_info "Umask is 0007" 2
+    chmod g+rwx $CW_BUILD_TMPDIR
+    chmod o-rwx $CW_BUILD_TMPDIR
+elif [[ "$(umask)" == "0002"  ]];then
+    print_info "Umask is 0002" 2
+    chmod g+rwx $CW_BUILD_TMPDIR
+    chmod o+rx $CW_BUILD_TMPDIR
+elif [[ "$(umask)" == "0022"  ]];then
+    print_info "Umask is 0022" 2
+    chmod go+rx $CW_BUILD_TMPDIR
+else
+   print_warn "Umask set to $CW_UMASK, check permissions of finished installation" 
+fi
+chmod g+s $CW_BUILD_TMPDIR
+chgrp $(stat -c "%G" $CW_INSTALLATION_PREFIX ) $CW_BUILD_TMPDIR
+
 
 $M_SCRIPT_DIR/../pre.sh || { print_err "Failed getting container image"; false ;}
 # Nothing to do if we are just wrapping a container
