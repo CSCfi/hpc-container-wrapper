@@ -37,7 +37,7 @@ fi
 
 if [[ "$CW_ISOLATE" == "yes" ]]; then
     # 
-    echo "_DIRS=(${CW_MOUNT_POINTS[@]})" >> _deploy/common.sh
+    echo "_DIRS=(${CW_MOUNT_POINTS[@]} \$_C_DIR )" >> _deploy/common.sh
 else
     echo "_DIRS=(\$(ls -1 / | awk '!/dev/' | sed 's/^/\//g' ))" >> _deploy/common.sh
 
