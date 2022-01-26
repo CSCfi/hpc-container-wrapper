@@ -44,6 +44,7 @@ def add_base_pars(par):
     add_post_flag(par)
     add_pre_flag(par)
     add_env_flag(par)
+    add_wrapper_flag(par)
 
 # non absolute paths are relative to the installation dir
 def parse_wrapper(conf,g_conf,a,req_abs):

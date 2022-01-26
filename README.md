@@ -1,13 +1,3 @@
-**Tool is very much WIP**
-
-- More error handling
-- Failing fast on illogical option combinations
-- Better descriptions 
-- Better syntax
-- Argument ordering bad?
-- Cleaning up the code
-- Custom python version for plain pip container
-- Keep wrapcont container names?
 
 ## Frontends
 
@@ -52,6 +42,11 @@ How verbosely to report program actions
 - 1 only warnings
 - 2 general (default)
 - `>2` debug
+
+
+## Misc features ideas
+
+- Keep container name based on src name
 
 ## Notes
 `SINGULARITY_BIND` handled after `-B`

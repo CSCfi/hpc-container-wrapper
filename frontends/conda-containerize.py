@@ -16,12 +16,13 @@ parser = argparse.ArgumentParser(description="Create or modify a Conda installat
 subparsers = parser.add_subparsers(help='subcommands',dest='command')
 parser_new=add_new_pars(subparsers)
 parser_new.add_argument("env_file",help="conda env file")
-parser.add_argument("-r", "--requirement", type=lambda x: is_valid_file(parser, x),help="requirements file for pip")
-add_upd_pars(subparsers)
+parser_upd=add_upd_pars(subparsers)
 add_adv_pars(subparsers)
-add_base_pars(parser)
-add_wrapper_flag(parser)
 
+ps=[parser_new,parser_upd]
+for p in ps:
+    add_base_pars(p)
+    p.add_argument("-r", "--requirement", type=lambda x: is_valid_file(parser, x),help="requirements file for pip")
 
 if len(sys.argv) < 2:
     parser.print_help()
