@@ -13,6 +13,10 @@ if [[ ${CW_UPDATE_INSTALLATION+defined } && "$CW_UPDATE_INSTALLATION" == "yes" ]
 fi
     cp -a $CW_BUILD_TMPDIR/_deploy/* $CW_INSTALLATION_PREFIX/
     mkdir -p $CW_INSTALLATION_PREFIX/share
-    cp -a $CW_BUILD_TMPDIR/*.yaml  $CW_INSTALLATION_PREFIX/share
+    if [[ ${CW_INSTALLATION_FILE_PATHS+defined} ]]; then
+        for _fil in ${CW_INSTALLATION_FILE_PATHS[@]}; do
+            mv $CW_BUILD_TMPDIR/_inst_dir/$( basename $_fil ) $CW_INSTALLATION_PREFIX/share 
+        done
+    fi
 
 rm -rf $CW_BUILD_TMPDIR
