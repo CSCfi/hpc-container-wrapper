@@ -42,7 +42,12 @@ print_info "Using $(readlink -f $CW_GLOBAL_YAML) as default config" 2
 
 # We might need to dynamically set values
 export SAVE_PP=$PYTHONPATH
+if [[ ! ${PYTHONNOUSERSITE+defined} ]];then
+    _USERSITE="YES"
+    PYTHONNOUSERSITE="YES"
+fi
 unset PYTHONPATH
+
 $PY_EXE $M_SCRIPT_DIR/$calling_name.py "$@" || exit $? 
 if [[ ! -s "$_usr_yaml" ]];then
     test -f $_usr_yaml && rm $_usr_yaml
@@ -57,6 +62,9 @@ CW_BUILD_TMPDIR=$($PY_EXE $M_SCRIPT_DIR/../construct.py $CW_GLOBAL_YAML $_usr_ya
     || { print_err "Configuration construction failed" ; false ;}
 export CW_BUILD_TMPDIR
 export PYTHONPATH=$SAVE_PP
+if [[ ${_USERSITE+defined} ]];then
+    unset PYTHONNOUSERSITE
+fi
 
 source $CW_BUILD_TMPDIR/_vars.sh
 if [[ ! -d "$CW_INSTALLATION_PREFIX" ]];then
