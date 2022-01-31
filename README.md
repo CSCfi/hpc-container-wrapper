@@ -1,3 +1,103 @@
+## Intro
+
+This is a tool to create installations using existing containers.
+The basic idea is to install software through a container,
+convert this into a filesystem image and mount this filesystem image
+when running the container. 
+
+The main goal is to reduce the number of files on disk,
+and reduce the IO load when installations are started. If you 
+are not running on a parallel filesystem with a lot of users and load,
+the points might not be that relevant. Only tested and developed
+on Lustre so benefits might be different on other parallel filesystems
+
+The tool originally started as a way to package conda 
+installations using container, as they cause a significant load on the filesystem.
+The idea being that using the tool should be very simple
+and as similar as possible to an un-containerized installation (drop in replacement for the majority of cases). 
+This means that we try to hide the container as much as possible 
+from the end-user. 
+
+It's singularity based, but nothing inherently prohibits usage
+of some other runtime (granted singularity is quite hardcoded atm ).
+All which is needed is the ability to mount filesystem images and control  over bind mounts
+
+### Design choices    
+
+Containers are used for two main things:
+- Automatic mounting and demounting of filesystem-image 
+- Per process private  (mount) namespace 
+
+From the point of view of the parallel filesystem, the image
+just looks like one single file -> much less load on the parallel filesystem.
+(I'm not a Lustre expert so I don't know if it's more the OST,OSS or MDT being saved)
+The image could be mounted using other tools, but then we would have to keep 
+track of unmounting it all kinds of error handling -> things we get for free using a container. The private namespaces means that we don't have to worry about 
+conflicts between multiple users, finding folders where to mount or breaking
+software which does not want to be moved. 
+
+Existing containers are used as this provides an easier way 
+to interface with the host software environment and a user does not have to
+have singularity build access on the HPC machine ( user namespaces might be temporarily disabled on a system due to security  reasons ). 
+
+The tool generates a lot of wrappers with some relatively nasty tricks. This
+is so that most things which should work without a container works within the container
+and the installation looks like a normal installation to the end-user 
+
+
+### Limitations
+
+What things break / work differently when compared to a normal installation
+
+- ssh commands will drop you out of the container, there is a fix for this, but then
+some pre commands have to be run to start any required ssh services 
+- you can't start other containers (singularity can not be nested), Ugly hack is
+to ssh to `localhost`, but that makes environment management tricky and requires sshd to be running on the current node. 
+- Resolving binary paths will result in paths which do not exist outside the container. 
+As the image is mounted on a directory which is not present on the host. Bind mounts
+are always applied after the image mount which means an image mount can not mask
+a directory on disk, without us dropping the whole preceeding path from the mount point list. 
+- A bit untested, but running one container per core when you have 128 of them
+can lead to the compute node feeling a bit unwell. 
+
+
+## Basic program structure
+Starting from command invocation
+Users will use commands under `bin`
+
+1. `bin` files are symlinks to `frontends/containerize` 
+2. `containerize` is the main script which runs all the steps and is responsible for cleanup  
+3. Based on the used symlink different a corresponding python script is going to be called from `frontends`
+4. This frontend parses the user input and sets a lot of tool specific defaults. 
+    - The python interpreter used is hardcoded during the tools installation.
+    - A user config is created
+5. The user config and the default config are both passed to `construct.py` 
+    - The default config has been defined during installation  
+    - Some values are overridable other are set.
+    - The construct will produce a `_vars.sh` file which will be sources by subsequent steps
+    - Current handling of environment variables in config is not standardized. `pre_install`,`post_install` and `extra_envs` will not be expanded in any way. `build_tmpdir_base` will be expanded and checked to be a valid directory during config construction. The rest will be expanded using `os.path.expandvars` note that this will leave unset variables as is.
+    - All non-special variables from the yaml will be uppercased, prefixed with `CW_` and dumped to the `_vars.sh` arrays are turned to bash arrays.  
+6. `containersize` makes sure that the installation dir exist.
+7. **pre.sh** Fetch container either by downloading or copying from disk. When modifying installations, will also copy the squashfs image
+8. **create_inst** Run installation script through the container based on some template in `templates`, after which the installation is compressed into a squashfs image. 
+    - The installation can be isolated or mount the complete host filesystem. 
+    - When modifying an existing installation, the whole installation has to be copied wich might take a while
+9. **generate_wrappers** (This is where most tricks live) Generate wrappers for the installation so that they can be used as normal installations. The wrappers:
+    - Defines common variables such as image name, container name  
+    - Defines runtime bind mounts
+    - Unset singularity envs if not actually inside a container (e.g srun called from container -> some SINGULARITY_ are still active) 
+    - Extra symlink layer in `_bin` to tricks the likes of dask to generate valid executable paths
+    - Copy venv definition when wrapping python venv
+    - Activates conda if a conda env is wrapped 
+10. **post.sh**
+    - Copy build files to final installatio file
+    - Save used build files to <install_dir>/share
+
+
+
+
+
+## Program
 
 ## Frontends
 
