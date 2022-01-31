@@ -121,12 +121,31 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
             done
         fi
     fi
+    # To activate conda environment
+    # printf is used to properly parse the arguments
+    # so that quote are maintainted
+    # e.g python -c "print('Hello')" works
+    # The test is there as printf returns '' if $@ is empty
+    # passing '' is not wanted behavior 
+    print_info "Checking if conda installation" 3
+    if $_CONTAINER_EXEC test -f $wrapper_path/../../../bin/conda ; then 
+        print_info "Inserting conda activation into wrappers" 3
+        env_name=$(basename $(realpath -m $wrapper_path/../ ))
+        conda_path=$(realpath -m $wrapper_path/../../../bin/conda)
+        _cws="bash -c \"eval \\\"\\\$($conda_path shell.bash hook )\\\"  && conda activate $env_name &>/dev/null && "
+        _cwe="\$( test \$# -eq 0 || printf \" %q\" \"\$@\" )\""
+    else
+        print_info "Does not look like a conda installation" 3 
+        _cws=""
+        _cwe="\"\$@\""
+    fi
     if [[ ! ${targets+defined} ]];then
         # No method to remove wrapper paths when updating
         # So don't fail here
         print_warn "Path $wrapper_path does not exist in container or is empty \n\tif only wrapping executables, did you forget +x?"
         continue
     fi
+    
 
     for target in "${targets[@]}"; do
         print_info "Creating wrapper for $target" 3
@@ -140,7 +159,7 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         if [[ \${_CW_IN_CONTAINER+defined} ]];then
             \$DIR/$target \"\$@\"
         else
-            $_RUN_CMD  \$DIR/$target \"\$@\" 
+            $_RUN_CMD  $_cws \$DIR/$target $_cwe  
         fi" >> _deploy/bin/$target
         chmod +x _deploy/bin/$target
         if [[ "$target" == "python"  ]];then
