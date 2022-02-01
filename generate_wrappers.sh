@@ -102,48 +102,54 @@ mkdir _deploy/_bin
 
 print_info "Creating wrappers" 1
 for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
+    _cws=""
+    _cwe="\"\$@\""
     print_info "Generating wrappers for $wrapper_path" 2
-    if [[ "$CW_WRAP_ALL" == "yes" ]];then
-        print_info "Wrapping all files" 3
-        targets=($($_CONTAINER_EXEC ls -F $wrapper_path 2>/dev/null | grep -v "/"  | sed 's/.$//g' ))
+    if $_CONTAINER_EXEC test -f $wrapper_path ; then
+        targets=( $(basename $wrapper_path ))
+        wrapper_path=$(dirname $wrapper_path)
     else
-        print_info "Only wrapping executables" 3
-        targets=($($_CONTAINER_EXEC ls -F $wrapper_path 2>/dev/null | grep "\*\|@" | sed 's/.$//g'))
-    fi
-    if [[ "$CW_ADD_LD" == "yes" ]]; then
-        # Nasty hack
-        # empty result -> no array defined
+     if [[ "$CW_WRAP_ALL" == "yes" ]];then
+         print_info "Wrapping all files" 3
+         targets=($($_CONTAINER_EXEC ls -F $wrapper_path 2>/dev/null | grep -v "/"  | sed 's/.$//g' ))
+     else
+         print_info "Only wrapping executables" 3
+         targets=($($_CONTAINER_EXEC ls -F $wrapper_path 2>/dev/null | grep "\*\|@" | sed 's/.$//g'))
+     fi
+     if [[ "$CW_ADD_LD" == "yes" ]]; then
+         # Nasty hack
+         # empty result -> no array defined
 
-        lib_dirs=($($_CONTAINER_EXEC ls $wrapper_path/.. | grep "lib[64]*$" || true ))
-        if [[ ${lib_dirs+defined} ]];then
-            for d in "${lib_dirs[@]}"; do
-                _SING_LIB_PATHS+=("$(dirname $wrapper_path)/$d")
-            done
-        fi
-    fi
-    if [[ ! ${targets+defined} ]];then
-        # No method to remove wrapper paths when updating
-        # So don't fail here
-        print_warn "Path $wrapper_path does not exist in container or is empty \n\tif only wrapping executables, did you forget +x?"
-        continue
-    fi
-    # To activate conda environment
-    # printf is used to properly parse the arguments
-    # so that quote are maintainted
-    # e.g python -c "print('Hello')" works
-    # The test is there as printf returns '' if $@ is empty
-    # passing '' is not wanted behavior 
-    print_info "Checking if conda installation" 3
-    if $_CONTAINER_EXEC test -f $wrapper_path/../../../bin/conda ; then 
-        print_info "Inserting conda activation into wrappers" 3
-        env_name=$(basename $(realpath -m $wrapper_path/../ ))
-        conda_path=$(realpath -m $wrapper_path/../../../bin/conda)
-        _cws="bash -c \"eval \\\"\\\$($conda_path shell.bash hook )\\\"  && conda activate $env_name &>/dev/null && "
-        _cwe="\$( test \$# -eq 0 || printf \" %q\" \"\$@\" )\""
-    else
-        print_info "Does not look like a conda installation" 3 
-        _cws=""
-        _cwe="\"\$@\""
+         lib_dirs=($($_CONTAINER_EXEC ls $wrapper_path/.. | grep "lib[64]*$" || true ))
+         if [[ ${lib_dirs+defined} ]];then
+             for d in "${lib_dirs[@]}"; do
+                 _SING_LIB_PATHS+=("$(dirname $wrapper_path)/$d")
+             done
+         fi
+     fi
+     if [[ ! ${targets+defined} ]];then
+         # No method to remove wrapper paths when updating
+         # So don't fail here
+         print_warn "Path $wrapper_path does not exist in container or is empty \n\tif only wrapping executables, did you forget +x?"
+         continue
+     fi
+     # To activate conda environment
+     # printf is used to properly parse the arguments
+     # so that quote are maintainted
+     # e.g python -c "print('Hello')" works
+     # The test is there as printf returns '' if $@ is empty
+     # passing '' is not wanted behavior 
+     print_info "Checking if conda installation" 3
+     if $_CONTAINER_EXEC test -f $wrapper_path/../../../bin/conda ; then 
+         print_info "Inserting conda activation into wrappers" 3
+         env_name=$(basename $(realpath -m $wrapper_path/../ ))
+         conda_path=$(realpath -m $wrapper_path/../../../bin/conda)
+         _cws="bash -c \"eval \\\"\\\$($conda_path shell.bash hook )\\\"  && conda activate $env_name &>/dev/null && "
+         _cwe="\$( test \$# -eq 0 || printf \" %q\" \"\$@\" )\""
+     else
+         print_info "Does not look like a conda installation" 3 
+     fi
+
     fi
     
 
