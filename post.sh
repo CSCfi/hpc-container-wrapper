@@ -18,5 +18,6 @@ fi
             mv $CW_BUILD_TMPDIR/_inst_dir/$( basename $_fil ) $CW_INSTALLATION_PREFIX/share 
         done
     fi
+    cp $CW_BUILD_TMPDIR/conf.yaml $CW_INSTALLATION_PREFIX/share
 
 rm -rf $CW_BUILD_TMPDIR
