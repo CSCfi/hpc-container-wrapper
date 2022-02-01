@@ -19,11 +19,9 @@ defaults:
             - /tmp
             - /scratch
             - /users
-            - /pfs/lustref1
-            - /pfs/lustrep1
-            - /pfs/lustrep2
-            - /pfs/lustrep3
-            - /pfs/lustrep4
+            - /pfs
+            - /flash
+            - /project
             - /run
     isolate: no
     create_wrappers: yes
