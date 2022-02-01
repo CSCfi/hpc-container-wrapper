@@ -1,3 +1,6 @@
+
+
+
 ## Intro
 
 This is a tool to create installations using existing containers.
@@ -44,6 +47,13 @@ The tool generates a lot of wrappers with some relatively nasty tricks. This
 is so that most things which should work without a container works within the container
 and the installation looks like a normal installation to the end-user 
 
+The tool is also explicitly meant to allow intertwining with the host
+software environment. 
+
+Current version of the tools is written using bash  + python. 
+At some point it could be worthwile to rewrite the whole thing
+in some language which can be statically compiled for maximum robustness
+e.g GO/rust/C++ or whatever. 
 
 ### Limitations
 
@@ -62,6 +72,7 @@ can lead to the compute node feeling a bit unwell.
 
 
 ## Basic program structure
+
 Starting from command invocation
 Users will use commands under `bin`
 
@@ -93,19 +104,14 @@ Users will use commands under `bin`
     - Copy build files to final installatio file
     - Save used build files to <install_dir>/share
 
-
-
-
-
-## Program
-
-## Frontends
+## Implemented Frontends
 
 - `conda-containerize`
  - Wrap new conda installation or edit existing
+ - requires a conda YML file as input
 - `pip-containerize`
  - Wrap new venv installation or edit existing
- - Defaults to slim python container
+ - Option to also use slim container image  (will then not mount full host)
 - `wrap-container`
  - Generate wrappers for existing container
 - `wrap-install`
@@ -117,16 +123,45 @@ some have subcommands.
 ## Examples
 
 - `conda-containerize new --prefix /path/to_install conda_env.yaml`
-- `conda-containerize --post-install <(echo conda install scipy --channel conda-forge) update /path/to_install`
-- `pip-containerize new --prefix /path/to_install requirements.txt`
+    - Where `conda_env.yaml`
+    ```
+    channels:
+      - conda-forge
+    dependencies:
+      - numpy
+    ```
+
+- `conda-containerize update --post-install post.sh /path/to_install`
+    - Where `post.sh`
+    ```
+    conda install scipy  --channel conda-forge
+    pip install pyyaml 
+    ```
+- `pip-containerize new --prefix /path/to_install req.txt`
+   - Where `req.txt`
+   ```
+   numpy 
+   ```
+
 - `wrap-container --wrapper-paths /opt/prog/bin --prefix /path/to_install /path/to/container` 
 - `wrap-install --wrapper-paths bin --mask --prefix /path/to/install /program/on/disk`
 
 
 ## Installation
 
-preferrably use system python + pip
-and run install.sh with the config as argument
+Preferably use system python + pip
+and run install.sh with the desired config as argument.
+Available configs are in `configs` folder
+
+```
+bash install.sh <config>
+```
+
+This will copy the config to `default_config`,
+install pyyaml locally in the repository and
+hardcode the used python interpreter. This
+is so that the tool can be used to construct environments
+which use a completely different python. 
 
 ## Special vars
 

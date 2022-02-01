@@ -24,6 +24,7 @@ defaults:
             - /pfs/lustrep2
             - /pfs/lustrep3
             - /pfs/lustrep4
+            - /run
     isolate: no
     create_wrappers: yes
     wrap_all: no
