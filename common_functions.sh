@@ -24,14 +24,19 @@ else
   export   _NC=""
 fi
 
+time_stamp(){
+    if [[  $CW_LOG_LEVEL -gt 2 ]];then
+        echo " $(date +"%H:%M:%S")"
+    fi
+}
 
 # _print_info <log level threshold>
 print_info(){
     if [[ $CW_LOG_LEVEL -gt $2 ]];then
         if [[ "$2" == 1 ]]; then 
-            >&1 echo -e "[ ${_BLUE}INFO${_NC} ] $1 " | sed '2,$s/^/         /g'
+            >&1 echo -e "[ ${_BLUE}INFO${_NC}$(time_stamp) ] $1 " | sed '2,$s/^/         /g'
         else
-            >&1 echo -e "[ ${_PURPLE}DEBUG${_NC} ] $1 " | sed '2,$s/^/         /g'
+            >&1 echo -e "[ ${_PURPLE}DEBUG${_NC}$(time_stamp) ] $1 " | sed '2,$s/^/         /g'
         fi
 
 
@@ -39,12 +44,12 @@ print_info(){
 }
 print_warn(){
     if [[ $CW_LOG_LEVEL -gt 0  ]];then
-        >&1 echo -e "[ ${_YELLOW}WARNING${_NC} ] $1 " | sed '2,$s/^/         /g'
+        >&1 echo -e "[ ${_YELLOW}WARNING${_NC}$(time_stamp) ] $1 " | sed '2,$s/^/         /g'
     fi
 }
 # Errors are always printed
 print_err(){
-        >&1 echo -e "[ ${_RED}ERROR${_NC} ] $1 " | sed '2,$s/^/         /g'
+        >&1 echo -e "[ ${_RED}ERROR${_NC}$(time_stamp) ] $1 " | sed '2,$s/^/         /g'
 }
 
 ## Fancy info

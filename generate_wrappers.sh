@@ -29,7 +29,7 @@ _PRE_COMMAND="source \$DIR/../common.sh"
 echo "_C_DIR=\"\$( cd \"\$( dirname \"\${BASH_SOURCE[0]}\" )\" >/dev/null 2>&1 && pwd )\"
 CONTAINER_IMAGE=$CW_CONTAINER_IMAGE
 INSTALLATION_PATH=$CW_INSTALLATION_PATH
-export SINGULARITYENV_PATH=\"$(echo "${CW_WRAPPER_PATHS[@]}" | tr ' ' ':' ):\$SINGULARITYENV_PATH\"
+export SINGULARITYENV_PATH=\"\$_C_DIR/bin:\$SINGULARITYENV_PATH\"
 ">> _deploy/common.sh
 if [[ ${CW_WRAPPER_LD_LIBRARY_PATHS+defined} ]]; then
     echo "export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:$(echo "${CW_WRAPPER_LD_LIBRARY_PATHS[@]}" | tr ' ' ':' )\"">> _deploy/common.sh
@@ -121,6 +121,12 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
             done
         fi
     fi
+    if [[ ! ${targets+defined} ]];then
+        # No method to remove wrapper paths when updating
+        # So don't fail here
+        print_warn "Path $wrapper_path does not exist in container or is empty \n\tif only wrapping executables, did you forget +x?"
+        continue
+    fi
     # To activate conda environment
     # printf is used to properly parse the arguments
     # so that quote are maintainted
@@ -138,12 +144,6 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         print_info "Does not look like a conda installation" 3 
         _cws=""
         _cwe="\"\$@\""
-    fi
-    if [[ ! ${targets+defined} ]];then
-        # No method to remove wrapper paths when updating
-        # So don't fail here
-        print_warn "Path $wrapper_path does not exist in container or is empty \n\tif only wrapping executables, did you forget +x?"
-        continue
     fi
     
 
