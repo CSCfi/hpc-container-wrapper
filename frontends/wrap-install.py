@@ -14,10 +14,9 @@ from script_shared import *
 sys.argv[0]=sys.argv[0].split(".")[0]
 parser = argparse.ArgumentParser(description="Wrap an existing installation into a container")
 parser.add_argument("dir",type=str,help="Installation to wrap")
-add_wrapper_flag(parser)
+add_base_pars(parser)
+
 add_prefix_flag(parser)
-add_env_flag(parser)
-add_post_flag(parser)
 parser.add_argument("-y","--yaml",help="Tool yaml conf file")
 parser.add_argument("--mask",action='store_true',help="Mask installation on disk")
 

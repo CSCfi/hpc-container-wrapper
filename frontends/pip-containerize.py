@@ -19,9 +19,14 @@ parser_new.add_argument("requirements_file", type=lambda x: is_valid_file(parser
 parser_upd=add_upd_pars(subparsers)
 parser_upd.add_argument("-r","--requirements-file", type=lambda x: is_valid_file(parser, x),help="requirements file for pip")
 add_adv_pars(subparsers)
-add_base_pars(parser)
-add_wrapper_flag(parser)
 parser_new.add_argument("--slim",action='store_true',help="Use minimal base python container")
+
+ps=[parser_new,parser_upd]
+for p in ps:
+    add_base_pars(p)
+
+
+
 
 if len(sys.argv) < 2:
     parser.print_help()

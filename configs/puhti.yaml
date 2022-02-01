@@ -21,6 +21,7 @@ defaults:
             - /users
             - /fmi
             - /appl/data
+            - /run
     isolate: no
     create_wrappers: yes
     wrap_all: no

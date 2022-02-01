@@ -14,10 +14,10 @@ from script_shared import *
 sys.argv[0]=sys.argv[0].split(".")[0]
 parser = argparse.ArgumentParser(description="Create wrappers for executables inside a container")
 parser.add_argument("container",type=str,help="Container to wrap, can be docker/singularity url")
-add_wrapper_flag(parser)
-add_prefix_flag(parser)
-add_env_flag(parser)
 parser.add_argument("-y","--yaml",help="Tool yaml conf file")
+add_base_pars(parser)
+add_prefix_flag(parser)
+
 
 
 if len(sys.argv) < 2:
