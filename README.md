@@ -48,7 +48,15 @@ is so that most things which should work without a container works within the co
 and the installation looks like a normal installation to the end-user 
 
 The tool is also explicitly meant to allow intertwining with the host
-software environment. 
+software environment. For this there are two basic modes of operation:
+
+1. Mount everything from the host
+ - All host paths will be mounted, used when it makes sense and compatibility can be assumend
+ - Internally there are some additional variables so exclude paths 
+ - Note! due to this the default container should always be the same as the host system. 
+2. Mount specified defaults
+ - defaults set in config
+
 
 Current version of the tools is written using bash  + python. 
 At some point it could be worthwile to rewrite the whole thing
@@ -67,6 +75,10 @@ to ssh to `localhost`, but that makes environment management tricky and requires
 As the image is mounted on a directory which is not present on the host. Bind mounts
 are always applied after the image mount which means an image mount can not mask
 a directory on disk, without us dropping the whole preceeding path from the mount point list. 
+There is a fix for this as a PR for apptainer (as of 1.2.2022) but we do not rely on this
+as the future is unclear if singularityCE or apptainer will become dominant.
+The workaround is to mount all directories on the same level as each component
+of the image mount path -> possibly very expensive -> not done automatically. 
 - A bit untested, but running one container per core when you have 128 of them
 can lead to the compute node feeling a bit unwell. 
 
@@ -111,11 +123,21 @@ Users will use commands under `bin`
  - requires a conda YML file as input
 - `pip-containerize`
  - Wrap new venv installation or edit existing
+ - Will by default use currently available python
  - Option to also use slim container image  (will then not mount full host)
 - `wrap-container`
- - Generate wrappers for existing container
+ - Generate wrappers for existing container. Mainly
+ so that applications in existing containers can be used "almost" as a normal installation.
+ - Full host will not be mounted
 - `wrap-install`
- - Wrap an installation on disk to a container. 
+ - Wrap an installation on disk to a container.
+ - Useful for containerizing existing installations which can not be re-installed
+ - Option to mount in exact place, so that external and internal paths are identical. This
+ will however require dropping the top parent path mount so only works when no dependencies required. E.g
+`wrap-install --mask -w bin /appl/soft/prog --prefix Dir` will not mount `/appl` at all.
+Understand the implications of this before using this frontend. For manual workaround
+and more explanation see [limitations section](#limitations).
+
 
 All tools support `-h/--help` for displaying info
 some have subcommands. 
