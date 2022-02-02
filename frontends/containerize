@@ -14,7 +14,6 @@ source $M_SCRIPT_DIR/inst_vars.sh
 start=`date +%s`
 clean_up () {
     trap '' 2
-    ARG=$?
     if [[ ${CW_DEBUG_KEEP_FILES+defined} ]];then 
         if [[ ${CW_BUILD_TMPDIR+defined} ]];then
             print_err "Build files can be found at $CW_BUILD_TMPDIR, and $_usr_yaml"
@@ -28,7 +27,7 @@ clean_up () {
     fi
     trap 2
     kill  -- -$$ &>/dev/null
-    exit $ARG
+    exit 1
 }
 export _usr_yaml="$(mktemp /tmp/cw-tmp.XXXXXX )";
 trap clean_up err
