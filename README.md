@@ -189,6 +189,10 @@ which use a completely different python.
 
 These can be set before starting the tool
 
+`CW_GLOBAL_YAML`
+path to config to use
+
+
 `CW_DEBUG_KEEP_FILES`
 Don't delete build files when failing. 
 
