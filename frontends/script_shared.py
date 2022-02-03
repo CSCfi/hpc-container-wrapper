@@ -78,8 +78,14 @@ def get_old_conf(d,conf):
     except FileNotFoundError:
         print_err("Directory {} does not exist or is not a valid installation".format(d))
         sys.exit(1)
-        
-    conf["container_src"]=d+"/"+old_conf["container_image"]
+       
+    # If the installation uses a shared container it should
+    # continue doing so
+
+    if "share_container" in old_conf and old_conf["share_container"]:
+        conf["container_src"]=old_conf["container_src"]
+    else:
+        conf["container_src"]=d+"/"+old_conf["container_image"]
     conf["sqfs_src"]=d+"/"+old_conf["sqfs_image"]
     conf["installation_path"]=old_conf["installation_path"]
     conf["installation_prefix"]=d

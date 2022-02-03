@@ -12,13 +12,18 @@ source $SCRIPT_DIR/common_functions.sh
 source $CW_BUILD_TMPDIR/_vars.sh
 mkdir -p  $CW_BUILD_TMPDIR/_deploy/
 
-if [[ ! -f $CW_CONTAINER_SRC ]]; then 
+if [[ ! -e $CW_CONTAINER_SRC ]]; then 
     print_info "Fetching container $CW_CONTAINER_SRC"  1
     singularity --silent pull $CW_BUILD_TMPDIR/_deploy/$CW_CONTAINER_IMAGE $CW_CONTAINER_SRC || \
     { print_err "Failed fetching container"; exit 1 ;}
 else
-    print_info "Copying container $CW_CONTAINER_SRC" 1
-    cp "$CW_CONTAINER_SRC" "$CW_BUILD_TMPDIR/_deploy/$CW_CONTAINER_IMAGE"
+    if [[ ${CW_SHARE_CONTAINER+defined} && ${CW_SHARE_CONTAINER} == "yes" ]];then
+        print_info "Using container $CW_CONTAINER_SRC" 1
+        ln -s $(realpath -s "$CW_CONTAINER_SRC") "$CW_BUILD_TMPDIR/_deploy/$CW_CONTAINER_IMAGE" 
+    else
+        print_info "Copying container $CW_CONTAINER_SRC" 1
+        cp "$CW_CONTAINER_SRC" "$CW_BUILD_TMPDIR/_deploy/$CW_CONTAINER_IMAGE"
+    fi
 fi
 if [[  "${CW_SQFS_SRC+defined}" ]];then 
     if [[ ! -f $CW_SQFS_SRC ]]; then
