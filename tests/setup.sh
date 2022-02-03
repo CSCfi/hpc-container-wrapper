@@ -9,9 +9,12 @@ rm -f test.log
 if [[ ! ${USE_COLOR+defined} ]];then
    export USE_COLOR="yes"
 fi
-if [[ ! ${CW_LOG_LEVEL+defined} ]];then
-   export CW_LOG_LEVEL="2"
+if [[ ${CW_LOG_LEVEL+defined} ]];then
+    unset CW_LOG_LEVEL
 fi
+unset CW_DEBUG_KEEP_FILES
+set PYTHONNOUSERSITE=1
+: [[ $(type -t module ) == function ]] && module purge
 
 if [[ -t 1 &&  "$USE_COLOR" = "yes" ]];then
   export   _RED='\033[0;31m'
@@ -40,5 +43,12 @@ _fail(){
 
 
 t_run(){
-    eval $1 &>>test.log && _ok $2 || _fail $2
+    eval "$1" &>>test.log 
+    if [[ $? -eq 0 ]];then
+        _ok "$2"
+    else
+        _fail "$2"
+    fi
+
+
 }
