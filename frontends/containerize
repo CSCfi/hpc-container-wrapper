@@ -60,6 +60,7 @@ print_info "Parsing user and default configs " 2
 CW_BUILD_TMPDIR=$($PY_EXE $M_SCRIPT_DIR/../construct.py $CW_GLOBAL_YAML $_usr_yaml) \
     || { print_err "Configuration construction failed" ; false ;}
 export CW_BUILD_TMPDIR
+print_info "Using $CW_BUILD_TMPDIR as temporary directory" 1
 export PYTHONPATH=$SAVE_PP
 if [[ ${_USERSITE+defined} ]];then
     unset PYTHONNOUSERSITE
