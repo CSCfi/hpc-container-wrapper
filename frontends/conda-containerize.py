@@ -75,7 +75,11 @@ else:
     print_err("No or incorrent mode set, [conda,conda_modify]")
     sys.exit(1)
 if "requirements_file" in conf:
-    conf["installation_file_paths"].append(conf["requirements_file"])
+    if "installation_file_paths" in conf:
+        conf["installation_file_paths"].append(conf["requirements_file"])
+    else:
+        conf["installation_file_paths"]=conf["requirements_file"]
+
 
 with open(os.getenv("_usr_yaml"),'a+') as f:
     yaml.dump(conf,f)
