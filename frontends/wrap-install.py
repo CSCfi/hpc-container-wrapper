@@ -11,7 +11,7 @@ import yaml
 from cw_common import *
 from script_shared import *
 
-sys.argv[0]=sys.argv[0].split(".")[0]
+sys.argv[0]=sys.argv[0].split('/')[-1].split('.')[0]
 parser = argparse.ArgumentParser(description="Wrap an existing installation into a container")
 parser.add_argument("dir",type=str,help="Installation to wrap")
 add_base_pars(parser)

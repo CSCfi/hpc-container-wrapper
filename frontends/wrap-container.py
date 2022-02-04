@@ -11,7 +11,7 @@ import yaml
 from cw_common import *
 from script_shared import *
 
-sys.argv[0]=sys.argv[0].split(".")[0]
+sys.argv[0]=sys.argv[0].split('/')[-1].split('.')[0]
 parser = argparse.ArgumentParser(description="Create wrappers for executables inside a container")
 parser.add_argument("container",type=str,help="Container to wrap, can be docker/singularity url")
 parser.add_argument("-y","--yaml",help="Tool yaml conf file")

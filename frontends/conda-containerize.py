@@ -11,7 +11,7 @@ import yaml
 from cw_common import *
 from script_shared import *
 
-sys.argv[0]=sys.argv[0].split(".")[0]
+sys.argv[0]=sys.argv[0].split('/')[-1].split('.')[0]
 parser = argparse.ArgumentParser(description="Create or modify a Conda installation inside a container")
 subparsers = parser.add_subparsers(help='subcommands',dest='command')
 parser_new=add_new_pars(subparsers)
