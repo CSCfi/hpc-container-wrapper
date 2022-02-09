@@ -112,5 +112,5 @@ else
 fi
 print_info "Program has been installed to $CW_INSTALLATION_PREFIX
 \tTo use add the bin folder to your path e.g:
-\texport PATH=\"$_inst_path:\$PATH\"" 1
+\texport PATH=\"$_inst_path/bin:\$PATH\"" 1
 
