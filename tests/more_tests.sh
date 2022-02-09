@@ -9,7 +9,9 @@ mkdir L_TEST_DIR
 cd L_TEST_DIR
 echo "pyyaml" > req.txt
 echo "pip install requests" > post.sh
-singularity pull test_container.sif docker://opensuse/leap:15.1 
+
+default_container=$(cat $SCRIPT_DIR/../default_config/config.yaml  | grep container_src | cut -d ":" -f2- | sed "s/'//g" )
+singularity pull test_container.sif $default_container 
 
 cat ../../default_config/config.yaml | sed  "s@container_src.*\$@container_src: $PWD/test_container.sif@g" > my_config.yaml | sed 's/container_image.*$/container_image: container.sif/g'
 if  grep -q share_container my_config.yaml   ; then
@@ -31,3 +33,30 @@ t_run "[[ -L PIP_INSTALL_DIR/container.sif  ]]" "Container is still symlink"
 c1=$(readlink -f test_container.sif )
 c2=$(readlink -f PIP_INSTALL_DIR/container.sif )
 t_run "[[ $c1 = $c2 ]]" "Symlink still points to correct location"
+
+rm -fr PIP_INSTALL_DIR
+mkdir PIP_INSTALL_DIR
+
+t_run "wrap-container -w /usr/sbin --prefix PIP_INSTALL_DIR test_container.sif" "wrap-container works"
+
+
+forall () { local e fun="$1"; shift ; for e; do $fun $e || return 1 ; done ; }
+
+elementIn () {
+  for e in ${real[@]}; do [[ "$e" == "$1" ]] && return 0; done
+  return 1
+}
+export -f forall elementIn
+
+export ref=($(singularity exec test_container.sif sh -c 'ls /usr/sbin' ))
+export real=($( ls PIP_INSTALL_DIR/bin/ ))
+t_run "forall elementIn \"\${ref[@]}\" " "Wrappers generated"
+
+
+export ref=($(singularity exec test_container.sif sh -c 'echo $PATH' | tr ':' '\n' ))
+export real=($(PIP_INSTALL_DIR/bin/_debug_exec sh -c 'echo $PATH' | tr ':' '\n' ))
+t_run "forall elementIn \"\${ref[@]}\" " "Container path retained when wrapping"
+
+export ref=($(singularity exec test_container.sif sh -c 'echo $LD_LIBRARY_PATH' | tr ':' '\n' ))
+export real=($(PIP_INSTALL_DIR/bin/_debug_exec sh -c 'echo $LD_LIBRARY_PATH' | tr ':' '\n' ))
+t_run "forall elementIn \"\${ref[@]}\" " "Container ld_library_path retained when wrapping"
