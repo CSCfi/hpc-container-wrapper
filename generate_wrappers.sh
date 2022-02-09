@@ -38,6 +38,13 @@ fi
 if [[ "$CW_ISOLATE" == "yes" ]]; then
     # 
     echo "_DIRS=(${CW_MOUNT_POINTS[@]} \$_C_DIR )" >> _deploy/common.sh
+echo "
+SINGULARITYENV_DEFAULT_PATH=\"$($_CONTAINER_EXEC sh -c 'echo $PATH')\"
+SINGULARITYENV_DEFAULT_LD_LIBRARY_PATH=\"$($_CONTAINER_EXEC sh -c 'echo $LD_LIBRARY_PATH')\"
+export SINGULARITYENV_PATH=\"\$SINGULARITYENV_PATH:\$SINGULARITYENV_DEFAULT_PATH\"
+export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$SINGULARITYENV_DEFAULT_LD_LIBRARY_PATH\"
+" >> _deploy/common.sh
+
 else
     echo "_DIRS=(\$(ls -1 / | awk '!/dev/' | sed 's/^/\//g' ))" >> _deploy/common.sh
 
@@ -50,14 +57,10 @@ if [[ "${CW_EXCLUDED_MOUNT_POINTS+defined}" ]];then
     ">> _deploy/common.sh
 
 fi
-    echo "export SINGULARITYENV_PATH=\"\$SINGULARITYENV_PATH:\$PATH\"
-export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\"
-SINGULARITYENV_DEFAULT_PATH=\"$($_CONTAINER_EXEC bash -c 'echo $PATH')\"
-SINGULARITYENV_DEFAULT_LD_LIBRARY_PATH=\"$($_CONTAINER_EXEC bash -c 'echo $LD_LIBRARY_PATH')\"
-export SINGULARITYENV_PATH=\"\$SINGULARITYENV_PATH:\$SINGULARITYENV_DEFAULT_PATH\"
-export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$SINGULARITYENV_DEFAULT_LD_LIBRARY_PATH\"
-" >> _deploy/common.sh
 fi
+echo "export SINGULARITYENV_PATH=\"\$SINGULARITYENV_PATH:\$PATH\"
+export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\"" >> _deploy/common.sh
+
 echo "
 if [[ \"\$( cat /proc/self/mountinfo)\" == *\"singularity/mnt/session\"* ]];then
     export _CW_IN_CONTAINER=Yes
@@ -208,8 +211,10 @@ if [[ "$CW_ADD_LD" == "yes" && ${_SING_LIB_PATHS+defined} ]]; then
     echo "SINGULARITYENV_LD_LIBRARY_PATH=\"$(echo "${_SING_LIB_PATHS[@]}" | tr ' ' ':' ):\$SINGULARITYENV_LD_LIBRARY_PATH\"" >> _deploy/common.sh
 fi
 set +H
-printf -- '%s\n' "SINGULARITYENV_LD_LIBRARY_PATH=\$(echo \$SINGULARITYENV_LD_LIBRARY_PATH | tr ':' '\n' | awk '!a[\$0]++' | tr '\n' ':')" >> _deploy/common.sh
-printf -- '%s\n' "SINGULARITYENV_PATH=\$(echo \$SINGULARITYENV_PATH | tr ':' '\n' | awk '!a[\$0]++' | tr '\n' ':')" >> _deploy/common.sh
+printf -- '%s\n' "_tmp_arr=(\$(echo \$SINGULARITYENV_PATH | tr ':' '\n' ))" >> _deploy/common.sh
+printf -- '%s\n' "SINGULARITYENV_PATH=\$(echo \"\${_tmp_arr[@]}\" | tr ' ' ':')" >> _deploy/common.sh
+printf -- '%s\n' "_tmp_arr=(\$(echo \$SINGULARITYENV_LD_LIBRARY_PATH | tr ':' '\n' ))" >> _deploy/common.sh
+printf -- '%s\n' "SINGULARITYENV_LD_LIBRARY_PATH=\$(echo \"\${_tmp_arr[@]}\" | tr ' ' ':')" >> _deploy/common.sh
 if [[ -f _extra_envs.sh ]];then
     cat _extra_envs.sh >> _deploy/common.sh 
 fi
