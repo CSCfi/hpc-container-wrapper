@@ -33,9 +33,9 @@ print_info "Creating env, full log in $CW_BUILD_TMPDIR/build.log" 1
 if [[ ${CW_MAMBA} == "yes" ]] ;then
     print_info "Using mamba to install packages" 1 
     conda install -y mamba -n base -c conda-forge
-    mamba $_EC create --name $CW_ENV_NAME $_FF $CW_ENV_FILE &>> $CW_BUILD_TMPDIR/build.log &
+    mamba $_EC create --name $CW_ENV_NAME $_FF $( basename $CW_ENV_FILE ) &>> $CW_BUILD_TMPDIR/build.log &
 else
-    conda $_EC create --name $CW_ENV_NAME $_FF $CW_ENV_FILE &>> $CW_BUILD_TMPDIR/build.log &
+    conda $_EC create --name $CW_ENV_NAME $_FF $( basename $CW_ENV_FILE ) &>> $CW_BUILD_TMPDIR/build.log &
 fi
 
 inst_pid=$!
