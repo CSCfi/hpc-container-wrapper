@@ -29,13 +29,21 @@ else
 fi
 cd $CW_INSTALLATION_PATH
 print_info "Creating env, full log in $CW_BUILD_TMPDIR/build.log" 1
-conda $_EC create --name $CW_ENV_NAME $_FF $CW_ENV_FILE &>> $CW_BUILD_TMPDIR/build.log &
+
+if [[ ${CW_MAMBA} == "yes" ]] ;then
+    print_info "Using mamba to install packages" 1 
+    conda install -y mamba -n base -c conda-forge
+    mamba $_EC create --name $CW_ENV_NAME $_FF $CW_ENV_FILE &>> $CW_BUILD_TMPDIR/build.log &
+else
+    conda $_EC create --name $CW_ENV_NAME $_FF $CW_ENV_FILE &>> $CW_BUILD_TMPDIR/build.log &
+fi
+
 inst_pid=$!
 follow_log $inst_pid $CW_BUILD_TMPDIR/build.log 10  
 wait $inst_pid
 conda activate $CW_ENV_NAME
 if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
-    pip install -r "$CW_REQUIREMENTS_FILE"
+    pip install -r $( basename "$CW_REQUIREMENTS_FILE" )
 fi
 cd $CW_WORKDIR
 print_info "Running user supplied commands" 1

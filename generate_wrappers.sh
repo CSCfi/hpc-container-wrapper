@@ -46,7 +46,7 @@ export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$SINGU
 " >> _deploy/common.sh
 
 else
-    echo "_DIRS=(\$(ls -1 / | awk '!/dev/' | sed 's/^/\//g' ))" >> _deploy/common.sh
+    echo "_DIRS=(\$(/usr/bin/ls -1 / | /usr/bin/awk '!/dev/' | /usr/bin/sed 's/^/\//g' ))" >> _deploy/common.sh
 
 if [[ "${CW_EXCLUDED_MOUNT_POINTS+defined}" ]];then
     echo "
@@ -87,7 +87,7 @@ done
 if [[ \"\${TMPDIR+defined}\" ]];then
     SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$TMPDIR,\$TMPDIR:/tmp\"
 fi
-SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$( readlink -f \$_C_DIR/_bin):\$( readlink -f \$_C_DIR/bin)\"
+SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$( /usr/bin/readlink -f \$_C_DIR/_bin):\$( /usr/bin/readlink -f \$_C_DIR/bin)\"
 export SINGULARITY_BIND" >> _deploy/common.sh
 
 # The above readlink is only needed as a workaround for Lumi
@@ -208,13 +208,13 @@ chmod +x _deploy/bin/$target
 
 
 if [[ "$CW_ADD_LD" == "yes" && ${_SING_LIB_PATHS+defined} ]]; then
-    echo "SINGULARITYENV_LD_LIBRARY_PATH=\"$(echo "${_SING_LIB_PATHS[@]}" | tr ' ' ':' ):\$SINGULARITYENV_LD_LIBRARY_PATH\"" >> _deploy/common.sh
+    echo "SINGULARITYENV_LD_LIBRARY_PATH=\"$(echo "${_SING_LIB_PATHS[@]}" | /usr/bin/tr ' ' ':' ):\$SINGULARITYENV_LD_LIBRARY_PATH\"" >> _deploy/common.sh
 fi
 set +H
-printf -- '%s\n' "_tmp_arr=(\$(echo \$SINGULARITYENV_PATH | tr ':' '\n' ))" >> _deploy/common.sh
-printf -- '%s\n' "SINGULARITYENV_PATH=\$(echo \"\${_tmp_arr[@]}\" | tr ' ' ':')" >> _deploy/common.sh
-printf -- '%s\n' "_tmp_arr=(\$(echo \$SINGULARITYENV_LD_LIBRARY_PATH | tr ':' '\n' ))" >> _deploy/common.sh
-printf -- '%s\n' "SINGULARITYENV_LD_LIBRARY_PATH=\$(echo \"\${_tmp_arr[@]}\" | tr ' ' ':')" >> _deploy/common.sh
+printf -- '%s\n' "_tmp_arr=(\$(echo \$SINGULARITYENV_PATH | /usr/bin/tr ':' '\n' ))" >> _deploy/common.sh
+printf -- '%s\n' "SINGULARITYENV_PATH=\$(echo \"\${_tmp_arr[@]}\" | /usr/bin/tr ' ' ':')" >> _deploy/common.sh
+printf -- '%s\n' "_tmp_arr=(\$(echo \$SINGULARITYENV_LD_LIBRARY_PATH | /usr/bin/tr ':' '\n' ))" >> _deploy/common.sh
+printf -- '%s\n' "SINGULARITYENV_LD_LIBRARY_PATH=\$(echo \"\${_tmp_arr[@]}\" | /usr/bin/tr ' ' ':')" >> _deploy/common.sh
 if [[ -f _extra_envs.sh ]];then
     cat _extra_envs.sh >> _deploy/common.sh 
 fi

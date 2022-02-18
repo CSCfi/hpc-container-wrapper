@@ -16,6 +16,7 @@ parser = argparse.ArgumentParser(description="Create or modify a Conda installat
 subparsers = parser.add_subparsers(help='subcommands',dest='command')
 parser_new=add_new_pars(subparsers)
 parser_new.add_argument("env_file",help="conda env file")
+parser_new.add_argument("--mamba",help="use mamba for installation",action="store_true")
 parser_upd=add_upd_pars(subparsers)
 add_adv_pars(subparsers)
 
@@ -35,6 +36,10 @@ if args.command == "new":
     if args.prefix:
         conf["installation_prefix"]=args.prefix
     conf["mode"]="conda"
+    if args.mamba: 
+        conf["mamba"]="yes" 
+    else:
+        conf["mamba"]="no"
 elif args.command == "update":
     conf["mode"]="conda_modify"
     get_old_conf(args.dir,conf)
