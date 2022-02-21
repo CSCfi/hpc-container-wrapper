@@ -19,7 +19,7 @@ if  grep -q share_container my_config.yaml   ; then
 else
     sed -i '/container_image.*$/a \ \ \ \ share_container: yes' my_config.yaml
 fi
-export CW_GLOBAL_YAML=my_config.yaml
+export CW_GLOBAL_YAML=$( readlink -f my_config.yaml)
 mkdir PIP_INSTALL_DIR
 t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt" "Basic pip installation ok"
 t_run "PIP_INSTALL_DIR/bin/python -c 'import yaml'" "Required package is present"
@@ -33,6 +33,21 @@ t_run "[[ -L PIP_INSTALL_DIR/container.sif  ]]" "Container is still symlink"
 c1=$(readlink -f test_container.sif )
 c2=$(readlink -f PIP_INSTALL_DIR/container.sif )
 t_run "[[ $c1 = $c2 ]]" "Symlink still points to correct location"
+t_run "PIP_INSTALL_DIR/bin/python -m venv VE " "Virtual environment creation works"
+t_run "VE/bin/python -c 'import sys;sys.exit( sys.prefix == sys.base_prefix )'" "Virtual environment is correct"
+t_run "VE/bin/pip install requests" "pip works for a venv"
+t_run "VE/bin/python -c 'import requests;print(requests.__file__)' | grep -q VE " "Package is installed correctly to venv"
+
+
+mkdir subdir 
+mkdir PIP_INSTALL_DIR_2
+cd subdir
+t_run "pip-containerize new --prefix ../PIP_INSTALL_DIR_2 ../req.txt" "Path resolve for input file works"
+cd ..
+exit 0
+cp req.txt subdir
+mkdir subdir/PIP_INSTALL_DIR_3
+t_run "pip-containerize new --prefix subdir/PIP_INSTALL_DIR_3 subdir/req.txt" "Path resolve for input file works"
 
 rm -fr PIP_INSTALL_DIR
 mkdir PIP_INSTALL_DIR
@@ -60,3 +75,6 @@ t_run "forall elementIn \"\${ref[@]}\" " "Container path retained when wrapping"
 export ref=($(singularity exec test_container.sif sh -c 'echo $LD_LIBRARY_PATH' | tr ':' '\n' ))
 export real=($(PIP_INSTALL_DIR/bin/_debug_exec sh -c 'echo $LD_LIBRARY_PATH' | tr ':' '\n' ))
 t_run "forall elementIn \"\${ref[@]}\" " "Container ld_library_path retained when wrapping"
+
+
+

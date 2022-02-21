@@ -73,6 +73,10 @@ test -d $tmp_dir && rm -rf $tmp_dir
 unset CW_DEBUG_KEEP_FILES
 
 t_run "conda-containerize new conda_base.yml -r req.txt --prefix CONDA_INSTALL_DIR &>/dev/null" "Basic installation works"
+t_run "CONDA_INSTALL_DIR/bin/python -m venv VE " "Virtual environment creation works"
+t_run "VE/bin/python -c 'import sys;sys.exit( sys.prefix == sys.base_prefix )'" "Virtual environment is correct"
+t_run "VE/bin/pip install requests" "pip works for a venv"
+t_run "VE/bin/python -c 'import requests;print(requests.__file__)' | grep -q VE " "Package is installed correctly to venv"
 CONDA_INSTALL_DIR/bin/_debug_exec bash -c "\$(dirname \$(readlink -f \$(which python)))/../../../bin/conda list --explicit" > explicit_env.txt 
 t_run "CONDA_INSTALL_DIR/bin/python -c 'import yaml'" "Package added by -r is there"
 t_run "conda-containerize update CONDA_INSTALL_DIR --post-install post.sh" "Update works"
