@@ -8,6 +8,7 @@ if [[ ! ${1+defined} ]];then
 fi
 if [[ ! -f "configs/$1.yaml" ]];then
     echo "Specified config does not exists, options: $(ls configs | tr '\n' ' ' | sed 's/.yaml//g')"
+    exit 1
 fi
 
 if [[  $( which python3 &> /dev/null ) ]];then
