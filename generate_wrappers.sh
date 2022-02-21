@@ -24,7 +24,16 @@ else
 fi
 
 
-_REAL_PATH_CMD='DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"'
+_REAL_PATH_CMD='SOURCE="${BASH_SOURCE[0]}"                                                                                                                                       
+_O_SOURCE=$SOURCE                                                                                                                                                
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink                                                                               
+  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"                                                                                               
+  SOURCE="$(readlink "$SOURCE")"                                                                                                                                 
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done                                                                                                                                                             
+DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"                                                                                                 
+
+'
 _PRE_COMMAND="source \$DIR/../common.sh"
 echo "_C_DIR=\"\$( cd \"\$( dirname \"\${BASH_SOURCE[0]}\" )\" >/dev/null 2>&1 && pwd )\"
 CONTAINER_IMAGE=$CW_CONTAINER_IMAGE
@@ -106,7 +115,7 @@ mkdir _deploy/_bin
 print_info "Creating wrappers" 1
 for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
     _cws=""
-    _cwe="\"\$@\""
+    _cwe="\$( test \$# -eq 0 || printf \" %q\" \"\$@\" )\""
     print_info "Generating wrappers for $wrapper_path" 2
     if $_CONTAINER_EXEC test -f $wrapper_path ; then
         targets=( $(basename $wrapper_path ))
@@ -148,9 +157,9 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
          env_name=$(basename $(realpath -m $wrapper_path/../ ))
          conda_path=$(realpath -m $wrapper_path/../../../bin/conda)
          _cws="bash -c \"eval \\\"\\\$($conda_path shell.bash hook )\\\"  && conda activate $env_name &>/dev/null && "
-         _cwe="\$( test \$# -eq 0 || printf \" %q\" \"\$@\" )\""
      else
          print_info "Does not look like a conda installation" 3 
+         _cws="bash -c \""
      fi
 
     fi
@@ -166,9 +175,9 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         ln -s $wrapper_path/$target _deploy/_bin/$target
         echo "
         if [[ \${_CW_IN_CONTAINER+defined} ]];then
-            \$DIR/$target \"\$@\"
+            exec -a \$_O_SOURCE \$DIR/$target \"\$@\"
         else
-            $_RUN_CMD  $_cws \$DIR/$target $_cwe  
+            $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
         fi" >> _deploy/bin/$target
         chmod +x _deploy/bin/$target
         if [[ "$target" == "python"  ]];then
