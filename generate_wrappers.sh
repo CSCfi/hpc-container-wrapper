@@ -114,7 +114,7 @@ mkdir _deploy/_bin
 
 print_info "Creating wrappers" 1
 for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
-    _cws=""
+    _cws="bash -c \""
     _cwe="\$( test \$# -eq 0 || printf \" %q\" \"\$@\" )\""
     print_info "Generating wrappers for $wrapper_path" 2
     if $_CONTAINER_EXEC test -f $wrapper_path ; then
@@ -159,7 +159,6 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
          _cws="bash -c \"eval \\\"\\\$($conda_path shell.bash hook )\\\"  && conda activate $env_name &>/dev/null && "
      else
          print_info "Does not look like a conda installation" 3 
-         _cws="bash -c \""
      fi
 
     fi
