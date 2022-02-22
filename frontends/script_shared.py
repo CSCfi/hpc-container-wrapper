@@ -40,9 +40,10 @@ def add_new_pars(subpar):
     parser_new = subpar.add_parser('new', help='Create new installation')
     add_prefix_flag(parser_new)
     return parser_new
-def add_base_pars(par):
-    add_post_flag(par)
-    add_pre_flag(par)
+def add_base_pars(par,pre_post=True):
+    if pre_post:
+        add_post_flag(par)
+        add_pre_flag(par)
     add_env_flag(par)
     add_wrapper_flag(par)
 

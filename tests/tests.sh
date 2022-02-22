@@ -13,10 +13,16 @@ for cmd in "${cmds[@]}"; do
     t_run "$cmd -h | grep 'show this help message'" "$cmd has help flag"
     t_run "$cmd" "$cmd help returns 0"
 done
-cmds=("conda-containerize new " "pip-containerize new" wrap-container wrap-install)
+cmds=("conda-containerize new " "pip-containerize new" wrap-install)
 for cmd in "${cmds[@]}"; do
    t_run "$cmd --help | grep -- '--post-install'" "$cmd has post-install flag"
    t_run "$cmd --help | grep -- '--pre-install'" "$cmd has pre-install flag"
+   t_run "$cmd --help | grep -- '--environ'" "$cmd has environ flag"
+   t_run "$cmd --help | grep -- '--wrapper-paths'" "$cmd has wrapper-paths flag"
+   t_run "$cmd 2>&1 | grep -- 'arguments are required\|^usage:'" "$cmd error/help on no arg"
+done
+cmd=(wrap-container)
+for cmd in "${cmds[@]}"; do
    t_run "$cmd --help | grep -- '--environ'" "$cmd has environ flag"
    t_run "$cmd --help | grep -- '--wrapper-paths'" "$cmd has wrapper-paths flag"
    t_run "$cmd 2>&1 | grep -- 'arguments are required\|^usage:'" "$cmd error/help on no arg"

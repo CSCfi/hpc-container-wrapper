@@ -15,7 +15,7 @@ sys.argv[0]=sys.argv[0].split('/')[-1].split('.')[0]
 parser = argparse.ArgumentParser(description="Create wrappers for executables inside a container")
 parser.add_argument("container",type=str,help="Container to wrap, can be docker/singularity url")
 parser.add_argument("-y","--yaml",help="Tool yaml conf file")
-add_base_pars(parser)
+add_base_pars(parser,False)
 add_prefix_flag(parser)
 
 

@@ -44,14 +44,16 @@ mkdir PIP_INSTALL_DIR_2
 cd subdir
 t_run "pip-containerize new --prefix ../PIP_INSTALL_DIR_2 ../req.txt" "Path resolve for input file works"
 cd ..
-exit 0
 cp req.txt subdir
 mkdir subdir/PIP_INSTALL_DIR_3
 t_run "pip-containerize new --prefix subdir/PIP_INSTALL_DIR_3 subdir/req.txt" "Path resolve for input file works"
 
 rm -fr PIP_INSTALL_DIR
 mkdir PIP_INSTALL_DIR
+t_run "wrap-container -w /usr/sbin/sln --prefix PIP_INSTALL_DIR test_container.sif" "wrap-container works with single target"
 
+rm -fr PIP_INSTALL_DIR
+mkdir PIP_INSTALL_DIR
 t_run "wrap-container -w /usr/sbin --prefix PIP_INSTALL_DIR test_container.sif" "wrap-container works"
 
 
