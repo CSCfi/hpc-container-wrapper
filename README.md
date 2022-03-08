@@ -1,5 +1,9 @@
+# Tykky
 
-
+**Sidenote:** 
+Permissions for the files inside the file system image
+is determined by the current umask and permissions for the 
+target installation folder!
 
 ## Intro
 
@@ -179,11 +183,15 @@ Available configs are in `configs` folder
 bash install.sh <config>
 ```
 
-This will copy the config to `default_config`,
+This will symlink the config to `default_config`,
 install pyyaml locally in the repository and
 hardcode the used python interpreter. This
 is so that the tool can be used to construct environments
 which use a completely different python. 
+
+If you are not satisfied with the config you can simply edit 
+the config under `default_config` or supply 
+a custom config file path using `CW_GLOBAL_YAML`. 
 
 ## Special vars
 
