@@ -1,9 +1,11 @@
 # Tykky
 
-**Sidenote:** 
-Permissions for the files inside the file system image
-is determined by the current umask and permissions for the 
-target installation folder!
+
+Tykky is a set of tools which wrap installations inside 
+an Apptainer/Singularity container to improve startup times, 
+reduce IO load, and lessen the number of files on large parallel filesystems.
+
+
 
 ## Intro
 
@@ -119,6 +121,13 @@ Users will use commands under `bin`
 10. **post.sh**
     - Copy build files to final installatio file
     - Save used build files to <install_dir>/share
+
+
+**Sidenote:** 
+Permissions for the files inside the file system image
+is determined by the current umask and permissions for the 
+target installation folder!
+
 
 ## Implemented Frontends
 
