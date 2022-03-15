@@ -54,8 +54,10 @@ if os.getenv("CW_LOG_LEVEL"):
 if os.getenv("CW_BUILD_TMPDIR"):
     full_conf["build_tmpdir_base"]=os.getenv("CW_BUILD_TMPDIR")
 tmpdir_base=full_conf["build_tmpdir_base"]
-if not os.path.isdir(expand_vars(tmpdir_base)):
-    print_err(f"Build directory {tmpdir_base}='{expand_vars(tmpdir_base)}' does not exist\n\t  Either correct build_tmpdir_base in {sys.argv[1]}\n\t  or set CW_BUILD_TMPDIR to a valid directory",True)
+try:
+    os.makedirs(expand_vars(tmpdir_base))
+except Exception as e:
+    print_err(f"Could not create build directory {tmpdir_base}='{expand_vars(tmpdir_base)}': {str(e)}  \n\tEither correct build_tmpdir_base in {sys.argv[1]}\n\tor set CW_BUILD_TMPDIR to a valid path",True)
     sys.exit(1)
 if not os.access(expand_vars(tmpdir_base),os.W_OK):
     print_err(f"Build directory {expand_vars(tmpdir_base)} is not writable",True)
