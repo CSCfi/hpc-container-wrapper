@@ -55,7 +55,7 @@ if os.getenv("CW_BUILD_TMPDIR"):
     full_conf["build_tmpdir_base"]=os.getenv("CW_BUILD_TMPDIR")
 tmpdir_base=full_conf["build_tmpdir_base"]
 try:
-    os.makedirs(expand_vars(tmpdir_base))
+    os.makedirs(expand_vars(tmpdir_base),exist_ok=True)
 except Exception as e:
     print_err(f"Could not create build directory {tmpdir_base}='{expand_vars(tmpdir_base)}': {str(e)}  \n\tEither correct build_tmpdir_base in {sys.argv[1]}\n\tor set CW_BUILD_TMPDIR to a valid path",True)
     sys.exit(1)
