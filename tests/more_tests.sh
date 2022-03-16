@@ -39,6 +39,14 @@ t_run "VE/bin/pip install requests" "pip works for a venv"
 t_run "VE/bin/python -c 'import requests;print(requests.__file__)' | grep -q VE " "Package is installed correctly to venv"
 
 
+
+export CW_BUILD_TMPDIR=/NOT_A_DIR
+t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt 2>&1 | grep -q 'Could not create build directory'" "Can not create build dir"
+export CW_BUILD_TMPDIR=A/B/C
+t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt 2>&1 | grep -q 'path is not absolute' " "Absolute Build dir"
+export CW_BUILD_TMPDIR=$PWD/A/B/C
+t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt " "Creates missing dirs"
+unset CW_BUILD_TMPDIR
 mkdir subdir 
 mkdir PIP_INSTALL_DIR_2
 cd subdir
@@ -77,6 +85,8 @@ t_run "forall elementIn \"\${ref[@]}\" " "Container path retained when wrapping"
 export ref=($(singularity exec test_container.sif sh -c 'echo $LD_LIBRARY_PATH' | tr ':' '\n' ))
 export real=($(PIP_INSTALL_DIR/bin/_debug_exec sh -c 'echo $LD_LIBRARY_PATH' | tr ':' '\n' ))
 t_run "forall elementIn \"\${ref[@]}\" " "Container ld_library_path retained when wrapping"
+
+
 
 
 
