@@ -54,6 +54,8 @@ if os.getenv("CW_LOG_LEVEL"):
 if os.getenv("CW_BUILD_TMPDIR"):
     full_conf["build_tmpdir_base"]=os.getenv("CW_BUILD_TMPDIR")
 tmpdir_base=full_conf["build_tmpdir_base"]
+
+
 try:
     os.makedirs(expand_vars(tmpdir_base),exist_ok=True)
 except Exception as e:
@@ -64,6 +66,9 @@ if not os.access(expand_vars(tmpdir_base),os.W_OK):
     sys.exit(1)
 
 build_dir=os.path.expandvars(full_conf["build_tmpdir_base"]+"/cw-"+name_generator())
+if build_dir[0] != '/':
+    print_err(f"Build directory path is not absolute",True)
+    sys.exit(1)
 subprocess.run(["mkdir","-p",build_dir])
 full_conf["build_tmpdir"]=build_dir
 print(build_dir)
