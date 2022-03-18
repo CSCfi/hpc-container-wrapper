@@ -12,19 +12,25 @@ cd $CW_BUILD_TMPDIR
 mkdir _deploy/bin
 touch _deploy/common.sh
 echo "#!/bin/bash" > _deploy/common.sh
+
+
 if [[ "$CW_MODE" == "wrapcont" ]];then
-    _CONTAINER_EXEC="singularity --silent exec  _deploy/$CW_CONTAINER_IMAGE"
-    _RUN_CMD="singularity --silent exec \$DIR/../\$CONTAINER_IMAGE"
-    _SHELL_CMD="singularity --silent shell \$DIR/../\$CONTAINER_IMAGE"
+    _CONTAINER_EXEC="/usr/bin/singularity --silent exec  _deploy/$CW_CONTAINER_IMAGE"
+    _RUN_CMD="/usr/bin/singularity --silent exec \$DIR/../\$CONTAINER_IMAGE"
+    _SHELL_CMD="/usr/bin/singularity --silent shell \$DIR/../\$CONTAINER_IMAGE"
 else
-    _CONTAINER_EXEC="singularity --silent exec -B _deploy/$CW_SQFS_IMAGE:$CW_INSTALLATION_PATH:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
+    _CONTAINER_EXEC="/usr/bin/singularity --silent exec -B _deploy/$CW_SQFS_IMAGE:$CW_INSTALLATION_PATH:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
     echo "SQFS_IMAGE=$CW_SQFS_IMAGE" >> _deploy/common.sh
-    _RUN_CMD="singularity --silent exec -B \$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/ \$DIR/../\$CONTAINER_IMAGE"
-    _SHELL_CMD="singularity --silent shell -B \$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/ \$DIR/../\$CONTAINER_IMAGE"
+    _RUN_CMD="/usr/bin/singularity --silent exec -B \$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/ \$DIR/../\$CONTAINER_IMAGE"
+    _SHELL_CMD="/usr/bin/singularity --silent shell -B \$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/ \$DIR/../\$CONTAINER_IMAGE"
 fi
 
-
-_REAL_PATH_CMD='SOURCE="${BASH_SOURCE[0]}"                                                                                                                                       
+# Need to unset the path, otherwise we might be stuck in a nasty loop
+# and exhaust the system 
+_REAL_PATH_CMD='
+export OLD_PATH=$PATH                                      
+export PATH="/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/bin"
+SOURCE="${BASH_SOURCE[0]}"                                                                                                                                       
 _O_SOURCE=$SOURCE                                                                                                                                                
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink                                                                               
   DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"                                                                                               
@@ -176,6 +182,7 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         if [[ \${_CW_IN_CONTAINER+defined} ]];then
             exec -a \$_O_SOURCE \$DIR/$target \"\$@\"
         else
+            export PATH=\"\$OLD_PATH\"
             $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
         fi" >> _deploy/bin/$target
         chmod +x _deploy/bin/$target
