@@ -29,7 +29,7 @@ fi
 # and exhaust the system 
 _REAL_PATH_CMD='
 export OLD_PATH=$PATH                                      
-export PATH="/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+export PATH="/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/bin"
 SOURCE="${BASH_SOURCE[0]}"                                                                                                                                       
 _O_SOURCE=$SOURCE                                                                                                                                                
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink                                                                               
