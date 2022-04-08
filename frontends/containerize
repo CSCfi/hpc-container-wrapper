@@ -88,8 +88,9 @@ elif [[ "$(umask)" == "0022"  ]];then
 else
    print_warn "Umask set to $CW_UMASK, check permissions of finished installation" 
 fi
-chmod g+s $CW_BUILD_TMPDIR
+
 chgrp $(stat -c "%G" $CW_INSTALLATION_PREFIX ) $CW_BUILD_TMPDIR
+chmod g+s $CW_BUILD_TMPDIR
 
 
 $M_SCRIPT_DIR/../pre.sh || { print_err "Failed getting container image"; false ;}
