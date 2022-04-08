@@ -123,10 +123,14 @@ Users will use commands under `bin`
     - Save used build files to <install_dir>/share
 
 
-**Sidenote:** 
-Permissions for the files inside the file system image
-is determined by the current umask and permissions for the 
-target installation folder!
+**NOTE** 
+
+Permissions for installation files 
+are determined by the current umask and permissions for the 
+target installation folder! Files inside the the squashfs are set to
+world readable to allow copying when installations are updated by other
+that the original creator. Limit access by setting correct permissions on
+on the sqfs image itself. 
 
 
 ## Implemented Frontends
