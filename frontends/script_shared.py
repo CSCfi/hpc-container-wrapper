@@ -77,7 +77,7 @@ def get_old_conf(d,conf):
         with open(d+"/share/conf.yaml",'r') as c:
             old_conf=yaml.safe_load(c)
     except FileNotFoundError:
-        print_err("Directory {} does not exist or is not a valid installation".format(d))
+        print_err("Directory {} does not exist or is not a valid installation ( missing share/conf.yaml )".format(d))
         sys.exit(1)
        
     # If the installation uses a shared container it should
