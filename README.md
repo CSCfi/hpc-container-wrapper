@@ -114,7 +114,7 @@ Users will use commands under `bin`
 9. **generate_wrappers** (This is where most tricks live) Generate wrappers for the installation so that they can be used as normal installations. The wrappers:
     - Defines common variables such as image name, container name  
     - Defines runtime bind mounts
-    - Unset singularity envs if not actually inside a container (e.g srun called from container -> some SINGULARITY_ are still active) 
+    - Unset singularity envs if not actually inside a container (e.g srun called from container -> some SINGULARITY are still active) 
     - Extra symlink layer in `_bin` to tricks the likes of dask to generate valid executable paths
     - Copy venv definition when wrapping python venv
     - Activates conda if a conda env is wrapped 
@@ -130,7 +130,7 @@ are determined by the current umask and permissions for the
 target installation folder! Files inside the the squashfs are set to
 world readable to allow copying when installations are updated by other
 that the original creator. Limit access by setting correct permissions on
-on the sqfs image itself. 
+on the sqfs image itself. This behavior can be disabled by setting `CW_NO_FIX_PERM`
 
 
 ## Implemented Frontends
