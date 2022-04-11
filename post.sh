@@ -11,7 +11,7 @@ if [[ ${CW_UPDATE_INSTALLATION+defined } && "$CW_UPDATE_INSTALLATION" == "yes" ]
     rm -fr $CW_INSTALLATION_PREFIX/_bin
     rm -fr $CW_INSTALLATION_PREFIX/share
 fi
-    cp -a $CW_BUILD_TMPDIR/_deploy/* $CW_INSTALLATION_PREFIX/
+    cp -rd $CW_BUILD_TMPDIR/_deploy/* $CW_INSTALLATION_PREFIX/
     mkdir -p $CW_INSTALLATION_PREFIX/share
     if [[ ${CW_INSTALLATION_FILE_PATHS+defined} ]]; then
         for _fil in ${CW_INSTALLATION_FILE_PATHS[@]}; do
