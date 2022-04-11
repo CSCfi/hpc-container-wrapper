@@ -74,4 +74,7 @@ if [[ ! ${CW_NO_FIX_PERM+defined}  ]];then
     chmod -R ugo+rwX _inst_dir 
 fi
 mksquashfs _inst_dir/ _deploy/$CW_SQFS_IMAGE -processors $_cpus $CW_SQFS_OPTIONS 
+ 
+# Check if we need to fix group permissions
+stat -c "%a" $CW_BUILD_TMPDIR | grep ".[67]." -q && chmod g+w _deploy/$CW_SQFS_IMAGE
 
