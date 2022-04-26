@@ -78,6 +78,13 @@ t_run "\[ -e $tmp_dir \]" "Build dir is saved if CW_DEBUG_KEEP_FILES set"
 test -d $tmp_dir && rm -rf $tmp_dir
 unset CW_DEBUG_KEEP_FILES
 
+unset CW_ENABLE_CONDARC
+echo "conda config --show-sources;conda config --show pkgs_dirs;exit 1" > pre.sh
+rc_res=$(conda-containerize new --pre-install=pre.sh conda_base.yml --prefix CONDA_INSTALL_DIR  | grep -o $HOME/.conda/pkgs)
+t_run "test -z $rc_res" "User .condarc is ignored"
+export CW_ENABLE_CONDARC=1
+t_run "conda-containerize new --pre-install=pre.sh conda_base.yml --prefix CONDA_INSTALL_DIR  | grep -q $HOME/.conda/pkgs" "User .condarc can be enabled"
+unset CW_ENABLE_CONDARC
 t_run "conda-containerize new conda_base.yml -r req.txt --prefix CONDA_INSTALL_DIR &>/dev/null" "Basic installation works"
 t_run "CONDA_INSTALL_DIR/bin/python -m venv VE " "Virtual environment creation works"
 t_run "VE/bin/python -c 'import sys;sys.exit( sys.prefix == sys.base_prefix )'" "Virtual environment is correct"
