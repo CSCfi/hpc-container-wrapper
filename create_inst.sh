@@ -36,6 +36,14 @@ for d in "${_DIRS[@]}"; do
         test -d $d && export SINGULARITY_BIND="$SINGULARITY_BIND,$d"
     fi
 done
+# By default we want to disable the user condarc as that
+# might interfere with the installation
+if [[ ! ${CW_ENABLE_CONDARC+defined} ]]; then
+    echo "pkgs_dirs: 
+        - $CW_INSTALLATION_PATH/miniconda/pkgs
+    " > $PWD/_inst_dir/condarc_override
+    SINGULARITY_BIND="$SINGULARITY_BIND,$PWD/_inst_dir/condarc_override:$HOME/.condarc"
+fi
 SINGULARITY_BIND="$SINGULARITY_BIND,/tmp"
 export SINGULARITY_BIND
 echo "export install_root=$CW_INSTALLATION_PATH" >> _extra_envs.sh
@@ -58,6 +66,7 @@ fi
 cp ./_sing_inst_script.sh _pre_install.sh _post_install.sh _inst_dir 
 print_info "Running installation script" 1
 $_CONTAINER_EXEC ./_sing_inst_script.sh
+rm -f $PWD/_inst_dir/condarc_override
 
 chmod o+r -R _inst_dir/
 print_info "Creating sqfs image" 1 
