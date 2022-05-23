@@ -86,7 +86,11 @@ export ref=($(singularity exec test_container.sif sh -c 'echo $LD_LIBRARY_PATH' 
 export real=($(PIP_INSTALL_DIR/bin/_debug_exec sh -c 'echo $LD_LIBRARY_PATH' | tr ':' '\n' ))
 t_run "forall elementIn \"\${ref[@]}\" " "Container ld_library_path retained when wrapping"
 
+export PATH="$PATH:/some/extra1:/another/path"
+export ref=( $(echo "$PATH" | tr ':' '\n' ))
+export real=($(PIP_INSTALL_DIR_2/bin/_debug_exec sh -c 'echo $PATH' | tr ':' '\n' ))
+t_run "forall elementIn \"\${ref[@]}\" " "External path retained"
 
-
-
-
+export real=($(PIP_INSTALL_DIR/bin/_debug_exec sh -c 'echo $PATH' | tr ':' '\n' ))
+t_string=$( echo "$real" | grep "/some/extra1" )
+t_run "test -z $t_string " "External path removed when isolating"
