@@ -62,6 +62,8 @@ export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$SINGU
 
 else
     echo "_DIRS=(\$(/usr/bin/ls -1 / | /usr/bin/awk '!/dev/' | /usr/bin/sed 's/^/\//g' ))" >> _deploy/common.sh
+    echo "export SINGULARITYENV_PATH=\"\$SINGULARITYENV_PATH:\$OLD_PATH\"
+export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\"" >> _deploy/common.sh
 
 if [[ "${CW_EXCLUDED_MOUNT_POINTS+defined}" ]];then
     echo "
@@ -73,8 +75,6 @@ if [[ "${CW_EXCLUDED_MOUNT_POINTS+defined}" ]];then
 
 fi
 fi
-echo "export SINGULARITYENV_PATH=\"\$SINGULARITYENV_PATH:\$PATH\"
-export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\"" >> _deploy/common.sh
 
 echo "
 if [[ \"\$( cat /proc/self/mountinfo)\" == *\"singularity/mnt/session\"* ]];then
