@@ -3,6 +3,7 @@ import sys
 import os
 import random
 import string
+import pathlib
 
 colors={}
 colors["RED"]='\033[0;31m'
@@ -42,3 +43,10 @@ def expand_vars(path,rec=0):
 def name_generator(size=6, chars=string.ascii_uppercase + string.digits):
    return ''.join(random.choice(chars) for _ in range(size))
 
+
+def installation_in_PATH():
+    return [P for P in os.environ["PATH"].split(':') if is_installation(P) ]
+
+def is_installation(base_path):
+    markers=["bin","_bin","common.sh"]
+    return all( pathlib.Path(base_path+'/../'+m).exists() for m in markers )

@@ -92,6 +92,11 @@ fi
 chgrp $(stat -c "%G" $CW_INSTALLATION_PREFIX ) $CW_BUILD_TMPDIR
 chmod g+s $CW_BUILD_TMPDIR
 
+if [[ "$CW_INSTALLATION_PREFIX" = /* ]]; then
+   export _inst_path=$CW_INSTALLATION_PREFIX
+else
+   export _inst_path=$(realpath -s $PWD/$CW_INSTALLATION_PREFIX )
+fi
 
 $M_SCRIPT_DIR/../pre.sh || { print_err "Failed getting container image"; false ;}
 # Nothing to do if we are just wrapping a container
@@ -106,11 +111,6 @@ $M_SCRIPT_DIR/../post.sh || { print_err "Failed to move to install dir"; false ;
 test -f "$_usr_yaml" && rm "$_usr_yaml"
 end=`date +%s`
 print_info "Done, duration: $((end-start))s" 1
-if [[ "$CW_INSTALLATION_PREFIX" = /* ]]; then
-    _inst_path=$CW_INSTALLATION_PREFIX
-else
-    _inst_path=$(realpath -s $PWD/$CW_INSTALLATION_PREFIX )
-fi
 print_info "Program has been installed to $CW_INSTALLATION_PREFIX
 \tTo use add the bin folder to your path e.g:
 \texport PATH=\"$_inst_path/bin:\$PATH\"" 1

@@ -38,14 +38,20 @@ t_run "VE/bin/python -c 'import sys;sys.exit( sys.prefix == sys.base_prefix )'" 
 t_run "VE/bin/pip install requests" "pip works for a venv"
 t_run "VE/bin/python -c 'import requests;print(requests.__file__)' | grep -q VE " "Package is installed correctly to venv"
 
-
+mkdir fake
+mkdir fake/_bin
+mkdir fake/bin
+touch fake/common.sh
+export PATH=$PWD/fake/bin:$PATH
+t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt 2>&1 | grep Remove" "Fail on active installation"
+rm -rf fake
 
 export CW_BUILD_TMPDIR=/NOT_A_DIR
 t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt 2>&1 | grep -q 'Could not create build directory'" "Can not create build dir"
 export CW_BUILD_TMPDIR=A/B/C
 t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt 2>&1 | grep -q 'path is not absolute' " "Absolute Build dir"
 export CW_BUILD_TMPDIR=$PWD/A/B/C
-t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt " "Creates missing dirs"
+t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt" "Creates missing dirs"
 unset CW_BUILD_TMPDIR
 mkdir subdir 
 mkdir PIP_INSTALL_DIR_2
@@ -94,3 +100,5 @@ t_run "forall elementIn \"\${ref[@]}\" " "External path retained"
 export real=($(PIP_INSTALL_DIR/bin/_debug_exec sh -c 'echo $PATH' | tr ':' '\n' ))
 t_string=$( echo "$real" | grep "/some/extra1" )
 t_run "test -z $t_string " "External path removed when isolating"
+
+
