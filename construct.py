@@ -22,13 +22,13 @@ shared_conf=None
 user_conf=None
 full_conf={}
 
-
-
+    
 
 with open(sys.argv[1]) as shared_conf_file:
     shared_conf=yaml.safe_load(shared_conf_file)
 with open(sys.argv[2]) as user_conf_file:
     user_conf=yaml.safe_load(user_conf_file)
+
 
 for s in ["prepends","appends", "force"]:
     if s not in shared_conf or shared_conf[s] is None:
@@ -54,6 +54,12 @@ if os.getenv("CW_LOG_LEVEL"):
 if os.getenv("CW_BUILD_TMPDIR"):
     full_conf["build_tmpdir_base"]=os.getenv("CW_BUILD_TMPDIR")
 tmpdir_base=full_conf["build_tmpdir_base"]
+
+if "update_installation" in full_conf  and full_conf["update_installation"] == "no":
+    active_installations=installation_in_PATH()
+    if len(active_installations) > 0:
+        print_err(f"Remove {active_installations} from PATH before running the tool, otherwise the tool might not work correctly",True)
+        sys.exit(1) 
 
 
 try:
