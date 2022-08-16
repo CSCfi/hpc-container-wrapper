@@ -25,6 +25,19 @@ def print_err(txt,err=False):
             print("[ ERROR ] "+txt)
         else:
             print("["+colors["RED"]+" ERROR "+colors["NC"]+"] "+txt)
+def print_warn(txt,err=False):
+    if(err):
+        if not sys.stderr.isatty():
+            print("[ WARNING ] "+txt, file=sys.stderr)
+        else:
+            print("["+colors["YELLOW"]+" WARNING "+colors["NC"]+"] "+txt,file=sys.stderr)
+
+    else:
+        if not sys.stdout.isatty():
+            print("[ WARNING ] "+txt)
+        else:
+            print("["+colors["YELLOW"]+" WARNING "+colors["NC"]+"] "+txt)
+    
 
 def expand_vars(path,rec=0):
     if(rec > 10):

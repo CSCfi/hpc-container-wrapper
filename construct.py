@@ -55,11 +55,13 @@ if os.getenv("CW_BUILD_TMPDIR"):
     full_conf["build_tmpdir_base"]=os.getenv("CW_BUILD_TMPDIR")
 tmpdir_base=full_conf["build_tmpdir_base"]
 
-if "update_installation" in full_conf  and full_conf["update_installation"] == "no":
-    active_installations=installation_in_PATH()
-    if len(active_installations) > 0:
+active_installations=installation_in_PATH()
+if len(active_installations) > 0:
+    if "update_installation" in full_conf  and full_conf["update_installation"] == "no":
         print_err(f"Remove {active_installations} from PATH before running the tool, otherwise the tool might not work correctly",True)
         sys.exit(1) 
+    else:
+        print_warn(f"Found existing installation(s) {active_installations} in PATH. It's recommended to remove these from PATH when running the tool",True)
 
 
 try:
