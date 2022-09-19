@@ -117,7 +117,8 @@ Users will use commands under `bin`
     - Unset singularity envs if not actually inside a container (e.g srun called from container -> some SINGULARITY are still active) 
     - Extra symlink layer in `_bin` to tricks the likes of dask to generate valid executable paths
     - Copy venv definition when wrapping python venv
-    - Activates conda if a conda env is wrapped 
+    - Activates conda if a conda env is wrapped
+    - set executable argv0 to enable python virtual envs. 
 10. **post.sh**
     - Copy build files to final installatio file
     - Save used build files to <install_dir>/share
@@ -131,6 +132,16 @@ target installation folder! Files inside the the squashfs are set to
 world readable to allow copying when installations are updated by other
 that the original creator. Limit access by setting correct permissions on
 on the sqfs image itself. This behavior can be disabled by setting `CW_NO_FIX_PERM`
+
+**BASH MAGIC**
+
+```
+/usr/bin/singularity --silent exec -B $DIR/../$SQFS_IMAGE:$INSTALLATION_PATH:image-src=/ $DIR/../$CONTAINER_IMAGE  bash -c "eval \"\$(/CSC_CONTAINER/miniconda/bin/conda shell.bash hook )\"  && conda activate env1 &>/dev/null &&  exec -a $_O_SOURCE $DIR/python $( test $# -eq 0 || printf " %q" "$@" )"
+```
+
+- `exec -a` is there to enable creating virtual environments as otherwise the venv symlink -> tykky wrapper -> executable in container chain is broken and python does not consider itself to be a venv. 
+- `bash -c` is required when conda is involved as we have to initialize the environment for some commands to work properly. Also partially due to exec being a builtin instead of a binary. 
+- `$( test $# -eq 0 || printf " %q" "$@" )` without printf special characters will not be escaped correctly and the command will error out. printf will print an empty string '' if no arguments so we need to be quiet in that case.
 
 
 ## Implemented Frontends
