@@ -77,7 +77,7 @@ fi
 fi
 
 echo "
-if [[ \"\$( cat /proc/self/mountinfo)\" == *\"singularity/mnt/session\"* ]];then
+if [[ grep singularity/mnt/session /proc/self/mountinfo ]];then
     export _CW_IN_CONTAINER=Yes
 else
     unset _CW_IN_CONTAINER
