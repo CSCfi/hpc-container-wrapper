@@ -27,7 +27,7 @@ is a `conda-containerize` specific variable which point to the root of the conda
 
 ```
 mkdir Inst
-conda-containerize new --prefix Inst/ --post install_test.sh -w fftw_prog def.yml 
+conda-containerize new --prefix Inst/ --post install_prog.sh -w fftw_prog def.yml 
 ```
 
 After this we can now run our toy program 
