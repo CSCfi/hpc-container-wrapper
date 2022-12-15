@@ -127,8 +127,15 @@ _GENERATED_WRAPPERS=""
 mkdir _deploy/_bin
 
 print_info "Creating wrappers" 1
+# Just in case the container does not contain bash
+if [[ -z $($_CONTAINER_EXEC bash --version 2>/dev/null) ]] && [[ "$CW_ISOLATE" == "yes" ]] ;then
+    print_info "Using sh inside the container as bash was not found" 1
+   _default_cws="sh -c \""
+else
+   _default_cws="bash -c \""
+fi
 for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
-    _cws="bash -c \""
+    _cws="$_default_cws"
     _cwe="\$( test \$# -eq 0 || printf \" %q\" \"\$@\" )\""
     print_info "Generating wrappers for $wrapper_path" 2
     if $_CONTAINER_EXEC test -f $wrapper_path ; then
