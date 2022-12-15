@@ -20,6 +20,7 @@ parser_upd=add_upd_pars(subparsers)
 parser_upd.add_argument("-r","--requirements-file", type=lambda x: is_valid_file(parser, x),help="requirements file for pip")
 add_adv_pars(subparsers)
 parser_new.add_argument("--slim",action='store_true',help="Use minimal base python container")
+parser_new.add_argument("--system-site-packages",action='store_true',help="Enable system and user site packages for the created installation")
 
 ps=[parser_new,parser_upd]
 for p in ps:
@@ -42,6 +43,8 @@ if args.requirements_file:
     conf["installation_file_paths"]=[conf["requirements_file"]]
 
 if args.command == "new":
+    if args.system_site_packages:
+        conf["enable_site_packages"]="yes"
     if args.prefix:
         conf["installation_prefix"]=args.prefix
     conf["mode"]="venv"

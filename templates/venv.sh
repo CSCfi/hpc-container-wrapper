@@ -16,8 +16,16 @@ cd $CW_INSTALLATION_PATH
 python3 -m venv $CW_ENV_NAME
 print_info "Installing requirements file" 1
 source $CW_INSTALLATION_PATH/$CW_ENV_NAME/bin/activate
+if [[ ${CW_ENABLE_SITE_PACKAGES+defined} ]];then
+    print_info "Enabling system and user site packages" 1
+    _SP="--system-site-packages"
+else
+    print_info "Not enabling system and user site packages" 1
+    _SP=""
+fi
+
 if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
-    pip install --disable-pip-version-check -r "$( basename $CW_REQUIREMENTS_FILE)"  
+    pip install $_SP --disable-pip-version-check -r "$( basename $CW_REQUIREMENTS_FILE)"  
 fi
 cd $CW_WORKDIR
 print_info "Running user supplied commands" 1

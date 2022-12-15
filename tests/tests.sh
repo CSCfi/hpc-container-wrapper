@@ -96,6 +96,7 @@ t_run "conda-containerize update CONDA_INSTALL_DIR --post-install post.sh" "Upda
 t_run "CONDA_INSTALL_DIR/bin/python -c 'import requests'" "Package added by update is there"
 rm -fr CONDA_INSTALL_DIR && mkdir CONDA_INSTALL_DIR
 t_run "conda-containerize new explicit_env.txt --prefix CONDA_INSTALL_DIR &>/dev/null" "Explicit env file works"
+
 rm -fr CONDA_INSTALL_DIR && mkdir CONDA_INSTALL_DIR
 t_run "conda-containerize new dask_env.yaml --prefix CONDA_INSTALL_DIR &>/dev/null" "yaml ending is also supported"
 OLD_PATH=$PATH

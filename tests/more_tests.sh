@@ -22,6 +22,7 @@ fi
 export CW_GLOBAL_YAML=$( readlink -f my_config.yaml)
 mkdir PIP_INSTALL_DIR
 t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt" "Basic pip installation ok"
+t_run "PIP_INSTALL_DIR/bin/python -c 'import site;import sys;sys.exit(site.ENABLE_USER_SITE == False )'" "Site packages disabled by default"
 t_run "PIP_INSTALL_DIR/bin/python -c 'import yaml'" "Required package is present"
 t_run "[[ -L PIP_INSTALL_DIR/container.sif  ]]" "Container is symlink"
 c1=$(readlink -f test_container.sif )
