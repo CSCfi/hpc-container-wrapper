@@ -8,7 +8,7 @@ defaults:
     installation_path: "/CSC_CONTAINER"
     # if this is not a thing which exist
     # I will do a singularity pull
-    container_src: 'library://centos:7.9'
+    container_src: 'docker://redhat/ubi8:8.6' 
     # name of the container image when on disk
     container_image: container.sif 
     sqfs_image: img.sqfs 
@@ -26,7 +26,7 @@ defaults:
     create_wrappers: yes
     wrap_all: no
     num_cpus: 8
-    sqfs_options: "-noappend"
+    sqfs_options: "-noappend -mem 10000M"
     add_ld: yes
 force:
     # I will create some random dir under here 

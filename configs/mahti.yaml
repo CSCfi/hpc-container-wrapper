@@ -9,7 +9,7 @@ defaults:
     installation_path: "/CSC_CONTAINER"
     # if this is not a thing which exist
     # I will do a singularity pull
-    container_src: 'library://centos:7.9'
+    container_src: 'docker://redhat/ubi8:8.6' 
     # name of the container image when on disk
     container_image: container.sif 
     sqfs_image: img.sqfs 

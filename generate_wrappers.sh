@@ -77,11 +77,12 @@ fi
 fi
 
 echo "
-if [[ grep singularity/mnt/session /proc/self/mountinfo ]];then
+if  grep -q 'singularity/mnt/session\|apptainer/mnt/session' /proc/self/mountinfo ;then
     export _CW_IN_CONTAINER=Yes
 else
     unset _CW_IN_CONTAINER
 fi
+
 if [[ ! \${_CW_IN_CONTAINER+defined} && \${SINGULARITY_NAME+defined} ]] ;then
     unset SINGULARITY_NAME
     unset SINGULARITY_COMMAND
@@ -89,6 +90,13 @@ if [[ ! \${_CW_IN_CONTAINER+defined} && \${SINGULARITY_NAME+defined} ]] ;then
     unset SINGULARITY_ENVIRONMENT
     unset SINGULARITY_BIND
     unset SINGULARITY_CONTAINER
+
+    unset APPTAINER_NAME
+    unset APPTAINER_COMMAND
+    unset APPTAINER_NAME
+    unset APPTAINER_ENVIRONMENT
+    unset APPTAINER_BIND
+    unset APPTAINER_CONTAINER
 fi
 " >> _deploy/common.sh
 echo "
