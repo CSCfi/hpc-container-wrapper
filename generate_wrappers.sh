@@ -21,8 +21,8 @@ if [[ "$CW_MODE" == "wrapcont" ]];then
 else
     _CONTAINER_EXEC="/usr/bin/singularity --silent exec -B _deploy/$CW_SQFS_IMAGE:$CW_INSTALLATION_PATH:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
     echo "SQFS_IMAGE=$CW_SQFS_IMAGE" >> _deploy/common.sh
-    _RUN_CMD="/usr/bin/singularity --silent exec -B \$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/ \$DIR/../\$CONTAINER_IMAGE"
-    _SHELL_CMD="/usr/bin/singularity --silent shell -B \$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/ \$DIR/../\$CONTAINER_IMAGE"
+    _RUN_CMD="/usr/bin/singularity --silent exec  \$DIR/../\$CONTAINER_IMAGE"
+    _SHELL_CMD="/usr/bin/singularity --silent shell \$DIR/../\$CONTAINER_IMAGE"
 fi
 
 # Need to unset the path, otherwise we might be stuck in a nasty loop
@@ -115,7 +115,7 @@ if [[ \"\${TMPDIR+defined}\" ]];then
     SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$TMPDIR,\$TMPDIR:/tmp\"
 fi
 SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$( /usr/bin/readlink -f \$_C_DIR/_bin):\$( /usr/bin/readlink -f \$_C_DIR/bin)\"
-export SINGULARITY_BIND" >> _deploy/common.sh
+export SINGULARITY_BIND=\$SINGULARITY_BIND:\$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/" >> _deploy/common.sh
 
 # The above readlink is only needed as a workaround for Lumi
 # where some folders are symlinked to lustre mount points
