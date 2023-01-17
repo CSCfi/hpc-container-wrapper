@@ -180,7 +180,9 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
      # The test is there as printf returns '' if $@ is empty
      # passing '' is not wanted behavior 
      print_info "Checking if conda installation" 3
+     unset CONDA_CMD
      if $_CONTAINER_EXEC test -f $wrapper_path/../../../bin/conda ; then 
+         export CONDA_CMD=1
          print_info "Inserting conda activation into wrappers" 3
          env_name=$(basename $(realpath -m $wrapper_path/../ ))
          conda_path=$(realpath -m $wrapper_path/../../../bin/conda)
@@ -203,7 +205,9 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         echo "
         if [[ \${_CW_IN_CONTAINER+defined} ]];then
             exec -a \$_O_SOURCE \$DIR/../_bin/$target \"\$@\"
-        else
+        else" >> _deploy/bin/$target
+        if [[ ${CONDA_CMD+defined} ]];then
+        echo "
             if [[ -e \$(/usr/bin/dirname \$_O_SOURCE )/../pyvenv.cfg && ! \${CW_FORCE_CONDA_ACTIVATE+defined} ]];then
                 export PATH=\"\$OLD_PATH\"
                 $_RUN_CMD $_default_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
@@ -211,6 +215,12 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
                 export PATH=\"\$OLD_PATH\"
                 $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
             fi
+        fi
+        " >>  _deploy/bin/$target
+        else 
+        echo"
+            export PATH=\"\$OLD_PATH\"
+            $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
         fi" >> _deploy/bin/$target
         chmod +x _deploy/bin/$target
         if [[ "$target" == "python"  ]];then
