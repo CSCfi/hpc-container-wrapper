@@ -78,8 +78,8 @@ fi
 echo "
 if  grep -q 'singularity/mnt/session\|apptainer/mnt/session' /proc/self/mountinfo ;then
     export _CW_IN_CONTAINER=Yes
-    if [[ ! \"\$SINGULARITY_CONTAINER\" == \"\$_C_DIR/\$CONTAINER_IMAGE\"  ]];then
-        echo \"[ ERROR ] wrapper called from another container. Is \$SINGULARITY_CONTAINER, should be \$_C_DIR/\$CONTAINER_IMAGE \" 
+    if [[ ! \"\$( stat -c '%i' \$SINGULARITY_CONTAINER)\" == \"\$( stat -c '%i' \$_C_DIR/\$CONTAINER_IMAGE)\"  ]];then
+        echo \"[ ERROR ] wrapper called from another container. Is \$SINGULARITY_CONTAINER, should be \$_C_DIR/\$CONTAINER_IMAGE \"
         exit 1
     fi
 else
