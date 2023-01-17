@@ -203,25 +203,25 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         echo "$_PRE_COMMAND" >> _deploy/bin/$target
         ln -s $wrapper_path/$target _deploy/_bin/$target
         echo "
-        if [[ \${_CW_IN_CONTAINER+defined} ]];then
-            exec -a \$_O_SOURCE \$DIR/../_bin/$target \"\$@\"
-        else" >> _deploy/bin/$target
+if [[ \${_CW_IN_CONTAINER+defined} ]];then
+    exec -a \$_O_SOURCE \$DIR/../_bin/$target \"\$@\"
+else" >> _deploy/bin/$target
         if [[ ${CONDA_CMD+defined} ]];then
         echo "
-            if [[ -e \$(/usr/bin/dirname \$_O_SOURCE )/../pyvenv.cfg && ! \${CW_FORCE_CONDA_ACTIVATE+defined} ]];then
-                export PATH=\"\$OLD_PATH\"
-                $_RUN_CMD $_default_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
-            else
-                export PATH=\"\$OLD_PATH\"
-                $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
-            fi
-        fi
+    if [[ -e \$(/usr/bin/dirname \$_O_SOURCE )/../pyvenv.cfg && ! \${CW_FORCE_CONDA_ACTIVATE+defined} ]];then
+        export PATH=\"\$OLD_PATH\"
+        $_RUN_CMD $_default_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
+    else
+        export PATH=\"\$OLD_PATH\"
+        $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
+    fi
+fi
         " >>  _deploy/bin/$target
         else 
-        echo"
-            export PATH=\"\$OLD_PATH\"
-            $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
-        fi" >> _deploy/bin/$target
+        echo "
+    export PATH=\"\$OLD_PATH\"
+    $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
+fi" >> _deploy/bin/$target
         fi
         chmod +x _deploy/bin/$target
         if [[ "$target" == "python"  ]];then
