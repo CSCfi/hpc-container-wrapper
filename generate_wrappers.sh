@@ -222,6 +222,7 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
             export PATH=\"\$OLD_PATH\"
             $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
         fi" >> _deploy/bin/$target
+        fi
         chmod +x _deploy/bin/$target
         if [[ "$target" == "python"  ]];then
             print_info "Found python, checking if venv" 2
