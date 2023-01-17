@@ -199,10 +199,15 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         ln -s $wrapper_path/$target _deploy/_bin/$target
         echo "
         if [[ \${_CW_IN_CONTAINER+defined} ]];then
-            exec -a \$_O_SOURCE \$DIR/$target \"\$@\"
+            exec -a \$_O_SOURCE \$DIR/../_bin/$target \"\$@\"
         else
-            export PATH=\"\$OLD_PATH\"
-            $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
+            if [[ -e $(/usr/bin/dirname \$_O_SOURCE )/../pyvenv.cfg ]];then
+                export PATH=\"\$OLD_PATH\"
+                $_RUN_CMD exec -a \$_O_SOURCE \$DIR/$target $_cwe  
+            else
+                export PATH=\"\$OLD_PATH\"
+                $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
+            fi
         fi" >> _deploy/bin/$target
         chmod +x _deploy/bin/$target
         if [[ "$target" == "python"  ]];then
