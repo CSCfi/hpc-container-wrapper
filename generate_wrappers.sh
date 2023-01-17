@@ -203,6 +203,7 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         ln -s $wrapper_path/$target _deploy/_bin/$target
         echo "
 if [[ \${_CW_IN_CONTAINER+defined} ]];then
+    export PATH=\"\$OLD_PATH\"
     exec -a \$_O_SOURCE \$DIR/../_bin/$target \"\$@\"
 else" >> _deploy/bin/$target
         if [[ ${CONDA_CMD+defined} ]];then
