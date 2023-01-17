@@ -44,7 +44,6 @@ _PRE_COMMAND="source \$DIR/../common.sh"
 echo "_C_DIR=\"\$( cd \"\$( dirname \"\${BASH_SOURCE[0]}\" )\" >/dev/null 2>&1 && pwd )\"
 CONTAINER_IMAGE=$CW_CONTAINER_IMAGE
 INSTALLATION_PATH=$CW_INSTALLATION_PATH
-export SINGULARITYENV_PATH=\"\$_C_DIR/bin:\$SINGULARITYENV_PATH\"
 ">> _deploy/common.sh
 if [[ ${CW_WRAPPER_LD_LIBRARY_PATHS+defined} ]]; then
     echo "export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:$(echo "${CW_WRAPPER_LD_LIBRARY_PATHS[@]}" | tr ' ' ':' )\"">> _deploy/common.sh
@@ -62,7 +61,7 @@ export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$SINGU
 
 else
     echo "_DIRS=(\$(/usr/bin/ls -1 / | /usr/bin/awk '!/dev/' | /usr/bin/sed 's/^/\//g' ))" >> _deploy/common.sh
-    echo "export SINGULARITYENV_PATH=\"\$SINGULARITYENV_PATH:\$OLD_PATH\"
+    echo "export SINGULARITYENV_PATH=\"\$OLD_PATH\"
 export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\"" >> _deploy/common.sh
 
 if [[ "${CW_EXCLUDED_MOUNT_POINTS+defined}" ]];then
