@@ -201,7 +201,7 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         if [[ \${_CW_IN_CONTAINER+defined} ]];then
             exec -a \$_O_SOURCE \$DIR/../_bin/$target \"\$@\"
         else
-            if [[ -e $(/usr/bin/dirname \$_O_SOURCE )/../pyvenv.cfg && ! ${CW_FORCE_CONDA_ACTIVATE+defined} ]];then
+            if [[ -e \$(/usr/bin/dirname \$_O_SOURCE )/../pyvenv.cfg && ! \${CW_FORCE_CONDA_ACTIVATE+defined} ]];then
                 export PATH=\"\$OLD_PATH\"
                 $_RUN_CMD exec -a \$_O_SOURCE \$DIR/$target $_cwe  
             else
