@@ -114,9 +114,12 @@ done
 if [[ \"\${TMPDIR+defined}\" ]];then
     SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$TMPDIR,\$TMPDIR:/tmp\"
 fi
-SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$( /usr/bin/readlink -f \$_C_DIR/_bin):\$( /usr/bin/readlink -f \$_C_DIR/bin)\"
-export SINGULARITY_BIND=\$SINGULARITY_BIND,\$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/" >> _deploy/common.sh
-
+SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$( /usr/bin/readlink -f \$_C_DIR/_bin):\$( /usr/bin/readlink -f \$_C_DIR/bin)\"" >> _deploy/common.sh
+if [[ "$CW_MODE" == "wrapcont" ]];then
+    echo "export SINGULARITY_BIND" >> _deploy/common.sh
+else
+    echo "export SINGULARITY_BIND=\$SINGULARITY_BIND,\$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/" >> _deploy/common.sh
+fi
 # The above readlink is only needed as a workaround for Lumi
 # where some folders are symlinked to lustre mount points
 
