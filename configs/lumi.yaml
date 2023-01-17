@@ -9,7 +9,7 @@ defaults:
     installation_path: "/LUMI_CONTAINER"
     # if this is not a thing which exist
     # I will do a singularity pull
-    container_src: 'docker://opensuse/leap:15.2'
+    container_src: 'docker://opensuse/leap:15.3'
     # name of the container image when on disk
     container_image: container.sif 
     sqfs_image: img.sqfs 
