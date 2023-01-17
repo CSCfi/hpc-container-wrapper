@@ -231,6 +231,9 @@ Don't delete build files when failing.
 `CW_LOG_LEVEL`
 How verbosely to report program actions
 
+`CW_FORCE_CONDA_ACTIVATE`
+Force conda to be activated even if called through a virtual environment. 
+
 - 0 only error
 - 1 only warnings
 - 2 general (default)
