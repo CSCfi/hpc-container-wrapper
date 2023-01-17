@@ -51,7 +51,8 @@ def expand_vars(path,rec=0):
         return expand_vars(g.replace(f"${var}",''),rec+1)
     return g
 
-
+def has_apptainer():
+    return shutil.which("apptainer") != ""
 
 def name_generator(size=6, chars=string.ascii_uppercase + string.digits):
    return ''.join(random.choice(chars) for _ in range(size))
