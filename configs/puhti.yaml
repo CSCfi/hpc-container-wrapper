@@ -5,7 +5,10 @@ defaults:
     env_name: env1 
     conda_version: latest
     installation_prefix: $PWD
-    installation_path: "/CSC_CONTAINER"
+    installation_path: "/PUHTI_TYKKY"
+    # Adds a random hash to the end of the path so
+    # That multiple installations can be active at the same time
+    composable: true
     # if this is not a thing which exist
     # I will do a singularity pull
     container_src: 'docker://redhat/ubi8:8.6' 

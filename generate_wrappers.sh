@@ -50,7 +50,6 @@ if [[ ${CW_WRAPPER_LD_LIBRARY_PATHS+defined} ]]; then
 fi
 
 if [[ "$CW_ISOLATE" == "yes" ]]; then
-    # 
     echo "_DIRS=(${CW_MOUNT_POINTS[@]} \$_C_DIR )" >> _deploy/common.sh
 echo "
 SINGULARITYENV_DEFAULT_PATH=\"$($_CONTAINER_EXEC sh -c 'echo $PATH')\"
@@ -78,12 +77,13 @@ fi
 echo "
 if  grep -q 'singularity/mnt/session\|apptainer/mnt/session' /proc/self/mountinfo ;then
     export _CW_IN_CONTAINER=Yes
-    if [[ ! \"\$( stat -c '%i' \$SINGULARITY_CONTAINER)\" == \"\$( stat -c '%i' \$_C_DIR/\$CONTAINER_IMAGE)\"  ]];then
+    if [[ \"\$_CW_IS_ISOLATED\" == \"yes\" || \"\$CW_ISOLATE\" == \"\$yes\" || ! -z \${CW_NO_COMPOSE+defined} ]];then
         echo \"[ ERROR ] wrapper called from another container. Is \$SINGULARITY_CONTAINER, should be \$_C_DIR/\$CONTAINER_IMAGE \"
-        exit 1
+        exit 1 
     fi
 else
     unset _CW_IN_CONTAINER
+    export _CW_IS_ISOLATED=$CW_ISOLATE
 fi
 
 if [[ ! \${_CW_IN_CONTAINER+defined} && \${SINGULARITY_NAME+defined} ]] ;then
@@ -114,13 +114,16 @@ if [[ \"\${TMPDIR+defined}\" ]];then
     SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$TMPDIR,\$TMPDIR:/tmp\"
 fi
 SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$( /usr/bin/readlink -f \$_C_DIR/_bin):\$( /usr/bin/readlink -f \$_C_DIR/bin)\"" >> _deploy/common.sh
+# The above readlink is only needed as a workaround for Lumi
+# where some folders are symlinked to lustre mount points
 if [[ "$CW_MODE" == "wrapcont" ]];then
     echo "export SINGULARITY_BIND" >> _deploy/common.sh
 else
     echo "export SINGULARITY_BIND=\$SINGULARITY_BIND,\$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/" >> _deploy/common.sh
 fi
-# The above readlink is only needed as a workaround for Lumi
-# where some folders are symlinked to lustre mount points
+echo "if [[ \${CW_EXTRA_BIND_MOUNTS+defined} ]]; then
+    export SINGULARITY_BIND=\$SINGULARITY_BIND:\$CW_EXTRA_BIND_MOUNTS
+fi" >> _deploy/common.sh
 
 
 _SING_LIB_PATHS=()

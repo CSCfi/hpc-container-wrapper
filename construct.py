@@ -48,6 +48,9 @@ for k,v in shared_conf["appends"].items():
         full_conf[k] = v
 full_conf.update(shared_conf["force"])
 
+if full_conf["composable"]:
+    full_conf["installation_path"]=full_conf["installation_path"]+"_"+name_generator(7)
+
 if os.getenv("CW_LOG_LEVEL"):
     full_conf["log_level"]=os.getenv("CW_LOG_LEVEL")
 
