@@ -57,7 +57,6 @@ def has_apptainer():
 def name_generator(size=6, chars=string.ascii_uppercase + string.digits):
    return ''.join(random.choice(chars) for _ in range(size))
 
-
 def installation_in_PATH():
     return [P for P in os.environ["PATH"].split(':') if is_installation(P) ]
 
