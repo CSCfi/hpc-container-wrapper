@@ -18,6 +18,10 @@ fi
             mv $CW_BUILD_TMPDIR/_inst_dir/$( basename $_fil ) $CW_INSTALLATION_PREFIX/share 
         done
     fi
+    echo "tag: $(git -C $SCRIPT_DIR describe --tags)" >> $CW_INSTALLATION_PREFIX/share/VERSION.yml
+    echo "commit: $(git -C $SCRIPT_DIR rev-parse --short HEAD )" >>  $CW_INSTALLATION_PREFIX/share/VERSION.yml
+    echo "build-time: $(date)" >>  $CW_INSTALLATION_PREFIX/share/VERSION.yml 
+    
     cp $CW_BUILD_TMPDIR/conf.yaml $CW_INSTALLATION_PREFIX/share
 
 rm -rf $CW_BUILD_TMPDIR
