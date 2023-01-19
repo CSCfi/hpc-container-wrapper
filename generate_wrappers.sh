@@ -77,10 +77,15 @@ fi
 echo "
 if  grep -q 'singularity/mnt/session\|apptainer/mnt/session' /proc/self/mountinfo ;then
     export _CW_IN_CONTAINER=Yes
-    if [[ \"\$_CW_IS_ISOLATED\" == \"yes\" || \"$CW_ISOLATE\" == \"yes\" || ! -z \${CW_NO_COMPOSE+defined} ]];then
+    if [[ \"$CW_ISOLATE\" == \"yes\" && ! \"\$( stat -c '%i' \$SINGULARITY_CONTAINER)\" == \"\$( stat -c '%i' \$_C_DIR/\$CONTAINER_IMAGE)\" ]]; then
         echo \"[ ERROR ] wrapper called from another container. Is \$SINGULARITY_CONTAINER, should be \$_C_DIR/\$CONTAINER_IMAGE \"
         exit 1 
     fi
+    if [[ ! -e $CW_INSTALLATION_PATH ]]; then
+        echo \"[ ERROR ] Installation for \$_C_DIR/ is not mounted. Wrapper called from another container?\" 
+        exit 1
+    fi
+    
 else
     unset _CW_IN_CONTAINER
     export _CW_IS_ISOLATED=$CW_ISOLATE
