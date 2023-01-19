@@ -127,7 +127,7 @@ else
     echo "export SINGULARITY_BIND=\$SINGULARITY_BIND,\$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/" >> _deploy/common.sh
 fi
 echo "if [[ \${CW_EXTRA_BIND_MOUNTS+defined} ]]; then
-    export SINGULARITY_BIND=\$SINGULARITY_BIND:\$CW_EXTRA_BIND_MOUNTS
+    export SINGULARITY_BIND=\$SINGULARITY_BIND:\$(echo \$CW_EXTRA_BIND_MOUNTS |  sed \"s@\$_C_DIR/\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/@@g\")
 fi" >> _deploy/common.sh
 
 
@@ -216,7 +216,7 @@ if [[ \${_CW_IN_CONTAINER+defined} ]];then
 else" >> _deploy/bin/$target
         if [[ ${CONDA_CMD+defined} ]];then
         echo "
-    if [[ -e \$(/usr/bin/dirname \$_O_SOURCE )/../pyvenv.cfg && ! \${CW_FORCE_CONDA_ACTIVATE+defined} ]];then
+        if [[ ( -e \$(/usr/bin/dirname \$_O_SOURCE )/../pyvenv.cfg && ! \${CW_FORCE_CONDA_ACTIVATE+defined} ) || \${CW_NO_CONDA_ACTIVATE+defined} ]];then
         export PATH=\"\$OLD_PATH\"
         $_RUN_CMD $_default_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
     else
