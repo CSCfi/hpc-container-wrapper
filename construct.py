@@ -48,8 +48,11 @@ for k,v in shared_conf["appends"].items():
         full_conf[k] = v
 full_conf.update(shared_conf["force"])
 
-if full_conf["composable"] and "update_installation" in full_conf  and full_conf["update_installation"] == "no":
+if (full_conf["composable"] and ("update_installation" in full_conf  and full_conf["update_installation"] == "no") and "mask_wrap_install" not in full_conf ):
     full_conf["installation_path"]=full_conf["installation_path"]+"_"+name_generator(7,string.ascii_letters + string.digits)
+
+if "wrapper_paths" in full_conf:
+    full_conf["wrapper_paths"] = [o if o[0]=="/" else full_conf["installation_path"] + "/" + o for o in full_conf["wrapper_paths"] ]
 
 if os.getenv("CW_LOG_LEVEL"):
     full_conf["log_level"]=os.getenv("CW_LOG_LEVEL")

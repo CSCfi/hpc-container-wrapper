@@ -126,8 +126,8 @@ if [[ "$CW_MODE" == "wrapcont" ]];then
 else
     echo "export SINGULARITY_BIND=\$SINGULARITY_BIND,\$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/" >> _deploy/common.sh
 fi
-echo "if [[ \${CW_EXTRA_BIND_MOUNTS+defined} ]]; then
-    export SINGULARITY_BIND=\$SINGULARITY_BIND:\$(echo \$CW_EXTRA_BIND_MOUNTS |  sed \"s@\$_C_DIR/\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/@@g\")
+echo "if [[ \${CW_EXTRA_BIND_MOUNTS+defined} && \"$CW_ISOLATE\" == \"no\" ]]; then
+    export SINGULARITY_BIND=\$SINGULARITY_BIND,\$(echo \$CW_EXTRA_BIND_MOUNTS |  sed \"s@\$_C_DIR/\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/@@g\")
 fi" >> _deploy/common.sh
 
 

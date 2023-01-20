@@ -40,6 +40,7 @@ if args.mask:
     conf["installation_path"]=str(pathlib.Path(args.dir).resolve())
     if not has_apptainer():
         conf["excluded_mount_points"]="/"+conf["installation_path"].split('/')[1]
+    conf["mask_wrap_install"] = True
 
 if args.prefix:
     conf["installation_prefix"]=args.prefix

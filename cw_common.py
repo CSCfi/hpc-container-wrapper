@@ -4,6 +4,8 @@ import os
 import random
 import string
 import pathlib
+import sys
+import shutil
 
 colors={}
 colors["RED"]='\033[0;31m'
