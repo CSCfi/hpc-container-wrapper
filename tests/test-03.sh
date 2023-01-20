@@ -3,37 +3,37 @@ SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/setup.sh
 # Test are run in current directory
 
-#rm -fr T_TEST_DIR
-#mkdir T_TEST_DIR
+rm -fr T_TEST_DIR
+mkdir T_TEST_DIR
 cd T_TEST_DIR
-#mkdir Gdal
-#mkdir S
-#echo 'channels:
-#  - conda-forge
-#  - bioconda
-#dependencies:
-#  - python>=3.10
-#  - snakemake
-#' > env2.yml
-#echo '
-#channels:
-#  - conda-forge
-#dependencies:
-#  - python>=3.10
-#  - gdal
-#' > env.yml
-#echo 'rule all:
-#	input: "out.txt"
-#rule ghelp:
-#    output: "out.txt"
-#    shell:
-#        """
-#        gdaladdo --help-general | grep -q "Generic GDAL utility command options" > out.txt
-#        """
-#' > Snakefile
-#
-#t_run "conda-containerize new --mamba env2.yml --prefix S" "mamba works" 
-#t_run "conda-containerize new --mamba env.yml --prefix Gdal" "gdal installed"
+mkdir Gdal
+mkdir S
+echo 'channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.10
+  - snakemake
+' > env2.yml
+echo '
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - gdal
+' > env.yml
+echo 'rule all:
+	input: "out.txt"
+rule ghelp:
+    output: "out.txt"
+    shell:
+        """
+        gdaladdo --help-general | grep -q "Generic GDAL utility command options" > out.txt
+        """
+' > Snakefile
+
+t_run "conda-containerize new --mamba env2.yml --prefix S" "mamba works" 
+t_run "conda-containerize new --mamba env.yml --prefix Gdal" "gdal installed"
 export OPATH=$PATH
 export PATH=$PWD/Gdal/bin:$PATH
 export PATH=$PWD/S/bin:$PATH
