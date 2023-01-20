@@ -69,7 +69,7 @@ def parse_wrapper(conf,g_conf,a,req_abs):
                 print_err("Only absolute paths are accepted for --wrapper-paths/-w")
                 sys.exit(1)
             else:
-                conf["wrapper_paths"].append(ip+"/"+p)
+                conf["wrapper_paths"].append(p)
 
 def get_old_conf(d,conf):
     old_conf={}

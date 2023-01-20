@@ -224,9 +224,14 @@ These can be set before starting the tool
 `CW_GLOBAL_YAML`
 path to config to use
 
+`CW_ENABLE_CONDARC`
+enable user condarc during installation
 
 `CW_DEBUG_KEEP_FILES`
 Don't delete build files when failing. 
+
+`CW_FORCE_CONDA_ACTIVATE`
+Force conda to be activated even if called through a virtual environment. 
 
 `CW_LOG_LEVEL`
 How verbosely to report program actions
@@ -247,7 +252,8 @@ ordering within both matter! -> nested bind mounts possible.
 Note that while loop devices can be mounted on bind mounts,
 any extra bind mounts will be applied after extra loop device (image mounts) 
 so to mask dirs on disk with an image mount, the path can not be bind mounted.
-(exception is the default $HOME mount, which is applied before loop device mounts)
+(exception is a default $HOME mount, which is applied before loop device mounts).
+Note that this has been fixed in apptainer and you can now apply image mounts over bind mounts. 
 
 
 ## Convoluted path modifications in py scripts

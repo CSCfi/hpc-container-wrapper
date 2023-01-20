@@ -6,10 +6,13 @@ defaults:
     env_name: env1 
     conda_version: latest
     installation_prefix: $PWD
-    installation_path: "/LUMI_CONTAINER"
+    installation_path: "/LUMI_TYKKY"
+    # Adds a random hash to the end of the path so
+    # That multiple installations can be active at the same time
+    composable: true
     # if this is not a thing which exist
     # I will do a singularity pull
-    container_src: 'docker://opensuse/leap:15.2'
+    container_src: 'docker://opensuse/leap:15.3'
     # name of the container image when on disk
     container_image: container.sif 
     sqfs_image: img.sqfs 

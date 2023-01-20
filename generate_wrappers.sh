@@ -21,8 +21,8 @@ if [[ "$CW_MODE" == "wrapcont" ]];then
 else
     _CONTAINER_EXEC="/usr/bin/singularity --silent exec -B _deploy/$CW_SQFS_IMAGE:$CW_INSTALLATION_PATH:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
     echo "SQFS_IMAGE=$CW_SQFS_IMAGE" >> _deploy/common.sh
-    _RUN_CMD="/usr/bin/singularity --silent exec -B \$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/ \$DIR/../\$CONTAINER_IMAGE"
-    _SHELL_CMD="/usr/bin/singularity --silent shell -B \$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/ \$DIR/../\$CONTAINER_IMAGE"
+    _RUN_CMD="/usr/bin/singularity --silent exec  \$DIR/../\$CONTAINER_IMAGE"
+    _SHELL_CMD="/usr/bin/singularity --silent shell \$DIR/../\$CONTAINER_IMAGE"
 fi
 
 # Need to unset the path, otherwise we might be stuck in a nasty loop
@@ -44,14 +44,12 @@ _PRE_COMMAND="source \$DIR/../common.sh"
 echo "_C_DIR=\"\$( cd \"\$( dirname \"\${BASH_SOURCE[0]}\" )\" >/dev/null 2>&1 && pwd )\"
 CONTAINER_IMAGE=$CW_CONTAINER_IMAGE
 INSTALLATION_PATH=$CW_INSTALLATION_PATH
-export SINGULARITYENV_PATH=\"\$_C_DIR/bin:\$SINGULARITYENV_PATH\"
 ">> _deploy/common.sh
 if [[ ${CW_WRAPPER_LD_LIBRARY_PATHS+defined} ]]; then
     echo "export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:$(echo "${CW_WRAPPER_LD_LIBRARY_PATHS[@]}" | tr ' ' ':' )\"">> _deploy/common.sh
 fi
 
 if [[ "$CW_ISOLATE" == "yes" ]]; then
-    # 
     echo "_DIRS=(${CW_MOUNT_POINTS[@]} \$_C_DIR )" >> _deploy/common.sh
 echo "
 SINGULARITYENV_DEFAULT_PATH=\"$($_CONTAINER_EXEC sh -c 'echo $PATH')\"
@@ -62,7 +60,7 @@ export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$SINGU
 
 else
     echo "_DIRS=(\$(/usr/bin/ls -1 / | /usr/bin/awk '!/dev/' | /usr/bin/sed 's/^/\//g' ))" >> _deploy/common.sh
-    echo "export SINGULARITYENV_PATH=\"\$SINGULARITYENV_PATH:\$OLD_PATH\"
+    echo "export SINGULARITYENV_PATH=\"\$OLD_PATH\"
 export SINGULARITYENV_LD_LIBRARY_PATH=\"\$SINGULARITYENV_LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\"" >> _deploy/common.sh
 
 if [[ "${CW_EXCLUDED_MOUNT_POINTS+defined}" ]];then
@@ -79,12 +77,18 @@ fi
 echo "
 if  grep -q 'singularity/mnt/session\|apptainer/mnt/session' /proc/self/mountinfo ;then
     export _CW_IN_CONTAINER=Yes
-    if [[ ! \"\$SINGULARITY_CONTAINER\" == \"\$_C_DIR/\$CONTAINER_IMAGE\"  ]];then
-        echo \"[ ERROR ] wrapper called from another container. Is \$SINGULARITY_CONTAINER, should be \$_C_DIR/\$CONTAINER_IMAGE \" 
+    if [[ \"$CW_ISOLATE\" == \"yes\" && ! \"\$( stat -c '%i' \$SINGULARITY_CONTAINER)\" == \"\$( stat -c '%i' \$_C_DIR/\$CONTAINER_IMAGE)\" ]]; then
+        echo \"[ ERROR ] wrapper called from another container. Is \$SINGULARITY_CONTAINER, should be \$_C_DIR/\$CONTAINER_IMAGE \"
+        exit 1 
+    fi
+    if [[ ! -e $CW_INSTALLATION_PATH ]]; then
+        echo \"[ ERROR ] Installation for \$_C_DIR/ is not mounted. Wrapper called from another container?\" 
         exit 1
     fi
+    
 else
     unset _CW_IN_CONTAINER
+    export _CW_IS_ISOLATED=$CW_ISOLATE
 fi
 
 if [[ ! \${_CW_IN_CONTAINER+defined} && \${SINGULARITY_NAME+defined} ]] ;then
@@ -114,11 +118,17 @@ done
 if [[ \"\${TMPDIR+defined}\" ]];then
     SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$TMPDIR,\$TMPDIR:/tmp\"
 fi
-SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$( /usr/bin/readlink -f \$_C_DIR/_bin):\$( /usr/bin/readlink -f \$_C_DIR/bin)\"
-export SINGULARITY_BIND" >> _deploy/common.sh
-
+SINGULARITY_BIND=\"\$SINGULARITY_BIND,\$( /usr/bin/readlink -f \$_C_DIR/_bin):\$( /usr/bin/readlink -f \$_C_DIR/bin)\"" >> _deploy/common.sh
 # The above readlink is only needed as a workaround for Lumi
 # where some folders are symlinked to lustre mount points
+if [[ "$CW_MODE" == "wrapcont" ]];then
+    echo "export SINGULARITY_BIND" >> _deploy/common.sh
+else
+    echo "export SINGULARITY_BIND=\$SINGULARITY_BIND,\$DIR/../\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/" >> _deploy/common.sh
+fi
+echo "if [[ \${CW_EXTRA_BIND_MOUNTS+defined} && \"$CW_ISOLATE\" == \"no\" ]]; then
+    export SINGULARITY_BIND=\$SINGULARITY_BIND,\$(echo \$CW_EXTRA_BIND_MOUNTS |  sed \"s@\$_C_DIR/\$SQFS_IMAGE:\$INSTALLATION_PATH:image-src=/@@g\")
+fi" >> _deploy/common.sh
 
 
 _SING_LIB_PATHS=()
@@ -177,7 +187,9 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
      # The test is there as printf returns '' if $@ is empty
      # passing '' is not wanted behavior 
      print_info "Checking if conda installation" 3
+     unset CONDA_CMD
      if $_CONTAINER_EXEC test -f $wrapper_path/../../../bin/conda ; then 
+         export CONDA_CMD=1
          print_info "Inserting conda activation into wrappers" 3
          env_name=$(basename $(realpath -m $wrapper_path/../ ))
          conda_path=$(realpath -m $wrapper_path/../../../bin/conda)
@@ -198,12 +210,27 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
         echo "$_PRE_COMMAND" >> _deploy/bin/$target
         ln -s $wrapper_path/$target _deploy/_bin/$target
         echo "
-        if [[ \${_CW_IN_CONTAINER+defined} ]];then
-            exec -a \$_O_SOURCE \$DIR/$target \"\$@\"
-        else
-            export PATH=\"\$OLD_PATH\"
-            $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
-        fi" >> _deploy/bin/$target
+if [[ \${_CW_IN_CONTAINER+defined} ]];then
+    export PATH=\"\$OLD_PATH\"
+    exec -a \$_O_SOURCE \$DIR/../_bin/$target \"\$@\"
+else" >> _deploy/bin/$target
+        if [[ ${CONDA_CMD+defined} ]];then
+        echo "
+        if [[ ( -e \$(/usr/bin/dirname \$_O_SOURCE )/../pyvenv.cfg && ! \${CW_FORCE_CONDA_ACTIVATE+defined} ) || \${CW_NO_CONDA_ACTIVATE+defined} ]];then
+        export PATH=\"\$OLD_PATH\"
+        $_RUN_CMD $_default_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
+    else
+        export PATH=\"\$OLD_PATH\"
+        $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
+    fi
+fi
+        " >>  _deploy/bin/$target
+        else 
+        echo "
+    export PATH=\"\$OLD_PATH\"
+    $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
+fi" >> _deploy/bin/$target
+        fi
         chmod +x _deploy/bin/$target
         if [[ "$target" == "python"  ]];then
             print_info "Found python, checking if venv" 2
