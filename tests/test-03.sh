@@ -64,7 +64,7 @@ t_run "M/bin/_debug_exec touch MyProg/A 2>&1 | grep -q 'Read-only file system'" 
 t_run "wrap-install MyProg/ -w bin --prefix N" "Wrap install nomask"
 t_run "N/bin/PP | grep -q HELLO" "wrap-install without --mask works"
 t_run "N/bin/_debug_exec touch MyProg/A" "disk installation is not masked"
-export CW_EXTRA_BIND_MOUNTS=$PWD/MyProg/img.sqfs:$PWD/MyProg:image-src=/:$PWD/S/img.sqfs:$(S/bin/_debug_exec bash -c "echo \$install_root"):image-src=/:$PWD/Gdal/img.sqfs:$(Gdal/bin/_debug_exec bash -c "echo \$install_root"):image-src=/
+export CW_EXTRA_BIND_MOUNTS=$PWD/MyProg/img.sqfs:$PWD/MyProg:image-src=/,$PWD/S/img.sqfs:$(S/bin/_debug_exec bash -c "echo \$install_root"):image-src=/,$PWD/Gdal/img.sqfs:$(Gdal/bin/_debug_exec bash -c "echo \$install_root"):image-src=/
 rm -rf MyProg
 mv M MyProg
 t_run "S/bin/_debug_exec MyProg/bin/PP | grep -q HELLO" "Composition works into wrapped"
