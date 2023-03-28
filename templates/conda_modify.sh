@@ -1,7 +1,8 @@
 #!/bin/bash
-cd $CW_INSTALLATION_PATH
+cd  $CW_BUILD_TMPDIR
 echo "export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/" >> _extra_envs.sh
 echo "export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/" >> _vars.sh
+cd $CW_INSTALLATION_PATH
 export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/
 eval "$($CW_INSTALLATION_PATH/miniconda/bin/conda shell.bash hook)"
 cd $CW_WORKDIR
