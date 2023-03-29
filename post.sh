@@ -17,10 +17,8 @@ if [[ ${CW_UPDATE_INSTALLATION+defined } && "$CW_UPDATE_INSTALLATION" == "yes" ]
 fi
     cp -rd $CW_BUILD_TMPDIR/_deploy/* $CW_INSTALLATION_PREFIX/
     mkdir -p $CW_INSTALLATION_PREFIX/share
-    if [[ ${CW_INSTALLATION_FILE_PATHS+defined} ]]; then
-        for _fil in ${CW_INSTALLATION_FILE_PATHS[@]}; do
-            mv $CW_BUILD_TMPDIR/_inst_dir/$( basename $_fil ) $CW_INSTALLATION_PREFIX/share 
-        done
+    if [[ ${CW_INSTALLATION_FILE_PATHS+defined} ]];then
+        cp -r $CW_BUILD_TMPDIR/_inst_dir/previous_input* $CW_INSTALLATION_PREFIX/share
     fi
     echo "tag: $(git -C $SCRIPT_DIR describe --tags)" > $CW_INSTALLATION_PREFIX/share/VERSION.yml
     echo "commit: $(git -C $SCRIPT_DIR rev-parse --short HEAD )" >>  $CW_INSTALLATION_PREFIX/share/VERSION.yml

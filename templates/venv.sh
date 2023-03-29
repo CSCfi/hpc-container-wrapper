@@ -26,7 +26,10 @@ python3 -m venv $_SP $CW_ENV_NAME
 source $CW_INSTALLATION_PATH/$CW_ENV_NAME/bin/activate
 
 if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
-    pip install --disable-pip-version-check -r "$( basename $CW_REQUIREMENTS_FILE)"  
+    pip install --disable-pip-version-check -r "$( basename $CW_REQUIREMENTS_FILE)" > $CW_BUILD_TMPDIR/_pip.log &
+    bg_pid=$!
+    wait $bg_pid
+    follow_log $bg_pid $CW_BUILD_TMPDIR/_pip.log 10
 fi
 cd $CW_WORKDIR
 print_info "Running user supplied commands" 1

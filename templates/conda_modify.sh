@@ -9,7 +9,11 @@ cd $CW_WORKDIR
 source $CW_INSTALLATION_PATH/_pre_install.sh
 conda activate $CW_ENV_NAME
 if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
-    pip install -r $( basename "$CW_REQUIREMENTS_FILE" )
+    print_info "Installing requirements file" 1
+    pip install -r $( basename "$CW_REQUIREMENTS_FILE" )  > $CW_BUILD_TMPDIR/_pip.log &
+    bg_pid=$!
+    wait $bg_pid
+    follow_log $bg_pid $CW_BUILD_TMPDIR/_pip.log 10
 fi
 cd $CW_WORKDIR
 source $CW_INSTALLATION_PATH/_post_install.sh
