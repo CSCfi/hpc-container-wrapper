@@ -20,8 +20,8 @@ fi
     if [[ ${CW_INSTALLATION_FILE_PATHS+defined} ]];then
         cp -r $CW_BUILD_TMPDIR/_inst_dir/previous_input* $CW_INSTALLATION_PREFIX/share
     fi
-    echo "tag: $(git -C $SCRIPT_DIR describe --tags)" > $CW_INSTALLATION_PREFIX/share/VERSION.yml
-    echo "commit: $(git -C $SCRIPT_DIR rev-parse --short HEAD )" >>  $CW_INSTALLATION_PREFIX/share/VERSION.yml
+    echo "tag: $(git -C $SCRIPT_DIR describe --tags 2>/dev/null)" > $CW_INSTALLATION_PREFIX/share/VERSION.yml 
+    echo "commit: $(git -C $SCRIPT_DIR rev-parse --short HEAD 2>/dev/null)" >>  $CW_INSTALLATION_PREFIX/share/VERSION.yml 
     echo "build-time: $(date)" >>  $CW_INSTALLATION_PREFIX/share/VERSION.yml 
     
     cp $CW_BUILD_TMPDIR/conf.yaml $CW_INSTALLATION_PREFIX/share
