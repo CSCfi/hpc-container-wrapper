@@ -100,7 +100,6 @@ fi
 done
 for fp in "${CW_INSTALLATION_FILE_PATHS[@]}";do
     n=$(basename $fp)
-    print_warn $(ls _inst_dir )
     mv _inst_dir/$n _inst_dir/previous_input/$counter
 done
 ####### 
