@@ -50,6 +50,9 @@ echo "export install_root=$CW_INSTALLATION_PATH" >> _extra_envs.sh
 echo "export install_root=$CW_INSTALLATION_PATH" >> _vars.sh
 export install_root=$CW_INSTALLATION_PATH
 
+
+
+
 if [[ "$CW_UPDATE_INSTALLATION" == "yes" ]];then
     _CONTAINER_EXEC="singularity --silent exec -B _deploy/$CW_SQFS_IMAGE:$CW_SOURCE_MOUNT_POINT:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
     export SINGULARITY_BIND="$SINGULARITY_BIND,$PWD/_inst_dir:$CW_INSTALLATION_PATH,$_inst_path/_bin:$_inst_path/bin"
@@ -79,10 +82,28 @@ fi
 # There should be a separate folder so that removal is easier
 (cd _inst_dir && rm -f _vars.sh common_functions.sh  _sing_inst_script.sh _pre_install.sh _post_install.sh $CW_TEMPLATE_SCRIPT  _extra_user_envs.sh _extra_envs.sh )
 
+
 if [[ ! ${CW_NO_FIX_PERM+defined}  ]];then
     print_info "Fixing permissions within squashfs image" 2
     chmod -R ugo+rwX _inst_dir 
 fi
+
+# Save old configurations in separate folder so they are not overridden
+counter=0
+while true;do
+if [[ -e _inst_dir/previous_input/$counter ]]; then
+    counter=$((counter+1))
+else
+    mkdir -p _inst_dir/previous_input/$counter
+    break
+fi
+done
+for fp in "${CW_INSTALLATION_FILE_PATHS[@]}";do
+    n=$(basename $fp)
+    mv _inst_dir/$n _inst_dir/previous_input/$counter
+done
+####### 
+
 mksquashfs _inst_dir/ _deploy/$CW_SQFS_IMAGE -processors $_cpus $CW_SQFS_OPTIONS 
  
 # Check if we need to fix group permissions

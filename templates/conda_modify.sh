@@ -1,14 +1,19 @@
 #!/bin/bash
-cd $CW_INSTALLATION_PATH
+cd  $CW_BUILD_TMPDIR
 echo "export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/" >> _extra_envs.sh
 echo "export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/" >> _vars.sh
+cd $CW_INSTALLATION_PATH
 export env_root=$CW_INSTALLATION_PATH/miniconda/envs/$CW_ENV_NAME/
 eval "$($CW_INSTALLATION_PATH/miniconda/bin/conda shell.bash hook)"
 cd $CW_WORKDIR
 source $CW_INSTALLATION_PATH/_pre_install.sh
 conda activate $CW_ENV_NAME
 if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
-    pip install -r $( basename "$CW_REQUIREMENTS_FILE" )
+    print_info "Installing requirements file" 1
+    pip install -r $( basename "$CW_REQUIREMENTS_FILE" )  > $CW_BUILD_TMPDIR/_pip.log &
+    bg_pid=$!
+    wait $bg_pid
+    follow_log $bg_pid $CW_BUILD_TMPDIR/_pip.log 10
 fi
 cd $CW_WORKDIR
 source $CW_INSTALLATION_PATH/_post_install.sh
