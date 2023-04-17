@@ -83,11 +83,6 @@ fi
 (cd _inst_dir && rm -f _vars.sh common_functions.sh  _sing_inst_script.sh _pre_install.sh _post_install.sh $CW_TEMPLATE_SCRIPT  _extra_user_envs.sh _extra_envs.sh )
 
 
-if [[ ! ${CW_NO_FIX_PERM+defined}  ]];then
-    print_info "Fixing permissions within squashfs image" 2
-    chmod -R ugo+rwX _inst_dir 
-fi
-
 # Save old configurations in separate folder so they are not overridden
 counter=0
 while true;do
@@ -103,6 +98,13 @@ for fp in "${CW_INSTALLATION_FILE_PATHS[@]}";do
     mv _inst_dir/$n _inst_dir/previous_input/$counter
 done
 ####### 
+
+
+
+if [[ ! ${CW_NO_FIX_PERM+defined}  ]];then
+    print_info "Fixing permissions within squashfs image" 2
+    chmod -R ugo+rwX _inst_dir 
+fi
 
 mksquashfs _inst_dir/ _deploy/$CW_SQFS_IMAGE -processors $_cpus $CW_SQFS_OPTIONS 
  
