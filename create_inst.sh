@@ -58,7 +58,7 @@ if [[ "$CW_UPDATE_INSTALLATION" == "yes" ]];then
     export SINGULARITY_BIND="$SINGULARITY_BIND,$PWD/_inst_dir:$CW_INSTALLATION_PATH,$_inst_path/_bin:$_inst_path/bin"
     print_info "Copying installation to writable area, might take a while" 1
     print_info "$(readlink -f $CW_INSTALLATION_PREFIX)" 1
-    $_CONTAINER_EXEC cp -a $CW_SOURCE_MOUNT_POINT/. $CW_INSTALLATION_PATH
+    $_CONTAINER_EXEC cp -a $CW_SOURCE_MOUNT_POINT/. $CW_INSTALLATION_PATH || { print_err "Failed to copy some files, most likely incorrect file permissions inside the squashfs image" && false ; }
 elif [[ "$CW_MODE" == "wrapdisk" ]];then
     export SINGULARITY_BIND="$SINGULARITY_BIND,$PWD/_inst_dir:$CW_INSTALLATION_PATH,$CW_WRAP_SRC:$CW_SOURCE_MOUNT_POINT"
     _CONTAINER_EXEC="singularity --silent exec _deploy/$CW_CONTAINER_IMAGE"
