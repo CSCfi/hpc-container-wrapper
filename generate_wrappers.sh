@@ -15,14 +15,14 @@ echo "#!/bin/bash" > _deploy/common.sh
 
 
 if [[ "$CW_MODE" == "wrapcont" ]];then
-    _CONTAINER_EXEC="/usr/bin/singularity --silent exec  _deploy/$CW_CONTAINER_IMAGE"
-    _RUN_CMD="/usr/bin/singularity --silent exec \$DIR/../\$CONTAINER_IMAGE"
-    _SHELL_CMD="/usr/bin/singularity --silent shell \$DIR/../\$CONTAINER_IMAGE"
+    _CONTAINER_EXEC="$CW_SINGULARITY_EXECUTABLE_PATH --silent exec  _deploy/$CW_CONTAINER_IMAGE"
+    _RUN_CMD="$CW_SINGULARITY_EXECUTABLE_PATH --silent exec \$DIR/../\$CONTAINER_IMAGE"
+    _SHELL_CMD="$CW_SINGULARITY_EXECUTABLE_PATH --silent shell \$DIR/../\$CONTAINER_IMAGE"
 else
-    _CONTAINER_EXEC="/usr/bin/singularity --silent exec -B _deploy/$CW_SQFS_IMAGE:$CW_INSTALLATION_PATH:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
+    _CONTAINER_EXEC="$CW_SINGULARITY_EXECUTABLE_PATH --silent exec -B _deploy/$CW_SQFS_IMAGE:$CW_INSTALLATION_PATH:image-src=/ _deploy/$CW_CONTAINER_IMAGE"
     echo "SQFS_IMAGE=$CW_SQFS_IMAGE" >> _deploy/common.sh
-    _RUN_CMD="/usr/bin/singularity --silent exec  \$DIR/../\$CONTAINER_IMAGE"
-    _SHELL_CMD="/usr/bin/singularity --silent shell \$DIR/../\$CONTAINER_IMAGE"
+    _RUN_CMD="$CW_SINGULARITY_EXECUTABLE_PATH --silent exec  \$DIR/../\$CONTAINER_IMAGE"
+    _SHELL_CMD="$CW_SINGULARITY_EXECUTABLE_PATH --silent shell \$DIR/../\$CONTAINER_IMAGE"
 fi
 
 # Need to unset the path, otherwise we might be stuck in a nasty loop
