@@ -11,20 +11,25 @@ if [[ ! -f "configs/$1.yaml" ]];then
     exit 1
 fi
 
-if [[  $( which python3 &> /dev/null ) ]];then
+if ! which python3 &> /dev/null;then
     echo "Could not find python3"
     exit 1 
 fi
-if [[  $(which pip3 &> /dev/null ) ]];then
-    echo "Could not find pip3"
+if which pip3 &> /dev/null;then
+    PIP=pip3
+elif which pip &> /dev/null;then
+    PIP=pip
+else
+    echo "Could not find pip3 or pip"
     exit 1 
 fi
-mkdir default_config
-ln -s ../configs/$1.yaml default_config/config.yaml
+
+mkdir -p default_config
+ln -sf ../configs/$1.yaml default_config/config.yaml
 echo "Using python3: $(which python3)"
 unset PYTHONUSERBASE
 export PYTHONUSERBASE=PyDeps
 echo "export PY_EXE=$(which python3)" > frontends/inst_vars.sh
-echo "Installing pyyaml"
-pip3 install --user pyyaml
+echo "Installing pyyaml with $PIP"
+$PIP install --user pyyaml
 
