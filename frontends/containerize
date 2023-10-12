@@ -98,6 +98,19 @@ else
    export _inst_path=$(realpath -s $PWD/$CW_INSTALLATION_PREFIX )
 fi
 
+if ! command -v $CW_SINGULARITY_EXECUTABLE_PATH &>/dev/null; then
+	{ print_err "The command $CW_SINGULARITY_EXECUTABLE_PATH does not exists
+	Verify that the value for 'singularity_executable_path' in $CW_GLOBAL_YAML is correct"; false ;}
+fi
+
+print_info "Validating the set singularity command $CW_SINGULARITY_EXECUTABLE_PATH" 2
+num_res=$($CW_SINGULARITY_EXECUTABLE_PATH --help | grep "build\|exec\|shell" 2>/dev/null | wc -l)
+if [[ "$num_res" -lt 3 ]];then
+	{ print_err "$CW_SINGULARITY_EXECUTABLE_PATH does not seem to be a valid apptainer/singularity executable"; false ;}
+fi
+
+
+
 $M_SCRIPT_DIR/../pre.sh || { print_err "Failed getting container image"; false ;}
 # Nothing to do if we are just wrapping a container
 if [[ ! "$CW_MODE" == "wrapcont" ]];then

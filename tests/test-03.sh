@@ -32,6 +32,19 @@ rule ghelp:
         """
 ' > Snakefile
 
+cat ../../default_config/config.yaml | sed  "s@singularity_executable_path.*@singularity_executable_path: 'ThisIsNotACommand'@g" > my_config.yaml 
+export CW_GLOBAL_YAML=$( readlink -f my_config.yaml)
+t_run "conda-containerize new --mamba env2.yml --prefix S | grep 'ThisIsNotACommand does not exists'" "Exit if configured singularity command does not exist" 
+cat ../../default_config/config.yaml | sed  "s@singularity_executable_path.*@singularity_executable_path: 'my_sing_command'@g" > my_config.yaml 
+echo "#!/bin/bash" > my_sing_command
+echo "exit 0" >> my_sing_command
+chmod +x my_sing_command
+export PATH=$PATH:$PWD
+t_run "conda-containerize new --mamba env2.yml --prefix S | grep 'does not seem to be a valid apptainer/singularity executable'" "Exit if configured singularity command seems broken" 
+# Run the rest of the test with singularity found from path.
+cat ../../default_config/config.yaml | sed  "s@singularity_executable_path.*@singularity_executable_path: 'singularity'@g" > my_config.yaml 
+
+
 t_run "conda-containerize new --mamba env2.yml --prefix S" "mamba works" 
 t_run "conda-containerize new --mamba env.yml --prefix Gdal" "gdal installed"
 export OPATH=$PATH

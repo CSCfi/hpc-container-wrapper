@@ -33,9 +33,18 @@ force:
     conda_arch: 'Linux-x86_64'
     max_num_cpus: 4
     # No logic currently to refer to other variables here
-    # So either implement that, throw them to $TMPDIR
-    #
+    # So either implement that, throw them to $TMPDIR 
     workdir: $PWD   
+    # What executable name or path to use for singularity
+    # For fully dynamic behavior 
+    # You can just set singularity or apptainer here.
+    # Keep in mind that this could break installations
+    # if e.g the user installs singularity via conda
+    # when user namespaces are not enabled 
+    # Environment variables can be used here 
+    # but they will be expanded during build,
+    # not during runtime
+    singularity_executable_path: "singularity"
     
 # Value will override any user set value
 
