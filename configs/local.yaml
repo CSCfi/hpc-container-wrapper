@@ -6,20 +6,18 @@ defaults:
     env_name: env1 
     conda_version: latest
     installation_prefix: $PWD
-    installation_path: "/CSC_CONTAINER"
+    installation_path: "/LOCAL_TYKKY"
     # if this is not a thing which exist
     # I will do a singularity pull
-    container_src: 'library://centos:7.9'
+    container_src: 'docker://rockylinux:8.9'
     # name of the container image when on disk
     container_image: container.sif 
     sqfs_image: img.sqfs 
     source_mount_point: /TMP_MP 
+    composable: true
     mount_points:
-            - /projappl
-            - /local_scratch
             - /tmp
-            - /scratch
-            - /users
+            - /home
             - /run
     isolate: no
     create_wrappers: yes
