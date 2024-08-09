@@ -41,7 +41,7 @@ SINGULARITY_BIND="$SINGULARITY_BIND,/tmp"
 # might interfere with the installation
 if [[ ! ${CW_ENABLE_CONDARC+defined} ]]; then
     echo "pkgs_dirs: 
-        - $CW_INSTALLATION_PATH/miniconda/pkgs
+        - $CW_INSTALLATION_PATH/miniforge/pkgs
     " > $PWD/_inst_dir/condarc_override
     SINGULARITY_BIND="$SINGULARITY_BIND,$PWD/_inst_dir/condarc_override:$(readlink -f $HOME/.condarc)"
 fi

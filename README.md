@@ -136,7 +136,7 @@ on the sqfs image itself. This behavior can be disabled by setting `CW_NO_FIX_PE
 **BASH MAGIC**
 
 ```
-/usr/bin/singularity --silent exec -B $DIR/../$SQFS_IMAGE:$INSTALLATION_PATH:image-src=/ $DIR/../$CONTAINER_IMAGE  bash -c "eval \"\$(/CSC_CONTAINER/miniconda/bin/conda shell.bash hook )\"  && conda activate env1 &>/dev/null &&  exec -a $_O_SOURCE $DIR/python $( test $# -eq 0 || printf " %q" "$@" )"
+/usr/bin/singularity --silent exec -B $DIR/../$SQFS_IMAGE:$INSTALLATION_PATH:image-src=/ $DIR/../$CONTAINER_IMAGE  bash -c "eval \"\$(/CSC_CONTAINER/miniforge/bin/conda shell.bash hook )\"  && conda activate env1 &>/dev/null &&  exec -a $_O_SOURCE $DIR/python $( test $# -eq 0 || printf " %q" "$@" )"
 ```
 
 - `exec -a` is there to enable creating virtual environments as otherwise the venv symlink -> tykky wrapper -> executable in container chain is broken and python does not consider itself to be a venv. 
