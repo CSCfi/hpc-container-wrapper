@@ -63,7 +63,7 @@ __tykky_activate() {
 
 
 __tykky_deactivate() {
-    # Dectivate a Tykky environment. Change PS1 if interactive by default,
+    # Deactivate a Tykky environment. Change PS1 if interactive by default,
 
     if [ -n "${TYKKY_PREFIX:-}" ]; then
         export PATH=$(echo $PATH | sed -e "s|$TYKKY_PREFIX/bin:||g")
