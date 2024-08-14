@@ -124,8 +124,19 @@ fi
 $M_SCRIPT_DIR/../post.sh || { print_err "Failed to move to install dir"; false ; }
 test -f "$_usr_yaml" && rm "$_usr_yaml"
 end=`date +%s`
+_env_root=$(realpath $(dirname $_inst_path))
+_env_name=$CW_INSTALLATION_PREFIX
+IFS=':' read -r -a _paths <<< "${TYKKY_PATH:-$HOME/.tykky}"
+for _path in "${_paths[@]}"; do
+    if [ "$_env_root" = "$(realpath $_path)" ]; then
+        _env_name=$(basename $CW_INSTALLATION_PREFIX)
+        break
+    fi
+done
 print_info "Done, duration: $((end-start))s" 1
-print_info "Program has been installed to $CW_INSTALLATION_PREFIX
-\tTo use add the bin folder to your path e.g:
+print_info "Environment has been installed to $CW_INSTALLATION_PREFIX
+\tTo use, activate with:
+\ttykky activate $_env_name
+\tAlternatively, add the bin folder to your path e.g:
 \texport PATH=\"$_inst_path/bin:\$PATH\"" 1
 
