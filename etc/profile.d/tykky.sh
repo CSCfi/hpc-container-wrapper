@@ -52,7 +52,7 @@ __tykky_activate() {
     fi
     if [ -n "$__candidate" ]; then
         __tykky_deactivate
-        export TYKKY_PREFIX="$__candidate"
+        export TYKKY_PREFIX="$(realpath $__candidate)"
         export PATH=$TYKKY_PREFIX/bin:$PATH
         if [ -n "${PS1:-}" ] && [ "${TYKKY_CHANGE_PS1:-}" != "0" ]; then
             PS1="($(basename $(echo $TYKKY_PREFIX))) $PS1"
