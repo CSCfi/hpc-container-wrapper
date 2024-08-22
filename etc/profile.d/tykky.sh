@@ -91,3 +91,10 @@ tykky() {
             ;;
     esac
 }
+
+# Enable BASH autocompletion
+if [ -n "$BASH_VERSION" ] && [ -n "$PS1" ]; then
+    __tykky_bash_completion_file="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../bash_completion.d/tykky_completion"
+    [ -f "$__tykky_bash_completion_file" ] && . "$__tykky_bash_completion_file"
+    unset __tykky_bash_completion_file
+fi
