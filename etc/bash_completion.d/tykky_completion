@@ -1,4 +1,4 @@
-_tykky_completions() {
+__tykky_completions() {
     if [ "${#COMP_WORDS[@]}" == "2" ]; then
         COMPREPLY=($(compgen -W "activate deactivate" "${COMP_WORDS[1]}"))
         return
@@ -33,4 +33,4 @@ _tykky_completions() {
     return
 }
 
-complete -F _tykky_completions tykky
+complete -F __tykky_completions tykky
