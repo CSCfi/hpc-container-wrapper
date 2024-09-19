@@ -68,7 +68,7 @@ fi
 
 source $CW_BUILD_TMPDIR/_vars.sh
 if [[ ! -d "$CW_INSTALLATION_PREFIX" ]];then
-    print_info "Installation dir $CW_INSTALLATION_PREFIX does not exist, creating it for you"
+    print_info "Installation dir $CW_INSTALLATION_PREFIX does not exist, creating it for you" 1
     mkdir -p "$CW_INSTALLATION_PREFIX"
 fi
 if [[ ! -w "$CW_INSTALLATION_PREFIX" || ! -x "$CW_INSTALLATION_PREFIX" ]];then
