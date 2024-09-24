@@ -91,6 +91,7 @@ tykky() {
             ;;
     esac
 }
+export -f tykky
 
 # Enable BASH autocompletion
 if [ -n "$BASH_VERSION" ] && [ -n "$PS1" ]; then
