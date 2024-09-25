@@ -1,0 +1,36 @@
+# Tykky shell functions to activate/deactivate environments
+__tykky_get_env_path() {
+    # Get and validate installation path of a tykky environment.
+    # If a name is passed as an argument, try to find it in colon-separated
+    # list TYKKY_PATH
+
+    __candidate=""
+    case "$1" in
+        */*)
+            __candidate="${1%/}"
+            ;;
+        *)
+            oldIFS=$IFS
+            IFS=:
+            for __tykky_path in ${TYKKY_PATH:-""}; do
+                IFS=$oldIFS
+                if [ -d "$__tykky_path/$1" ]; then
+                    __candidate="${__tykky_path%/}/${1%/}"
+                    break
+                fi
+            done
+            
+            ;;
+    esac
+
+    # Validation of genunine tykky installation
+    if [ -f "$__candidate/common.sh" ] && [ -d "$__candidate/bin" ]; then
+        echo "$__candidate"
+        unset __candidate __tykky_path 
+    else
+        unset __candidate __tykky_path 
+        echo "ERROR: $1 is not a valid tykky environment" >&2
+        false
+    fi
+
+}

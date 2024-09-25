@@ -1,101 +1,44 @@
 # Tykky shell functions to activate/deactivate environments
 
-__tykky_get_env_path() {
-    # Get and validate installation path of a tykky environment.
-    # If a name is passed as an argument, try to find it in colon-separated
-    # list TYKKY_PATH
+__tykky_dir=""
+if [ -n "${BASH_SOURCE:-}" ]; then
+    __tykky_dir="$(dirname "${BASH_SOURCE[0]}")"
+elif [ -n "${ZSH_VERSION:-}" ]; then
+    __tykky_dir="$(dirname "${(%):-%N}")"
+elif [ -n "${KSH_VERSION:-}" ]; then
+    __tykky_dir="$(dirname "${.sh.file}")"
+else
+    # Generic POSIX shell case or dash
+    __tykky_dir="$(dirname "$0")"
+fi
 
-    __candidate=""
-    case "$1" in
-        */*)
-            __candidate="${1%/}"
-            ;;
-        *)
-            oldIFS=$IFS
-            IFS=:
-            for __tykky_path in ${TYKKY_PATH:-""}; do
-                IFS=$oldIFS
-                if [ -d "$__tykky_path/$1" ]; then
-                    __candidate="${__tykky_path%/}/${1%/}"
-                    break
-                fi
-            done
-            
-            ;;
-    esac
+__tykky_dir="$(realpath $(dirname $(dirname "$__tykky_dir")))"
 
-    # Validation of genunine tykky installation
-    if [ -f "$__candidate/common.sh" ] && [ -d "$__candidate/bin" ]; then
-        echo "$__candidate"
-        unset __candidate __tykky_path 
-    else
-        unset __candidate __tykky_path 
-        echo "ERROR: $1 is not a valid tykky environment" >&2
-        false
+# Add the tykky tools to PATH if not present
+if [ "${PATH#*$__tykky_dir/bin:}" = "$PATH" ]; then
+    echo "export PATH"
+    export PATH="$__tykky_dir/bin:$PATH"
+fi
+
+# Make available tykky functions for this shell and subshells
+for __function in $__tykky_dir/share/sh_functions/*; do
+    source $__function
+    if [ -z "$KSH_VERSION" ]; then
+        export -f $(basename $__function)
     fi
+done
+unset __function
 
-}
-
-__tykky_activate() {
-    # Activate a Tykky environment. Change PS1 if interactive by default,
-    # unless TYKKY_CHANGE_PS1 is set to 0
-
-    if [ -z "${2:-}" ]; then
-        echo "ERROR: You must specify a valid tykky environment to activate" >&2
-        false
-        return
-    fi
-    __candidate=$(__tykky_get_env_path $2)
-    if [ "$?" -ne 0 ]; then
-        false
-        return
-    fi
-    if [ -n "$__candidate" ]; then
-        __tykky_deactivate
-        export TYKKY_PREFIX="$(realpath $__candidate)"
-        export PATH=$TYKKY_PREFIX/bin:$PATH
-        if [ -n "${PS1:-}" ] && [ "${TYKKY_CHANGE_PS1:-}" != "0" ]; then
-            PS1="($(basename $(echo $TYKKY_PREFIX))) $PS1"
-        fi
-    fi
-    unset __candidate
-}
-
-
-__tykky_deactivate() {
-    # Deactivate a Tykky environment. Change PS1 if interactive by default,
-
-    if [ -n "${TYKKY_PREFIX:-}" ]; then
-        export PATH=$(echo $PATH | sed -e "s|$TYKKY_PREFIX/bin:||g")
-        if [ -n "${PS1:-}" ]; then 
-            PS1="$(echo "$PS1" | sed -e "s|^($(basename $TYKKY_PREFIX)) ||")"
-        fi
-        unset TYKKY_PREFIX
-    fi
-}
-
-
-tykky() {
-    # Top level shell function to activate and deactivate Tykky environments
-
-    case "${1:-}" in
-        activate)
-            __tykky_activate "$@"
-            ;;
-        deactivate)
-            __tykky_deactivate "$@"
-            ;;
-        *)
-            echo "Usage: tykky activate <env_name_or_dir>"
-            echo "       tykky deactivate"
-            ;;
-    esac
-}
-export -f tykky
+# KSH does not support exporting functions
+if [ "${FPATH#*$__tykky_dir/share/sh_functions:}" = "$FPATH" ]; then
+    echo "export FPATH"
+    export FPATH="$__tykky_dir/share/sh_functions:$FPATH" 
+fi
 
 # Enable BASH autocompletion
-if [ -n "$BASH_VERSION" ] && [ -n "$PS1" ]; then
-    __tykky_bash_completion_file="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../bash_completion.d/tykky_completion"
+if [ -n "${BASH_VERSIONi:-}" ] && [ -n "${PS1:-}" ]; then
+    __tykky_bash_completion_file="$_tykky_dir/etc/bash_completion.d/tykky_completion"
     [ -f "$__tykky_bash_completion_file" ] && . "$__tykky_bash_completion_file"
     unset __tykky_bash_completion_file
 fi
+unset __tykky_dir
