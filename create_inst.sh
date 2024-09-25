@@ -40,8 +40,7 @@ SINGULARITY_BIND="$SINGULARITY_BIND,/tmp"
 # By default we want to disable the user condarc as that
 # might interfere with the installation
 if [[ ! ${CW_ENABLE_CONDARC+defined} ]]; then
-    echo "" > $PWD/_inst_dir/condarc_override
-    SINGULARITY_BIND="$SINGULARITY_BIND,$PWD/_inst_dir/condarc_override:$(readlink -f $HOME/.condarc)"
+    export CONDA_PKGS_DIRS=$CW_INSTALLATION_PATH/miniforge/pkgs
 fi
 export SINGULARITY_BIND
 echo "export install_root=$CW_INSTALLATION_PATH" >> _extra_envs.sh
