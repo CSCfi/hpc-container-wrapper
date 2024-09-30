@@ -42,6 +42,8 @@ SINGULARITY_BIND="$SINGULARITY_BIND,/tmp"
 if [[ ! ${CW_ENABLE_CONDARC+defined} ]]; then
     export CONDA_PKGS_DIRS=$CW_INSTALLATION_PATH/miniforge/pkgs
 fi
+mkdir -p $CW_BUILD_TMPDIR/.conda_override
+SINGULARITY_BIND="$SINGULARITY_BIND,$CW_BUILD_TMPDIR/.conda_override:$(readlink -f $HOME/.conda)"
 export SINGULARITY_BIND
 echo "export install_root=$CW_INSTALLATION_PATH" >> _extra_envs.sh
 echo "export install_root=$CW_INSTALLATION_PATH" >> _vars.sh
