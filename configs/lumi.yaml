@@ -12,7 +12,7 @@ defaults:
     composable: true
     # if this is not a thing which exist
     # I will do a singularity pull
-    container_src: 'docker://opensuse/leap:15.4'
+    container_src: 'docker://opensuse/leap:15.5'
     # name of the container image when on disk
     container_image: container.sif 
     sqfs_image: img.sqfs 

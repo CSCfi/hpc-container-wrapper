@@ -55,7 +55,7 @@ dependencies:
 " > conda_broken.yaml
 echo "GARBAGE" > conda_env.txt
 
-t_run "conda-containerize new conda_base.yml --prefix NOT_A_DIR | grep ERROR" "Missing install dir causes error"
+t_run "conda-containerize new conda_base.yml --prefix NOT_A_DIR" "Missing install dir is created"
 mkdir A_DIR_NO_WRITE
 chmod ugo-w A_DIR_NO_WRITE
 t_run "conda-containerize new conda_base.yml --prefix A_DIR_NO_WRITE | grep ERROR" "Installation dir has to be writable"

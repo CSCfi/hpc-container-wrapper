@@ -13,7 +13,7 @@ if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
     pip install -r $( basename "$CW_REQUIREMENTS_FILE" )  > $CW_BUILD_TMPDIR/_pip.log &
     bg_pid=$!
     wait $bg_pid
-    follow_log $bg_pid $CW_BUILD_TMPDIR/_pip.log 10
+    follow_log $bg_pid $CW_BUILD_TMPDIR/_pip.log 20
 fi
 cd $CW_WORKDIR
 source $CW_INSTALLATION_PATH/_post_install.sh
