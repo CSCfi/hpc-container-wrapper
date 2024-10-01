@@ -15,8 +15,14 @@ __tykky_get_env_path() {
             for __tykky_path in ${TYKKY_PATH:-""}; do
                 IFS=$oldIFS
                 if [ -d "$__tykky_path/$1" ]; then
-                    __candidate="${__tykky_path%/}/${1%/}"
-                    break
+                    if [ -n "$__candidate"  ]; then
+                        echo "WARNING: Additional candidate tykky environments found in TYKKY_PATH for $1, only the first one will be considered" >&2
+                        echo -e "\tfirst candidate: $__candidate"  >&2
+                        echo -e "\tnew candidate: $__tykky_path/$1" >&2
+                    else 
+                        __candidate="${__tykky_path%/}/${1%/}"
+                    fi
+                    #break
                 fi
             done
             if [ -d "$1" ];then
