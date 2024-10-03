@@ -241,6 +241,25 @@ How verbosely to report program actions
 - 2 general (default)
 - `>2` debug
 
+## Activating and Deactivating wrapped environments
+A `tykky` convenience shell function is provided to mimic the conda activate and
+deactivate helpers. To use it, you must load those functions into your shell with:
+
+`source etc/profile.d/tykky`
+
+Then you may activate a tykky installation with
+
+`tykky activate <env_dir>`
+
+If you define the environment variable `TYKKY_PATH`, environments may also be
+found by name inside that colon-separated list of paths in `TYKKY_PATH`.
+
+You may deactivate the tykky environment in your shell with:
+
+`tykky deactivate`
+
+Alternatively, you may also manually add `<env_dir>/bin` to your `$PATH`.
+
 
 ## Misc features ideas
 
