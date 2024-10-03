@@ -16,7 +16,6 @@ __tykky_dir="$(realpath $(dirname $(dirname "$__tykky_dir")))"
 
 # Add the tykky tools to PATH if not present
 if [ "${PATH#*$__tykky_dir/bin:}" = "$PATH" ]; then
-    echo "export PATH"
     export PATH="$__tykky_dir/bin:$PATH"
 fi
 
@@ -31,7 +30,6 @@ unset __function
 
 # KSH does not support exporting functions
 if [ "${FPATH#*$__tykky_dir/share/sh_functions:}" = "$FPATH" ]; then
-    echo "export FPATH"
     export FPATH="$__tykky_dir/share/sh_functions:$FPATH" 
 fi
 
