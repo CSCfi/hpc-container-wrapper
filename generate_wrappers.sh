@@ -276,6 +276,11 @@ printf -- '%s\n' "_tmp_arr=(\$(echo \$SINGULARITYENV_PATH | /usr/bin/tr ':' '\n'
 printf -- '%s\n' "SINGULARITYENV_PATH=\$(echo \"\${_tmp_arr[@]}\" | /usr/bin/tr ' ' ':')" >> _deploy/common.sh
 printf -- '%s\n' "_tmp_arr=(\$(echo \$SINGULARITYENV_LD_LIBRARY_PATH | /usr/bin/tr ':' '\n' ))" >> _deploy/common.sh
 printf -- '%s\n' "SINGULARITYENV_LD_LIBRARY_PATH=\$(echo \"\${_tmp_arr[@]}\" | /usr/bin/tr ' ' ':')" >> _deploy/common.sh
+
+# Keep Venv path if we wrap a container and create 
+if [[ "$CW_MODE" == "wrapcont" ]];then
+    echo '[[ ${VIRTUAL_ENV+defined} && "$(readlink -f $_C_DIR)/bin/python" = $(readlink -f $VIRTUAL_ENV/bin/python) ]] && SINGULARITYENV_PATH="$VIRTUAL_ENV/bin:$SINGULARITYENV_PATH"' >> _deploy/common.sh
+fi
 if [[ -f _extra_envs.sh ]];then
     cat _extra_envs.sh >> _deploy/common.sh 
 fi
