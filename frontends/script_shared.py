@@ -92,5 +92,6 @@ def get_old_conf(d,conf):
     conf["installation_prefix"]=d
     conf["sqfs_image"]=old_conf["sqfs_image"]
     conf["container_image"]=old_conf["container_image"]
+    conf["isolate"]=old_conf["isolate"]
     if "wrapper_paths" in old_conf:
         conf["wrapper_paths"] = old_conf["wrapper_paths"]
