@@ -216,12 +216,17 @@ if [[ \${_CW_IN_CONTAINER+defined} ]];then
 else" >> _deploy/bin/$target
         if [[ ${CONDA_CMD+defined} ]];then
         echo "
-        if [[ ( -e \$(/usr/bin/dirname \$_O_SOURCE )/../pyvenv.cfg && ! \${CW_FORCE_CONDA_ACTIVATE+defined} ) || \${CW_NO_CONDA_ACTIVATE+defined} ]];then
+        _venvd=\$(/usr/bin/dirname \$_O_SOURCE )
+        test -e \$_venvd/../pyvenv.cfg
+        _v_in_use=\$?
+        if [[ ( \$_v_in_use -eq 0 && ! \${CW_FORCE_CONDA_ACTIVATE+defined} ) || \${CW_NO_CONDA_ACTIVATE+defined} ]];then
         export PATH=\"\$OLD_PATH\"
         $_RUN_CMD $_default_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
     else
         export PATH=\"\$OLD_PATH\"
-        $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
+        _venv_act=\":\"
+        test 0 -eq \$_v_in_use && _venv_act=\"source \$_venvd/activate\" 
+        $_RUN_CMD  $_cws \$_venv_act && exec -a \$_O_SOURCE \$DIR/$target $_cwe  
     fi
 fi
         " >>  _deploy/bin/$target

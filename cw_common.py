@@ -12,6 +12,7 @@ colors["RED"]='\033[0;31m'
 colors["GREEN"]='\033[0;32m'
 colors["YELLOW"]='\033[1;33m'
 colors["BLUE"]="\033[1;34m"
+colors["PURPLE"]='\033[0;35m'
 colors["NC"]='\033[0m' # No Color
 
 def print_err(txt,err=False):
@@ -27,6 +28,28 @@ def print_err(txt,err=False):
             print("[ ERROR ] "+txt)
         else:
             print("["+colors["RED"]+" ERROR "+colors["NC"]+"] "+txt)
+
+def print_info(txt,log_level,msg_level,err=False):
+    """Pretty info message, color is disabled if not in a TTY"""
+    if int(log_level) <= msg_level:
+        return
+    if msg_level >= 2:
+        msg="DEBUG"
+        color=colors["PURPLE"]
+    else:
+        msg="INFO"
+        color=colors["BLUE"]
+    if(err):
+        if not sys.stderr.isatty():
+            print(f"[ {msg} ] "+txt,file=sys.stderr)
+        else:
+            print("["+color+f" {msg} "+colors["NC"]+"] "+txt,file=sys.stderr)
+    else:
+        if not sys.stdout.isatty():
+            print(f"[ {msg} ] "+txt,file=sys.stderr)
+        else:
+            print("["+color+f" {msg} "+colors["NC"]+"] "+txt,file=sys.stdout)
+
 def print_warn(txt,err=False):
     if(err):
         if not sys.stderr.isatty():
@@ -65,3 +88,49 @@ def installation_in_PATH():
 def is_installation(base_path):
     markers=["bin","_bin","common.sh"]
     return all( pathlib.Path(base_path+'/../'+m).exists() for m in markers )
+
+# UBI images are namespaced with the major version as part of the name
+# and not just the tag.
+special={}
+special["rhel"]= lambda namespace,version: namespace+version.split('.')[0]
+
+# Get the docker image matching the host OS
+def get_docker_image(release_file):
+    os_release_file = release_file
+    docker_images = {
+        "sles": "opensuse/leap",
+        "rhel": "redhat/ubi",
+        "almalinux": "almalinux",
+        "rocky": "rockylinux",
+        "ubuntu": "ubuntu"
+    }
+
+    try:
+        with open(os_release_file, 'r') as file:
+            lines = file.readlines()
+            os_info = {}
+            for line in lines:
+                # Lazy way to handle empty lines
+                try:
+                    key, value = line.strip().split('=', 1)
+                except:
+                    continue
+                os_info[key] = value.strip('"')
+
+            os_id = os_info.get("ID", "").lower()
+            version_id = os_info.get("VERSION_ID", "").lower()
+
+            if os_id in docker_images:
+                docker_image = docker_images[os_id]
+                if os_id in special:
+                    docker_image = special[os_id](docker_image,version_id)
+                return (True,f"{docker_image}:{version_id}")
+            else:
+                # Guess what the name could be
+                # Will most likely fail for most small distros
+                return (True,f"{os_id}:{version_id}")
+
+    except FileNotFoundError:
+        return (False,"OS release file not found")
+    except Exception as e:
+        return (False,f"An error occurred: {e}")

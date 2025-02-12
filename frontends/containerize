@@ -23,7 +23,7 @@ clean_up () {
     else
         test -f "$_usr_yaml" && rm "$_usr_yaml"
         test -d "$CW_BUILD_TMPDIR" && rm -r "$CW_BUILD_TMPDIR"
-        print_err "Set CW_DEBUG_KEEP_FILES env variable to keep build files"
+        print_err "Set CW_DEBUG_KEEP_FILES env variable to keep build files or set CW_LOG_LEVEL to a higher value for more output, e.g. CW_LOG_LEVEL=3"
     fi
     trap 2
     kill  -- -$$ &>/dev/null
@@ -90,8 +90,10 @@ else
    print_warn "Umask set to $CW_UMASK, check permissions of finished installation" 
 fi
 
-chgrp $(stat -c "%G" $CW_INSTALLATION_PREFIX ) $CW_BUILD_TMPDIR
-chmod g+s $CW_BUILD_TMPDIR
+_install_prefix_group=$(stat -c "%G" $CW_INSTALLATION_PREFIX )
+chgrp $_install_prefix_group $CW_BUILD_TMPDIR || print_warn "Failed to match group ownership of installation directory, attempted group was $_install_prefix_group"
+chmod g+s $CW_BUILD_TMPDIR || print_warn "Failed to set group stickybit for build directory, installation permissions might be incorrect. Please check once the installation is done."
+print_info "Setting group ownership of build directory to $_install_prefix_group" 2 
 
 if [[ "$CW_INSTALLATION_PREFIX" = /* ]]; then
    export _inst_path=$CW_INSTALLATION_PREFIX
