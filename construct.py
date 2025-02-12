@@ -57,6 +57,15 @@ if "wrapper_paths" in full_conf:
 if os.getenv("CW_LOG_LEVEL"):
     full_conf["log_level"]=os.getenv("CW_LOG_LEVEL")
 
+if full_conf["container_src"] == "auto":
+    success,container_source = get_docker_image("/etc/os-release")
+    if not success:
+        print_err("Unable to automatically determine base container to use: "+container_source,True)
+        sys.exit(1) 
+    else:
+        print_info("Automatically determined base container to: "+container_source,full_conf["log_level"],2,True)
+    full_conf["container_src"] = f"docker://{container_source}"
+
 if os.getenv("CW_BUILD_TMPDIR"):
     full_conf["build_tmpdir_base"]=os.getenv("CW_BUILD_TMPDIR")
 tmpdir_base=full_conf["build_tmpdir_base"]

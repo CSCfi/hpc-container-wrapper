@@ -9,7 +9,7 @@ defaults:
     installation_path: "/LOCAL_TYKKY"
     # if this is not a thing which exist
     # I will do a singularity pull
-    container_src: 'docker://rockylinux:8.9'
+    container_src: auto
     # name of the container image when on disk
     container_image: container.sif 
     sqfs_image: img.sqfs 
