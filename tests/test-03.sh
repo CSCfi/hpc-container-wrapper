@@ -65,6 +65,7 @@ Gdal/bin/python -m venv Py
 t_run 'Py/bin/python -c "import sys;import os;sys.exit(\"CONDA_PREFIX\" in os.environ)"' "Conda is not active in venv"
 export CW_FORCE_CONDA_ACTIVATE=1
 t_run 'Py/bin/python -c "import sys;import os;sys.exit(\"CONDA_PREFIX\" not in os.environ)"' "Conda can be activated in venv"
+t_run 'Py/bin/python -c "import os;import shutil;import sys;sys.exit(shutil.which(\"python3\") != os.getcwd()+\"/Py/bin/python3\" )"' "Venv path is first even if conda is active"
 unset CW_FORCE_CONDA_ACTIVATE
 unset CW_EXTRA_BIND_MOUNTS
 mkdir -p M MyProg/bin N

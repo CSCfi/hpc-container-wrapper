@@ -33,6 +33,10 @@ else
   export   _NC=""
 fi
 
+_msg(){
+    echo -en "[ - ] $1\r"
+}
+
 _ok (){
     echo -e "[ ${_GREEN}OK${_NC} ] $1"
 
@@ -43,6 +47,7 @@ _fail(){
 
 
 t_run(){
+    _msg "$2"
     eval "$1" &>>test.log 
     if [[ $? -eq 0 ]];then
         _ok "$2"
