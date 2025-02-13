@@ -101,7 +101,7 @@ def get_docker_image(release_file):
         "sles": "opensuse/leap",
         "rhel": "redhat/ubi",
         "almalinux": "almalinux",
-        "rocky": "rockylinux",
+        "rocky": "rockylinux/rockylinux",
         "ubuntu": "ubuntu"
     }
 
