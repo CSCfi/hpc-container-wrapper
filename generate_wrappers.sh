@@ -283,8 +283,16 @@ printf -- '%s\n' "_tmp_arr=(\$(echo \$SINGULARITYENV_LD_LIBRARY_PATH | /usr/bin/
 printf -- '%s\n' "SINGULARITYENV_LD_LIBRARY_PATH=\$(echo \"\${_tmp_arr[@]}\" | /usr/bin/tr ' ' ':')" >> _deploy/common.sh
 
 # Keep Venv path if we wrap a container and create 
+# So the expectation if a user creates a venv on top of a wrapped container
+# would be that invoking the venv python which launches shell commands again 
+# calling the python interpreter would call the venv python and not the base python
 if [[ "$CW_MODE" == "wrapcont" ]];then
-    echo '[[ ${VIRTUAL_ENV+defined} && "$(readlink -f $_C_DIR)/bin/python" = $(readlink -f $VIRTUAL_ENV/bin/python) ]] && SINGULARITYENV_PATH="$VIRTUAL_ENV/bin:$SINGULARITYENV_PATH"' >> _deploy/common.sh
+    echo '
+    _venvd=$(/usr/bin/dirname $_O_SOURCE )
+test -e $_venvd/../pyvenv.cfg
+ _v_in_use=$?
+ [[  $_v_in_use -eq 0  && "$(dirname $(readlink -f $_venvd/python))" == "$(readlink -f $_C_DIR/bin)"  ]] && SINGULARITYENV_PATH="$(readlink -f $_venvd):$SINGULARITYENV_PATH"
+' >> _deploy/common.sh
 fi
 
 if [[ -f _extra_envs.sh ]];then
