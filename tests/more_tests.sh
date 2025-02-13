@@ -11,7 +11,12 @@ echo "pyyaml" > req.txt
 echo "pip install requests" > post.sh
 
 default_container=$(cat $SCRIPT_DIR/../default_config/config.yaml  | grep container_src | cut -d ":" -f2- | sed "s/'//g" )
-singularity pull test_container.sif $default_container 
+if [[ "$default_container"=="auto" ]];then
+    default_container=$(python3 ../get_container.py)
+fi
+set -e
+t_run "singularity pull test_container.sif docker://$default_container" "default or auto determined container exists and can be downloaded" 
+set +e
 
 cat ../../default_config/config.yaml | sed  "s@container_src.*\$@container_src: $PWD/test_container.sif@g" > my_config.yaml | sed 's/container_image.*$/container_image: container.sif/g'
 if  grep -q share_container my_config.yaml   ; then
@@ -68,6 +73,18 @@ t_run "pip-containerize new --prefix subdir/PIP_INSTALL_DIR_3 subdir/req.txt" "P
 rm -fr PIP_INSTALL_DIR
 mkdir PIP_INSTALL_DIR
 t_run "wrap-container -w /usr/sbin/zdump --prefix PIP_INSTALL_DIR test_container.sif" "wrap-container works with single target"
+
+rm -fr WRAP_TEST
+mkdir WRAP_TEST
+t_run "wrap-container docker://python:3.12.9-slim-bookworm -w /usr/local/bin --prefix WRAP_TEST/WW" "Wrap container for remote container"
+t_run "WRAP_TEST/WW/bin/python --version | grep '3.12.9'" "Wrapped container actually contains the correct version of python"
+t_run "WRAP_TEST/WW/bin/python -m venv WRAP_TEST/Py" "Creating a virtual environment on wrapped python works"
+t_run "WRAP_TEST/Py/bin/python -c 'import sys;sys.exit( sys.prefix == sys.base_prefix )'" "Created venv is functional"
+t_run "WRAP_TEST/Py/bin/python -c 'import shutil; print(shutil.which(\"python\"))' | grep 'WRAP_TEST/Py'" "Trick to retain venv path works"
+source WRAP_TEST/Py/bin/activate
+t_run "python -c 'import sys;sys.exit( sys.prefix == sys.base_prefix )'" "Created venv is functional (activated env)"
+t_run "python -c 'import shutil; print(shutil.which(\"python\"))' | grep 'WRAP_TEST/Py'" "Trick to retain venv path works (activated env)"
+deactivate
 
 rm -fr PIP_INSTALL_DIR
 mkdir PIP_INSTALL_DIR
