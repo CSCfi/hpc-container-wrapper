@@ -1,4 +1,13 @@
 #!/bin/bash
+
+
+## Fix for updating older installations 
+
+if [[ ! -e $CW_INSTALLATION_PATH/miniforge/ ]];then
+    print_info "Updating older installation which is using miniconda and not miniforge\nCreating symlink miniforge -> miniconda" 1
+    ln -s "$CW_INSTALLATION_PATH/miniconda" "$CW_INSTALLATION_PATH/miniforge"
+fi
+
 cd  $CW_BUILD_TMPDIR
 echo "export env_root=$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/" >> _extra_envs.sh
 echo "export env_root=$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/" >> _vars.sh
