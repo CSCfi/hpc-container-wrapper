@@ -260,12 +260,17 @@ You may deactivate the tykky environment in your shell with:
 
 Alternatively, you may also manually add `<env_dir>/bin` to your `$PATH`.
 
+## License 
+
+Getting errors like `CondaToSNonInteractiveError: Terms of Service have not been accepted for the following channels. Please accept or remove them before proceeding:`
+
+Newer versions of conda have finer management of channels licenses, which might stop the installatoion if using miniconda (currently tykky versions < 0.4), set `CONDA_PLUGINS_AUTO_ACCEPT_TOS=true` to mitigate this ( https://www.anaconda.com/docs/getting-started/tos-plugin#docker-in-ci%2Fcd-environments ). Understand that this means accepting the channel TOS, make sure you have read and understood them and what they imply for your use case and organization. 
 
 ## Misc features ideas
 
 - Keep container name based on src name
 
-## Notes
+## Notes (This is most likely no longer the case for both apptainer and singularity but needs validation)
 `SINGULARITY_BIND` handled after `-B`
 ordering within both matter! -> nested bind mounts possible.
 Note that while loop devices can be mounted on bind mounts,
