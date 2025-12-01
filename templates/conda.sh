@@ -24,7 +24,7 @@ eval "$($CW_INSTALLATION_PATH/miniforge/bin/conda shell.bash hook)"
 
 cd $CW_WORKDIR
 source $CW_INSTALLATION_PATH/_pre_install.sh
-if [[ ! -z "$(echo "$CW_ENV_FILE" | grep ".*\.yaml\|.*\.yml")" ]];then 
+if [[ ! -z "$(echo "$CW_ENV_FILE" | grep ".*\.yaml\|.*\.yml")" ]]; then
     _EC="env"
     _FF="-f"
 else
@@ -34,14 +34,14 @@ cd $CW_INSTALLATION_PATH
 print_info "Creating env, full log in $CW_BUILD_TMPDIR/build.log" 1
 
 if [[ ${CW_MAMBA} == "yes" ]] ;then
-    print_info "Using mamba to install packages" 1 
-    mamba $_EC create --name $CW_ENV_NAME $_FF $( basename $CW_ENV_FILE ) &>> $CW_BUILD_TMPDIR/build.log &
+    print_info "Using mamba to install packages" 1
+    mamba $_EC create -y --name $CW_ENV_NAME $_FF $( basename $CW_ENV_FILE ) &>> $CW_BUILD_TMPDIR/build.log &
 else
-    conda $_EC create --name $CW_ENV_NAME $_FF $( basename $CW_ENV_FILE ) &>> $CW_BUILD_TMPDIR/build.log &
+    conda $_EC create -y --name $CW_ENV_NAME $_FF $( basename $CW_ENV_FILE ) &>> $CW_BUILD_TMPDIR/build.log &
 fi
 
 inst_pid=$!
-follow_log $inst_pid $CW_BUILD_TMPDIR/build.log 20 
+follow_log $inst_pid $CW_BUILD_TMPDIR/build.log 20
 wait $inst_pid
 conda activate $CW_ENV_NAME
 if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
