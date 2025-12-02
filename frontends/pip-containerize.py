@@ -68,27 +68,31 @@ if len(sys.argv) < 2:
     sys.exit(0)
 args = parser.parse_args()
 conf = {}
-pyver = "3.12.9-slim-bookworm"
-
 
 if args.requirements_file:
     conf["requirements_file"] = args.requirements_file
     conf["installation_file_paths"] = [conf["requirements_file"]]
 
 if args.command == "new":
+    conf["mode"] = "venv"
+    conf["use_uv"] = "no"
     conf["update_installation"] = "no"
     if args.system_site_packages:
         conf["enable_site_packages"] = "yes"
     if args.prefix:
         conf["installation_prefix"] = args.prefix
-    conf["mode"] = "venv"
     if args.slim:
+        conf["pyver"] = "slim"
         if args.pyver:
-            pyver = args.pyver
-        conf["container_src"] = "docker://python:{}".format(pyver)
+            if "-slim" in args.pyver or args.pyver == "slim":
+                conf["pyver"] = args.pyver
+            else:
+                conf["pyver"] = args.pyver + "-slim"
+
+        conf["container_src"] = "docker://python:{}".format(conf["pyver"])
         conf["isolate"] = "yes"
     elif args.uv:
-        conf["mode"] = "uvenv"
+        conf["use_uv"] = "yes"
         conf["pyver"] = args.pyver if args.pyver else "3"
     else:
         if args.pyver:
@@ -117,10 +121,7 @@ with open(os.getenv("CW_GLOBAL_YAML", ""), "r") as g:
 
 parse_wrapper(conf, args, False)
 
-if conf["mode"] == "uvenv":
-    conf["template_script"] = "uvenv.sh"
-else:
-    conf["template_script"] = "venv.sh"
+conf["template_script"] = "venv.sh"
 
 if "pipcache" not in conf:
     conf["pipcache"] = True

@@ -152,6 +152,7 @@ on the sqfs image itself. This behavior can be disabled by setting `CW_NO_FIX_PE
 - `pip-containerize`
  - Wrap new venv installation or edit existing
  - Will by default use currently available python
+ - Option to use uv to manage python and venv
  - Option to also use slim container image  (will then not mount full host)
 - `wrap-container`
  - Generate wrappers for existing container. Mainly
@@ -291,4 +292,4 @@ the conf to allow for very "creative" usages of the tool
 Technically updating masked disk installations
 is not an issue, but let's not do that until there is a specific
 request. The tool now drops the full path leading to the target
-from the bind list, if more binds are needed a yaml input needs to be constructed. 
+from the bind list, if more binds are needed a yaml input needs to be constructed.
