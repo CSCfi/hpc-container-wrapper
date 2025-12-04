@@ -87,16 +87,7 @@ with open(os.getenv("CW_GLOBAL_YAML"),'r') as g:
     global_conf=yaml.safe_load(g)
     
 parse_wrapper(conf,global_conf,args,False)
-if conf["mode"] == "conda":
-    conf["update_installation"]="no"
-    conf["template_script"]="conda.sh"
-    conf["installation_file_paths"]=[conf["env_file"]]
-elif conf["mode"]=="conda_modify":
-    conf["update_installation"]="yes"
-    conf["template_script"]="conda_modify.sh"
-else:
-    print_err("No or incorrent mode set, [conda,conda_modify]")
-    sys.exit(1)
+
 if "requirements_file" in conf:
     if "installation_file_paths" in conf:
         conf["installation_file_paths"].append(conf["requirements_file"])

@@ -157,7 +157,7 @@ PATH=$OLD_PATH
 OLD_PATH=$PATH
 mkdir PIP_INSTALL_DIR
 
-cat ../../default_config/config.yaml | sed  's/container_image.*$/container_image: My_very_cool_name.sif/g' > my_config.yaml
+cat $SCRIPT_DIR/../default_config/config.yaml | sed  's/container_image.*$/container_image: My_very_cool_name.sif/g' > my_config.yaml
 t_run "pip-containerize new --prefix PIP_INSTALL_DIR req_typo.txt  2>&1 | grep 'No matching distribution'" "pip error shown to user"
 export CW_GLOBAL_YAML=my_config.yaml
 t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt " "pip install works"
