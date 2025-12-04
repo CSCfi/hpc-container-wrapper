@@ -1,12 +1,13 @@
 #!/bin/bash
-#set -e
+set -e
 
-cd  "$CW_BUILD_TMPDIR"
+
+cd  $CW_BUILD_TMPDIR
 echo "export env_root=$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/" >> _extra_envs.sh
 echo "export env_root=$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/" >> _vars.sh
-export env_root="$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/"
+export env_root=$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/
 
-cd "$CW_INSTALLATION_PATH"
+cd $CW_INSTALLATION_PATH
 
 if [[ ! -e $CW_INSTALLATION_PATH/miniforge/ ]]; then
     if [[ -e $CW_INSTALLATION_PATH/miniconda/ ]]; then
@@ -27,17 +28,17 @@ if [[ ! -e $CW_INSTALLATION_PATH/miniforge/ ]]; then
     fi
 fi
 
-eval "$("$CW_INSTALLATION_PATH/miniforge/bin/conda" shell.bash hook)"
+eval "$($CW_INSTALLATION_PATH/miniforge/bin/conda shell.bash hook)"
 
-cd "$CW_WORKDIR"
-source "$CW_INSTALLATION_PATH/_pre_install.sh"
-if [[ ! -z "$(echo "$CW_ENV_FILE" | grep ".*\.yaml\|.*\.yml")" ]]; then
+cd $CW_WORKDIR
+source $CW_INSTALLATION_PATH/_pre_install.sh
+if [[ ! -z "$(echo "$CW_ENV_FILE" | grep ".*\.yaml\|.*\.yml")" ]];then 
     _EC="env"
     _FF="-f"
 else
     _FF="--file"
 fi
-cd "$CW_INSTALLATION_PATH"
+cd $CW_INSTALLATION_PATH
 
 if [[ "$CW_PIPCACHE" != "yes" ]]; then
     export PIP_NO_CACHE_DIR=1
@@ -77,19 +78,19 @@ if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
     wait $bg_pid
     follow_log $bg_pid "$CW_BUILD_TMPDIR/_pip.log" 20
 fi
-
-cd "$CW_WORKDIR"
+cd $CW_WORKDIR
 print_info "Running user supplied commands" 1
-source "$CW_INSTALLATION_PATH/_post_install.sh"
-if [[ -d "$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin/" ]];then
-    echo 'echo "' > "$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin/list-packages"
-    conda list >> "$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin/list-packages"
-    echo '"' >> "$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin/list-packages"
-    chmod +x "$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin/list-packages"
+source $CW_INSTALLATION_PATH/_post_install.sh
+if [[ -d $CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin/ ]];then
+    echo 'echo "' > $CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin/list-packages
+    conda list >> $CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin/list-packages
+    echo '"' >> $CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin/list-packages
+    chmod +x $CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin/list-packages
 else
     print_warn "Created env is empty"
 fi
 
+
 # Set here as they are dynamic
 # Could also set them in construct.py...
-echo "CW_WRAPPER_PATHS+=( \"$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin/\" )" >>  "$CW_BUILD_TMPDIR/_vars.sh"
+echo "CW_WRAPPER_PATHS+=( \"$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin/\" )" >>  $CW_BUILD_TMPDIR/_vars.sh

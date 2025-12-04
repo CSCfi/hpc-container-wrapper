@@ -1,7 +1,7 @@
 #!/bin/bash
 SINGULARITY_BIND=""
 set -e
-set -u
+set -u 
 
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source $SCRIPT_DIR/common_functions.sh
@@ -26,18 +26,18 @@ else
 fi
 
 # Need to unset the path, otherwise we might be stuck in a nasty loop
-# and exhaust the system
+# and exhaust the system 
 _REAL_PATH_CMD='
-export OLD_PATH=$PATH
+export OLD_PATH=$PATH                                      
 export PATH="/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/bin"
-SOURCE="${BASH_SOURCE[0]}"
-_O_SOURCE=$SOURCE
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
-  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
-  SOURCE="$(readlink "$SOURCE")"
+SOURCE="${BASH_SOURCE[0]}"                                                                                                                                       
+_O_SOURCE=$SOURCE                                                                                                                                                
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink                                                                               
+  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"                                                                                               
+  SOURCE="$(readlink "$SOURCE")"                                                                                                                                 
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-done
-DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+done                                                                                                                                                             
+DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"                                                                                                 
 
 '
 _PRE_COMMAND="source \$DIR/../common.sh"
@@ -79,13 +79,13 @@ if  grep -q 'singularity/mnt/session\|apptainer/mnt/session' /proc/self/mountinf
     export _CW_IN_CONTAINER=Yes
     if [[ \"$CW_ISOLATE\" == \"yes\" && ! \"\$( stat -c '%i' \$SINGULARITY_CONTAINER)\" == \"\$( stat -c '%i' \$_C_DIR/\$CONTAINER_IMAGE)\" ]]; then
         echo \"[ ERROR ] wrapper called from another container. Is \$SINGULARITY_CONTAINER, should be \$_C_DIR/\$CONTAINER_IMAGE \"
-        exit 1
+        exit 1 
     fi
     if [[ ! -e $CW_INSTALLATION_PATH ]]; then
-        echo \"[ ERROR ] Installation for \$_C_DIR/ is not mounted. Wrapper called from another container?\"
+        echo \"[ ERROR ] Installation for \$_C_DIR/ is not mounted. Wrapper called from another container?\" 
         exit 1
     fi
-
+    
 else
     unset _CW_IN_CONTAINER
     export _CW_IS_ISOLATED=$CW_ISOLATE
@@ -185,21 +185,21 @@ for wrapper_path in "${CW_WRAPPER_PATHS[@]}";do
      # so that quote are maintainted
      # e.g python -c "print('Hello')" works
      # The test is there as printf returns '' if $@ is empty
-     # passing '' is not wanted behavior
+     # passing '' is not wanted behavior 
      print_info "Checking if conda installation" 3
      unset CONDA_CMD
-     if $_CONTAINER_EXEC test -f $wrapper_path/../../../bin/conda ; then
+     if $_CONTAINER_EXEC test -f $wrapper_path/../../../bin/conda ; then 
          export CONDA_CMD=1
          print_info "Inserting conda activation into wrappers" 3
          env_name=$(basename $(realpath -m $wrapper_path/../ ))
          conda_path=$(realpath -m $wrapper_path/../../../bin/conda)
          _cws="bash -c \"eval \\\"\\\$($conda_path shell.bash hook )\\\"  && conda activate $env_name &>/dev/null && "
      else
-         print_info "Does not look like a conda installation" 3
+         print_info "Does not look like a conda installation" 3 
      fi
 
     fi
-
+    
 
     for target in "${targets[@]}"; do
         print_info "Creating wrapper for $target" 3
@@ -221,19 +221,19 @@ else" >> _deploy/bin/$target
         _v_in_use=\$?
         if [[ ( \$_v_in_use -eq 0 && ! \${CW_FORCE_CONDA_ACTIVATE+defined} ) || \${CW_NO_CONDA_ACTIVATE+defined} ]];then
         export PATH=\"\$OLD_PATH\"
-        $_RUN_CMD $_default_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe
+        $_RUN_CMD $_default_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
     else
         export PATH=\"\$OLD_PATH\"
         _venv_act=\":\"
-        test 0 -eq \$_v_in_use && _venv_act=\"source \$_venvd/activate\"
-        $_RUN_CMD  $_cws \$_venv_act && exec -a \$_O_SOURCE \$DIR/$target $_cwe
+        test 0 -eq \$_v_in_use && _venv_act=\"source \$_venvd/activate\" 
+        $_RUN_CMD  $_cws \$_venv_act && exec -a \$_O_SOURCE \$DIR/$target $_cwe  
     fi
 fi
         " >>  _deploy/bin/$target
-        else
+        else 
         echo "
     export PATH=\"\$OLD_PATH\"
-    $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe
+    $_RUN_CMD  $_cws exec -a \$_O_SOURCE \$DIR/$target $_cwe  
 fi" >> _deploy/bin/$target
         fi
         chmod +x _deploy/bin/$target
@@ -258,7 +258,7 @@ echo "$_PRE_COMMAND" >> _deploy/bin/$target
 echo "
 
 if [[ -z \"\$SINGULARITY_NAME\" ]];then
-    $_SHELL_CMD  \"\$@\"
+    $_SHELL_CMD  \"\$@\" 
 fi" >> _deploy/bin/$target
 chmod +x _deploy/bin/$target
 
@@ -268,7 +268,7 @@ echo "$_REAL_PATH_CMD" >> _deploy/bin/$target
 echo "$_PRE_COMMAND" >> _deploy/bin/$target
 echo "
 if [[ -z \"\$SINGULARITY_NAME\" ]];then
-    $_RUN_CMD \"\$@\"
+    $_RUN_CMD \"\$@\" 
 fi" >> _deploy/bin/$target
 chmod +x _deploy/bin/$target
 
@@ -282,9 +282,9 @@ printf -- '%s\n' "SINGULARITYENV_PATH=\$(echo \"\${_tmp_arr[@]}\" | /usr/bin/tr 
 printf -- '%s\n' "_tmp_arr=(\$(echo \$SINGULARITYENV_LD_LIBRARY_PATH | /usr/bin/tr ':' '\n' ))" >> _deploy/common.sh
 printf -- '%s\n' "SINGULARITYENV_LD_LIBRARY_PATH=\$(echo \"\${_tmp_arr[@]}\" | /usr/bin/tr ' ' ':')" >> _deploy/common.sh
 
-# Keep Venv path if we wrap a container and create
+# Keep Venv path if we wrap a container and create 
 # So the expectation if a user creates a venv on top of a wrapped container
-# would be that invoking the venv python which launches shell commands again
+# would be that invoking the venv python which launches shell commands again 
 # calling the python interpreter would call the venv python and not the base python
 if [[ "$CW_MODE" == "wrapcont" ]];then
     echo '
@@ -296,10 +296,10 @@ test -e $_venvd/../pyvenv.cfg
 fi
 
 if [[ -f _extra_envs.sh ]];then
-    cat _extra_envs.sh >> _deploy/common.sh
+    cat _extra_envs.sh >> _deploy/common.sh 
 fi
 if [[ -f _extra_user_envs.sh ]];then
-    cat _extra_user_envs.sh >> _deploy/common.sh
+    cat _extra_user_envs.sh >> _deploy/common.sh 
 fi
 chmod o+r _deploy
 chmod o+x _deploy

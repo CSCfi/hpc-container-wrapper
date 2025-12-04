@@ -1,6 +1,6 @@
 #!/bin/bash -u
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-source "$SCRIPT_DIR/setup.sh"
+source $SCRIPT_DIR/setup.sh
 # Test are run in current directory
 
 #cd "${TMPDIR:-/tmp}"
@@ -78,7 +78,7 @@ t_run "conda-containerize new conda_base.yml --prefix A_DIR_NO_EXE | grep ERROR"
 mkdir CONDA_INSTALL_DIR
 
 t_run "conda-containerize new conda_broken.yaml --prefix CONDA_INSTALL_DIR | tee conda_inst.out | grep 'ResolvePackageNotFound\|PackagesNotFoundError'" "Conda errors are propagated to the user"
-t_run "grep ERROR conda_inst.out" "Failed run contains error"
+t_run "grep ERROR conda_inst.out" "Failed run contains error" 
 t_run "grep INFO conda_inst.out"  "Info is present"
 t_run "test -z \"\$(grep ' DEBUG ' conda_inst.out )\" "  "Default no debug message"
 tmp_dir=$(cat conda_inst.out | grep -o "[^ ]*/cw-[A-Z,0-9]\{6\} ")
@@ -87,7 +87,7 @@ export CW_DEBUG_KEEP_FILES=1
 conda-containerize new conda_broken.yaml --prefix CONDA_INSTALL_DIR &> conda_inst.out
 tmp_dir=$(cat conda_inst.out | grep -o "[^ ]*/cw-[A-Z,0-9]\{6\} ")
 t_run "\[ -e $tmp_dir \]" "Build dir is saved if CW_DEBUG_KEEP_FILES set"
-test -d "$tmp_dir" && rm -rf "$tmp_dir"
+test -d $tmp_dir && rm -rf $tmp_dir
 unset CW_DEBUG_KEEP_FILES
 
 unset CW_ENABLE_CONDARC
@@ -102,7 +102,7 @@ t_run "CONDA_INSTALL_DIR/bin/python -m venv VE " "Virtual environment creation w
 t_run "VE/bin/python -c 'import sys;sys.exit( sys.prefix == sys.base_prefix )'" "Virtual environment is correct"
 t_run "VE/bin/pip install requests" "pip works for a venv"
 t_run "VE/bin/python -c 'import requests;print(requests.__file__)' | grep -q VE " "Package is installed correctly to venv"
-CONDA_INSTALL_DIR/bin/_debug_exec bash -c "\$(readlink -f \$env_root)/../../bin/conda list --explicit" > explicit_env.txt
+CONDA_INSTALL_DIR/bin/_debug_exec bash -c "\$(readlink -f \$env_root)/../../bin/conda list --explicit" > explicit_env.txt 
 t_run "CONDA_INSTALL_DIR/bin/python -c 'import yaml'" "Package added by -r is there"
 t_run "conda-containerize update CONDA_INSTALL_DIR --post-install post.sh" "Update works"
 t_run "CONDA_INSTALL_DIR/bin/python -c 'import requests'" "Package added by update is there"
@@ -150,14 +150,14 @@ cluster = dask_jobqueue.SLURMCluster(
 print(cluster.job_script())
 
 ' > dask_test.py
-t_run "python dask_test.py | grep \"$(realpath -s "$PWD/CONDA_INSTALL_DIR/bin/python")\"" "Dask uses correct python path"
+t_run "python dask_test.py | grep \"$(realpath -s $PWD/CONDA_INSTALL_DIR/bin/python )\"" "Dask uses correct python path"
 PATH=$OLD_PATH
 
 
-# OLD_PATH=$PATH
-rm -fr PIP_INSTALL_DIR && mkdir PIP_INSTALL_DIR
+OLD_PATH=$PATH
+mkdir PIP_INSTALL_DIR
 
-cat "$SCRIPT_DIR/../default_config/config.yaml" | sed  's/container_image.*$/container_image: My_very_cool_name.sif/g' > my_config.yaml
+cat ../../default_config/config.yaml | sed  's/container_image.*$/container_image: My_very_cool_name.sif/g' > my_config.yaml
 t_run "pip-containerize new --prefix PIP_INSTALL_DIR req_typo.txt  2>&1 | grep 'No matching distribution'" "pip error shown to user"
 export CW_GLOBAL_YAML=my_config.yaml
 t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt " "pip install works"
@@ -166,10 +166,9 @@ PATH="PIP_INSTALL_DIR/bin:$PATH"
 t_run "python -c 'import requests'" "Package added in update available"
 t_run "\[ -e PIP_INSTALL_DIR/My_very_cool_name.sif \]" "Using custom conf"
 t_run "python -c 'import sys;sys.exit(sys.prefix == sys.base_prefix)'" "Installation is venv"
-in_p=$(python3 -c 'import sys;print(sys.executable)')
-out_p="$PWD/PIP_INSTALL_DIR/bin/python3"
-t_run "[[ $in_p == $out_p ]]" "Executable name is same on in and out"
-
+in_p=$(python3 -c 'import sys;print(sys.executable)') 
+out_p="$PWD/PIP_INSTALL_DIR/bin/python3"                                  
+t_run "[[ $in_p == $out_p ]]" "Executable name is same on in and out"                         
 rm -fr PIP_INSTALL_DIR && mkdir PIP_INSTALL_DIR
 t_run "pip-containerize new --uv --prefix PIP_UV_INSTALL_DIR req_typo.txt  2>&1 | grep -o 'not found in the package registry'" "uv error shown to user"
 t_run "pip-containerize new --uv --prefix PIP_UV_INSTALL_DIR req.txt " "pip install with uv works"
