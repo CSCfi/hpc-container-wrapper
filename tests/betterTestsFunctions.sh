@@ -1,12 +1,84 @@
 
 export UPLINE=$(tput cuu1)
 export ERASELINE=$(tput el)
+
+
+
+export SAVE_POS=$'\033[s'   # ESC [ s
+export RESTORE_POS=$'\033[u' # ESC [ u
+export CLEAR_EOS=$'\033[J'   # ESC [ J
+
+
+move_to() {           # move to row, col
+  printf '%s' "$(tput cup "$1" "$2")"
+}
+clear_eol() {         # clear to end of line
+  printf '%s' "$(tput el)"
+}
+clear_from_top() {    # go to top-left and clear to end of screen
+  move_to 0 0
+  printf '%s' "$(tput ed)"
+}
+
+draw_line() {         # write text and clear rest of line
+  #printf '%s' "$1"
+  #
+  echo -ne "$1"
+  clear_eol
+}
+
+# Track previous frame
+declare -a LAST=()
+
+# Redraw only changed lines; assumes anchor at (0,0)
+redraw_lines() {
+  local -a CUR=("$@")
+  local rows=${#CUR[@]}
+
+  # On first draw or forced full redraw, clear downwards from top
+  if [[ ${#LAST[@]} -eq 0 ]]; then
+    clear_from_top
+  fi
+
+  # Update only the lines that changed
+  for ((r=0; r<rows; r++)); do
+    if [[ "${CUR[r]-}" != "${LAST[r]-}" ]]; then
+      move_to "$r" 0
+      draw_line "${CUR[r]}"
+    fi
+  done
+
+  # If previously we had more lines, clear the leftovers
+  if (( ${#LAST[@]} > rows )); then
+    for ((r=rows; r<${#LAST[@]}; r++)); do
+      move_to "$r" 0
+      clear_eol
+    done
+  fi
+
+  LAST=("${CUR[@]}")
+}
+
+# Optional: handle terminal resize gracefully
+need_full_redraw=1
+trap 'need_full_redraw=1; LAST=()' WINCH
+
+# Optional: hide cursor for smoother look; ensure it is restored on exit
+printf '\033[?25l'
+#trap 'printf "\033[?25h"' EXIT
+
+
+
+
 erase_lines(){
-    for i in $(eval echo "{1..$1}");do
+    for i in $(eval echo "{1..$(($1 +1))}");do
         echo -e "$ERASELINE$UPLINE$ERASELINE\c" 
     done
 
 }
+
+
+
 
 use_color="yes"
 
@@ -42,15 +114,57 @@ waitAndCheck(){
         sleep 1
     done
     if ! [[ $(cat $2-status.out 2>/dev/null ) -eq 0  ]];then
-        touch $3.skipped 
+        echo $2 > $3.skipped 
         return 1
     elif [[ -e $2.skipped ]];then
-        touch $3.skipped 
+        cat $2.skipped > $3.skipped 
         return 1
     else
         return 0
     fi
 }
+
+
+
+
+
+setupFifo(){
+    SEMFILE=/tmp/mysem.$$
+    mkfifo "$SEMFILE"
+    exec {SEM}<> "$SEMFILE"
+    M=$1
+    # Create a FIFO and preload M tokens
+    echo "[ CREATED FIFO $SEMFILE, max test = $M]"
+    # Background: continuously re-provide tokens from a subshell holding M of them
+    # The trick: cat reads tokens from writers (release) and tee feeds new readers (acquire)
+    {
+    
+      for i in $(seq 1 "$M"); do echo -e "token-in-$i" ; done
+    } >& $SEM # &   # writer that keeps the FIFO supplied
+}
+
+# acquire: read one token from the FIFO (blocks if none available)
+acquire() { 
+    touch $1.pending
+    read -r tok <& $SEM  
+    rm $1.pending
+}
+
+# release: write a token back into the FIFO
+release() { 
+    echo -e "token-$1" >& $SEM 
+
+}
+
+cleanup() {
+ 
+  exec 3>/dev/tty
+  echo -e "\e[?25h" >&3
+  exec {SEM}<>-
+  rm -f "$SEMFILE"
+  kill -TERM -- -$$
+}
+
 
 runTest(){
 
@@ -64,7 +178,7 @@ runTest(){
         if [[ ${#3} -ge 2 ]];then 
             getTestIdFromPid $3
             #{  while [ -e /proc/$3 ] ; do sleep 1;done ;   touch $TEST_IDX.running ; eval "$1" 2> $TEST_IDX.err 1> $TEST_IDX.log; echo $? > $TEST_IDX-status.out; rm $TEST_IDX.running ;   }  &
-            {   waitAndCheck $3 $_RET_ID $TEST_IDX && { touch $TEST_IDX.running ; eval "$1" 2> $TEST_IDX.err 1> $TEST_IDX.log; echo $? > $TEST_IDX-status.out; rm $TEST_IDX.running ;   }  ; }  &
+            {   waitAndCheck $3 $_RET_ID $TEST_IDX && {   touch $TEST_IDX.running ; eval "$1" 2> $TEST_IDX.err 1> $TEST_IDX.log; echo $? > $TEST_IDX-status.out; rm $TEST_IDX.running ;   }  ; }  &
             BACKGROUND_PID=$!
             PID_MAP[$TEST_IDX]=$BACKGROUND_PID
             idxp=$(printf "%03d" $_RET_ID)
@@ -72,8 +186,7 @@ runTest(){
             #echo $bpid
         # Schedule directly
         else 
-            touch $TEST_IDX.running
-            { eval "$1" 2> $TEST_IDX.err 1> $TEST_IDX.log; echo $? > $TEST_IDX-status.out; rm $TEST_IDX.running ;} &
+            { acquire $TEST_IDX; touch $TEST_IDX.running ; eval "$1" 2> $TEST_IDX.err 1> $TEST_IDX.log; echo $? > $TEST_IDX-status.out; rm $TEST_IDX.running ; release $TEST_IDX  ;} &
             BACKGROUND_PID=$!
             PID_MAP[$TEST_IDX]=$BACKGROUND_PID
          
@@ -84,15 +197,20 @@ runTest(){
     
 }
 
+##
+##
+
 updateStatus(){
     changed=0
     re='^[0-9]+$'
     for i in $(seq 0 $1);do
         CT=${STATUS_ARRAY[$i]}
-        if [[ -e $i.running ]];then
+       if [[ -e $i.pending ]];then
+          CT="${_blue}WAITING FOR SLOT${_nc}"
+        elif [[ -e $i.running ]];then
             CT=${_yellow}RUNNING${_nc}
         elif [[ -e $i.skipped ]];then
-            CT="${_red}SKIPPED${_nc}"
+            CT="${_red}SKIPPED DUE TO $(<$i.skipped) ${_nc}"
         elif [[ -e $i-status.out ]];then
             ret=$(cat $i-status.out)
             if [[ "$ret" == "0"  ]]; then
@@ -104,21 +222,35 @@ updateStatus(){
             fi
             
         fi
-        if [[ "$CT" != ${STATUS_ARRAY[$i]} ]];then
+        if ! [[ "$CT" == "${STATUS_ARRAY[$i]}" ]];then
+            OLD_STATUS_ARRAY[$i]=STATUS_ARRAY[$i]
             STATUS_ARRAY[$i]=$CT
             changed=1
         fi
     done
+    changed=1
     return $changed
 }
 
 
 printStatus(){
     idx=0
+    lines=()
+    events=()
+    lines+="Time: $(date '+%H:%M:%S')"
     for  i in "${STATUS_ARRAY[@]}"; do
         idxp=$(printf "%03d" $idx)
-        echo -e "$idxp [ $i ] ${TEST_DESCRIPTION[$idx]}"
-        idx=$((idx+1))
+        lines+=("$idxp [ $i ] ${TEST_DESCRIPTION[$idx]}")
+        idx=$((idx+1)) 
     done
-    
+    if [ -t 1 ]; then
+     if (( need_full_redraw )); then
+         clear_from_top               
+          need_full_redraw=0           
+         LAST=()                      
+     fi                                                            
+     redraw_lines "${lines[@]}"     
+    else
+        echo "NOT A TTY"
+    fi                          
 }

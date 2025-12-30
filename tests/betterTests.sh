@@ -3,6 +3,9 @@ source $SCRIPT_DIR/betterTestsFunctions.sh
 export PATH="$(realpath $SCRIPT_DIR/../bin):$PATH"
 # Test are run in current directory
 
+
+trap cleanup EXIT
+
 #cd "${TMPDIR:-/tmp}"
 rm -fr TEST_DIR
 mkdir TEST_DIR
@@ -24,13 +27,6 @@ channels:
 dependencies:
   - numpy
 " > conda_base.yml
-echo "
-channels:
-  - conda-forge
-dependencies:
-   - dask
-   - dask-jobqueue
-" > dask_env.yaml
 
 echo "
 channels:
@@ -102,15 +98,22 @@ NUM_TESTS=$TEST_IDX
 TEST_IDX=0
 #printStatus
 export FIRST_RUN=0
+
+OLD_STATUS_ARRAY=("${STATUS_ARRAY[@]}")
+setupFifo 4
 for f in "${testFiles[@]}";do
     source $f
 done
 #erase_lines $NUM_TESTS
+#refresh_begin
 printStatus
 
-while jobs -p >/dev/null; do
+while true; do
     sleep 2
-    jobs | grep -q "Running" || break 
-    updateStatus $NUM_TESTS || { erase_lines $NUM_TESTS; printStatus  ;}
+    lj=$(jobs -l)
+    # If No background tasks are running, quit
+    echo "$lj" | grep -q "^\[[0-9]*\][-+] [0-9]* Running" || break
+    #updateStatus $NUM_TESTS || { erase_lines $NUM_TESTS; printStatus  ;}
+    updateStatus $NUM_TESTS || { printStatus  ;}
 done
 updateStatus $NUM_TESTS || { erase_lines $NUM_TESTS; printStatus  ;}
