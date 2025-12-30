@@ -223,7 +223,6 @@ updateStatus(){
             
         fi
         if ! [[ "$CT" == "${STATUS_ARRAY[$i]}" ]];then
-            OLD_STATUS_ARRAY[$i]=STATUS_ARRAY[$i]
             STATUS_ARRAY[$i]=$CT
             changed=1
         fi
@@ -237,10 +236,17 @@ printStatus(){
     idx=0
     lines=()
     events=()
-    lines+="Time: $(date '+%H:%M:%S')"
+    time=$(date '+%H:%M:%S')
+    lines+="Time: $time"
     for  i in "${STATUS_ARRAY[@]}"; do
         idxp=$(printf "%03d" $idx)
         lines+=("$idxp [ $i ] ${TEST_DESCRIPTION[$idx]}")
+    if ! [ -t 1 ]; then
+        if ! [[ "${STATUS_ARRAY[$idx]}" == "${OLD_STATUS_ARRAY[$idx]}" ]] ; then
+            events+=("TASK $idx changed from ${OLD_STATUS_ARRAY[$idx]} to ${STATUS_ARRAY[$idx]}")
+            OLD_STATUS_ARRAY[$idx]=${STATUS_ARRAY[$idx]}
+        fi
+    fi
         idx=$((idx+1)) 
     done
     if [ -t 1 ]; then
@@ -251,6 +257,9 @@ printStatus(){
      fi                                                            
      redraw_lines "${lines[@]}"     
     else
-        echo "NOT A TTY"
+        echo "Status at $time"
+        for e in "${events[@]}"; do
+            echo "$e"
+        done
     fi                          
 }
