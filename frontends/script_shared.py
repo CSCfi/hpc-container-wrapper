@@ -93,5 +93,12 @@ def get_old_conf(d,conf):
     conf["sqfs_image"]=old_conf["sqfs_image"]
     conf["container_image"]=old_conf["container_image"]
     conf["isolate"]=old_conf["isolate"]
+    conf["mode"] = old_conf["mode"]
+    if "mamba" in old_conf:
+        conf["mamba"] = old_conf["mamba"]
+    if "use_uv" in old_conf:
+        conf["use_uv"] = old_conf["use_uv"]
+    if "pipcache" in old_conf:
+        conf["pipcache"] = old_conf["pipcache"]
     if "wrapper_paths" in old_conf:
         conf["wrapper_paths"] = old_conf["wrapper_paths"]

@@ -152,6 +152,7 @@ on the sqfs image itself. This behavior can be disabled by setting `CW_NO_FIX_PE
 - `pip-containerize`
  - Wrap new venv installation or edit existing
  - Will by default use currently available python
+ - Option to use uv to manage python and venv
  - Option to also use slim container image  (will then not mount full host)
 - `wrap-container`
  - Generate wrappers for existing container. Mainly

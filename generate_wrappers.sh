@@ -242,7 +242,7 @@ fi" >> _deploy/bin/$target
             if [[ ! -z "$($_CONTAINER_EXEC ls $wrapper_path/../pyvenv.cfg 2>/dev/null )" ]]; then
                 print_info "Target is a venv" 2
                 $_CONTAINER_EXEC cat $wrapper_path/../pyvenv.cfg > _deploy/pyvenv.cfg
-                _pyd=$($_CONTAINER_EXEC ls $wrapper_path/../lib)
+                _pyd=$(basename "$($_CONTAINER_EXEC find $wrapper_path/../lib -maxdepth 1 -type d -regex '.*/python[0-9]+\.[0-9]+$')")
                 mkdir -p _deploy/lib/$_pyd/
                 (cd _deploy/lib/$_pyd && ln -s $wrapper_path/../lib/$_pyd/site-packages site-packages )
                 (cd _deploy && ln -s lib lib64 )
