@@ -1,14 +1,18 @@
-local version = "0.4.3"
+local version = myModuleVersion()
 local base = "/appl/soft/manual/general/common/tykky"
+
 help([[
 Tykky - HPC Container Wrapper
 ]])
 whatis("Name: Tykky")
 whatis("Version: " .. version)
 whatis("Description: HPC Container Wrapper")
+whatis("URL: https://github.com/CSCfi/hpc-container-wrapper")
+
 -- Set paths
 prepend_path("PATH", pathJoin(base, version, "bin"))
 prepend_path("FPATH", pathJoin(base, version, "share/sh_functions"))
+
 -- Set shell functions:
 local function read_file(filename)
     local file = io.open(filename, "r")
