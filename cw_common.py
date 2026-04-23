@@ -98,7 +98,7 @@ special["rhel"]= lambda namespace,version: namespace+version.split('.')[0]
 def get_docker_image(release_file):
     os_release_file = release_file
     docker_images = {
-        "sles": "opensuse/leap",
+        "sles": "registry.suse.com/bci/bci-base",
         "rhel": "redhat/ubi",
         "almalinux": "almalinux",
         "rocky": "rockylinux/rockylinux",
