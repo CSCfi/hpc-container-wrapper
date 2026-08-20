@@ -14,8 +14,13 @@ if [[ ! -e $CW_INSTALLATION_PATH/miniforge/ ]]; then
         print_info "Updating older installation which is using miniconda and not miniforge\nCreating symlink miniforge -> miniconda" 1
         ln -s "$CW_INSTALLATION_PATH/miniconda" "$CW_INSTALLATION_PATH/miniforge"
     else
-        [ "$CW_CONDA_VERSION" = "latest" ] && CW_CONDA_VERSION=$(curl -s https://api.github.com/repos/conda-forge/miniforge/releases/latest | grep "tag_name" | cut -d: -f2 | tr -d \" | tr -d , | tr -d " ")
-
+        [ "$CW_CONDA_VERSION" = "latest" ] && CW_CONDA_VERSION=$(curl -w "%{url_effective}\n" -I -L -s -S https://github.com/conda-forge/miniforge/releases/latest -o /dev/null | rev | cut -d / -f1 | rev)
+        if [[  $CW_CONDA_VERSION =~ ^[0-9.-]+$ ]]; then
+            print_info "Resolved newest miniforge release to $CW_CONDA_VERSION" 2
+        else
+            print_err "Failed to resolve what version of miniforge to download"
+            false
+        fi
         print_info "Using miniforge version Miniforge3-$CW_CONDA_VERSION-$CW_CONDA_ARCH" 1
         print_info "Downloading miniforge " 2
         curl -sL "https://github.com/conda-forge/miniforge/releases/download/$CW_CONDA_VERSION/Miniforge3-$CW_CONDA_VERSION-$CW_CONDA_ARCH.sh" --output Miniforge_inst.sh &>/dev/null
