@@ -26,4 +26,4 @@ fi
     
     cp $CW_BUILD_TMPDIR/conf.yaml $CW_INSTALLATION_PREFIX/share
 
-rm -rf $CW_BUILD_TMPDIR
+rm -rf $CW_BUILD_TMPDIR || print_warn "Failed to remove $CW_BUILD_TMPDIR\n\tContinuing anyway"
