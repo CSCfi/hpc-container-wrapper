@@ -23,6 +23,7 @@ defaults:
             - /users
             - /appl
             - /run
+            - /dataset
     isolate: no
     create_wrappers: yes
     wrap_all: no
