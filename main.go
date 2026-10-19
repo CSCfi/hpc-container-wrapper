@@ -18,10 +18,8 @@ var version, commit string
 
 var (
 	logLevel = 2
-	color    = func() bool {
-		st, err := os.Stdout.Stat()
-		return err == nil && st.Mode()&os.ModeCharDevice != 0 && os.Getenv("USE_COLOR") != "no"
-	}()
+	tty      = func() bool { st, err := os.Stdout.Stat(); return err == nil && st.Mode()&os.ModeCharDevice != 0 }()
+	color    = tty && os.Getenv("USE_COLOR") != "no"
 )
 
 func logmsg(c, tag, f string, a ...any) {
@@ -147,7 +145,7 @@ func frontend(prog string, argv []string, global map[string]any) map[string]any 
 	}
 	switch prog {
 	case "conda-containerize":
-		conf["add_ld"], conf["use_uv"], conf["mode"], conf["template_script"] = "no", "no", "conda", "conda.sh"
+		conf["add_ld"], conf["use_uv"], conf["mode"] = "no", "no", "conda"
 		if a["command"] == "new" {
 			if st, err := os.Stat(a["env_file"]); err != nil || st.IsDir() {
 				fatal("Env file %s does not exist", a["env_file"])
@@ -199,7 +197,7 @@ func frontend(prog string, argv []string, global map[string]any) map[string]any 
 	case "wrap-install":
 		src := realpath(a["dir"])
 		conf["isolate"], conf["mode"], conf["wrap_src"] = "no", "wrapdisk", src
-		conf["update_installation"], conf["template_script"] = "no", "wrap.sh"
+		conf["update_installation"] = "no"
 		if a["mask"] != "" {
 			conf["installation_path"] = src
 			if !hasApptainer() {
@@ -237,7 +235,7 @@ func frontend(prog string, argv []string, global map[string]any) map[string]any 
 	}
 	addWrapperPaths(conf, global, a["wrapper_paths"], prog == "wrap-container")
 	if prog == "pip-containerize" {
-		conf["template_script"] = "venv.sh"
+		conf["mode"] = "venv"
 	}
 	if strings.HasSuffix(prog, "-containerize") && a["command"] != "advanced" {
 		conf["pipcache"] = a["nocache"] == ""

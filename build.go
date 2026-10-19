@@ -2,7 +2,7 @@ package main
 
 import (
 	"cmp"
-	"embed"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -16,11 +16,6 @@ import (
 
 	"gopkg.in/yaml.v3"
 )
-
-// Scripts that run inside the container during installation.
-//
-//go:embed templates
-var templates embed.FS
 
 type build struct {
 	c          conf
@@ -232,8 +227,8 @@ func (b *build) fetch() error {
 	return nil
 }
 
-// script concatenates a pre_install/post_install list of commands and {file: path} entries.
-func script(entries any) (string, error) {
+// userScript concatenates a pre_install/post_install list of commands and {file: path} entries.
+func userScript(entries any) (string, error) {
 	s := "#!/bin/bash\n"
 	for _, e := range list(entries) {
 		if m, ok := e.(map[string]any); ok {
@@ -249,7 +244,7 @@ func script(entries any) (string, error) {
 	return s, nil
 }
 
-// envRoot is where the template creates the environment; empty if none.
+// envRoot is where the install script creates the environment; empty if none.
 func (b *build) envRoot() string {
 	switch b.c.get("mode") {
 	case "conda":
@@ -272,25 +267,11 @@ func (b *build) install() error {
 			return err
 		}
 	}
-	tmpl := c.get("template_script")
-	helpers := map[string]string{}
-	for _, name := range []string{"common_functions.sh", tmpl} {
-		if name != "" {
-			s, err := templates.ReadFile("templates/" + name)
-			if err != nil {
-				return err
-			}
-			helpers[name] = string(s)
+	for name, k := range map[string]string{"_pre_install.sh": "pre_install", "_post_install.sh": "post_install"} {
+		s, err := userScript(c[k])
+		if err != nil {
+			return err
 		}
-	}
-	var err error
-	if helpers["_pre_install.sh"], err = script(c["pre_install"]); err != nil {
-		return err
-	}
-	if helpers["_post_install.sh"], err = script(c["post_install"]); err != nil {
-		return err
-	}
-	for name, s := range helpers {
 		if err := os.WriteFile(inst+"/"+name, []byte(s), 0o755); err != nil {
 			return err
 		}
@@ -346,16 +327,25 @@ func (b *build) install() error {
 			return fmt.Errorf("Failed to copy some files, most likely incorrect file permissions inside the squashfs image")
 		}
 	}
-	info(1, "Running installation script")
-	run := "set -e; source $CW_INSTALLATION_PATH/common_functions.sh"
-	if tmpl != "" {
-		run += "; source $CW_INSTALLATION_PATH/" + tmpl
+	sh, extra, err := b.installScript(inst)
+	if err != nil {
+		return err
 	}
-	if err := b.cmd(env, b.sing, append(execArgs, "bash", "-c", run)...).Run(); err != nil {
+	info(1, "Running installation script")
+	log, err := os.OpenFile(b.dir+"/build.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	defer log.Close()
+	cmd := b.cmd(append(env, extra...), b.sing, append(execArgs, "bash", "-c", sh)...)
+	cmd.Stdout = &console{out: os.Stdout, log: log, tty: tty}
+	// don't hang on background processes left holding the output by the user's scripts
+	cmd.WaitDelay = time.Second
+	if err := cmd.Run(); err != nil && !errors.Is(err, exec.ErrWaitDelay) {
 		return err
 	}
 
-	for name := range helpers {
+	for _, name := range []string{"_pre_install.sh", "_post_install.sh", "Miniforge_inst.sh", "uv_install.sh"} {
 		os.Remove(inst + "/" + name)
 	}
 	// keep inputs of every build in a separate folder so they are not overwritten

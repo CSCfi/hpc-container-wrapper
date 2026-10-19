@@ -1,4 +1,0 @@
-cp -a $CW_SOURCE_MOUNT_POINT/. $CW_INSTALLATION_PATH
-cd $CW_WORKDIR
-source $CW_INSTALLATION_PATH/_pre_install.sh
-source $CW_INSTALLATION_PATH/_post_install.sh
