@@ -155,7 +155,7 @@ func say(lvl int, msg string) string {
 	if logLevel > 2 {
 		ts = " $(date +%H:%M:%S)"
 	}
-	return fmt.Sprintf("echo \"[ %s%s ] \"'%s '\n", tag, ts, strings.ReplaceAll(msg, "'", `'\''`))
+	return fmt.Sprintf("echo \"[ %s%s ] \"%s\n", tag, ts, shq(msg+" "))
 }
 
 // miniforgeVersion resolves "latest" to the newest release tag.

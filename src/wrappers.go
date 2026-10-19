@@ -25,7 +25,7 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 
 
-source $DIR/../common.sh
+source "$DIR/../common.sh"
 `
 
 // probe runs a command inside the built container and returns its stdout.
@@ -43,6 +43,23 @@ func (b *build) probe(args ...string) (string, error) {
 
 var libDir = regexp.MustCompile(`lib[64]*$`)
 
+// shq quotes s as a single shell word.
+func shq(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
+
+func shqAll(l []string) string {
+	q := make([]string, len(l))
+	for i, s := range l {
+		q[i] = shq(s)
+	}
+	return strings.Join(q, " ")
+}
+
+// dq escapes s for use inside double quotes, keeping $VAR expansion.
+func dq(s string) string { return strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(s) }
+
+// The wrappers pass these through bash -c "...", so they are quoted again for the inner shell.
+const qSrc, qDir = `$(printf %q "$_O_SOURCE")`, `$(printf %q "$DIR")`
+
 func (b *build) wrappers() error {
 	c, d := b.c, b.deploy
 	isolate, wrapcont := c.get("isolate"), c.get("mode") == "wrapcont"
@@ -56,27 +73,27 @@ func (b *build) wrappers() error {
 	var w strings.Builder
 	pr := func(f string, a ...any) { fmt.Fprintf(&w, f, a...) }
 
-	runCmd := b.sing + " --silent exec $DIR/../$CONTAINER_IMAGE"
-	shellCmd := b.sing + " --silent shell $DIR/../$CONTAINER_IMAGE"
+	runCmd := shq(b.sing) + ` --silent exec "$DIR/../$CONTAINER_IMAGE"`
+	shellCmd := shq(b.sing) + ` --silent shell "$DIR/../$CONTAINER_IMAGE"`
 	pr("#!/bin/bash\n")
 	if !wrapcont {
-		pr("SQFS_IMAGE=%s\n", c.get("sqfs_image"))
+		pr("SQFS_IMAGE=%s\n", shq(c.get("sqfs_image")))
 	}
-	pr("_C_DIR=\"$( cd \"$( dirname \"${BASH_SOURCE[0]}\" )\" >/dev/null 2>&1 && pwd )\"\nCONTAINER_IMAGE=%s\nINSTALLATION_PATH=%s\n\n", c.get("container_image"), ipath)
+	pr("_C_DIR=\"$( cd \"$( dirname \"${BASH_SOURCE[0]}\" )\" >/dev/null 2>&1 && pwd )\"\nCONTAINER_IMAGE=%s\nINSTALLATION_PATH=%s\n\n", shq(c.get("container_image")), shq(ipath))
 	if c.has("wrapper_ld_library_paths") {
-		pr("export SINGULARITYENV_LD_LIBRARY_PATH=\"$SINGULARITYENV_LD_LIBRARY_PATH:%s\"\n", strings.Join(c.list("wrapper_ld_library_paths"), ":"))
+		pr("export SINGULARITYENV_LD_LIBRARY_PATH=\"$SINGULARITYENV_LD_LIBRARY_PATH:\"%s\n", shq(strings.Join(c.list("wrapper_ld_library_paths"), ":")))
 	}
 	if isolate == "yes" {
-		pr("_DIRS=(%s $_C_DIR )\n", strings.Join(c.list("mount_points"), " "))
+		pr("_DIRS=(%s \"$_C_DIR\" )\n", shqAll(c.list("mount_points")))
 		out, _ := b.probe("sh", "-c", "echo $PATH; echo $LD_LIBRARY_PATH")
 		path, ld, _ := strings.Cut(out, "\n")
 		pr(`
-SINGULARITYENV_DEFAULT_PATH="%s"
-SINGULARITYENV_DEFAULT_LD_LIBRARY_PATH="%s"
+SINGULARITYENV_DEFAULT_PATH=%s
+SINGULARITYENV_DEFAULT_LD_LIBRARY_PATH=%s
 export SINGULARITYENV_PATH="$SINGULARITYENV_PATH:$SINGULARITYENV_DEFAULT_PATH"
 export SINGULARITYENV_LD_LIBRARY_PATH="$SINGULARITYENV_LD_LIBRARY_PATH:$SINGULARITYENV_DEFAULT_LD_LIBRARY_PATH"
 
-`, strings.TrimSpace(path), strings.TrimSpace(ld))
+`, shq(strings.TrimSpace(path)), shq(strings.TrimSpace(ld)))
 	} else {
 		pr(`_DIRS=($(/usr/bin/ls -1 / | /usr/bin/awk '!/dev/' | /usr/bin/sed 's/^/\//g' ))
 export SINGULARITYENV_PATH="$OLD_PATH"
@@ -89,13 +106,13 @@ export SINGULARITYENV_LD_LIBRARY_PATH="$SINGULARITYENV_LD_LIBRARY_PATH:$LD_LIBRA
             _DIRS=( "${_DIRS[@]/$mp}")
         done
 
-`, strings.Join(c.list("excluded_mount_points"), " "))
+`, shqAll(c.list("excluded_mount_points")))
 		}
 	}
 	pr(`
 if  grep -q 'singularity/mnt/session\|apptainer/mnt/session' /proc/self/mountinfo ;then
     export _CW_IN_CONTAINER=Yes
-    if [[ "%[1]s" == "yes" && ! "$( stat -c '%%i' $SINGULARITY_CONTAINER)" == "$( stat -c '%%i' $_C_DIR/$CONTAINER_IMAGE)" ]]; then
+    if [[ %[1]s == "yes" && ! "$( stat -c '%%i' "$SINGULARITY_CONTAINER")" == "$( stat -c '%%i' "$_C_DIR/$CONTAINER_IMAGE")" ]]; then
         echo "[ ERROR ] wrapper called from another container. Is $SINGULARITY_CONTAINER, should be $_C_DIR/$CONTAINER_IMAGE "
         exit 1
     fi
@@ -116,26 +133,26 @@ fi
 
 for d in "${_DIRS[@]}"; do
     if [[ -z "$SINGULARITY_BIND" ]];then
-        test -d $d && export SINGULARITY_BIND="$d"
+        test -d "$d" && export SINGULARITY_BIND="$d"
     else
-        test -d $d && export SINGULARITY_BIND="$SINGULARITY_BIND,$d"
+        test -d "$d" && export SINGULARITY_BIND="$SINGULARITY_BIND,$d"
     fi
 done
 if [[ "${TMPDIR+defined}" ]];then
     SINGULARITY_BIND="$SINGULARITY_BIND,$TMPDIR,$TMPDIR:/tmp"
 fi
-SINGULARITY_BIND="$SINGULARITY_BIND,$( /usr/bin/readlink -f $_C_DIR/_bin):$( /usr/bin/readlink -f $_C_DIR/bin)"
-`, isolate, ipath)
+SINGULARITY_BIND="$SINGULARITY_BIND,$( /usr/bin/readlink -f "$_C_DIR/_bin"):$( /usr/bin/readlink -f "$_C_DIR/bin")"
+`, shq(isolate), shq(ipath))
 	// readlink above: on LUMI some folders are symlinks to lustre mount points
 	if wrapcont {
 		pr("export SINGULARITY_BIND\n")
 	} else {
 		pr("export SINGULARITY_BIND=$SINGULARITY_BIND,$DIR/../$SQFS_IMAGE:$INSTALLATION_PATH:image-src=/\n")
 	}
-	pr(`if [[ ${CW_EXTRA_BIND_MOUNTS+defined} && "%s" == "no" ]]; then
+	pr(`if [[ ${CW_EXTRA_BIND_MOUNTS+defined} && %s == "no" ]]; then
     export SINGULARITY_BIND=$SINGULARITY_BIND,$(echo $CW_EXTRA_BIND_MOUNTS |  sed "s@[^,]*:$INSTALLATION_PATH:image-src=/@@g")
 fi
-`, isolate)
+`, shq(isolate))
 
 	info(1, "Creating wrappers")
 	defaultCws := `bash -c "`
@@ -184,7 +201,7 @@ fi
 				info(3, "Inserting conda activation into wrappers")
 				conda = true
 				cws = fmt.Sprintf(`bash -c "eval \"\$(%s shell.bash hook )\"  && conda activate %s &>/dev/null && `,
-					path.Clean(wp+"/../../../bin/conda"), path.Base(path.Clean(wp+"/..")))
+					shq(path.Clean(wp+"/../../../bin/conda")), shq(path.Base(path.Clean(wp+"/.."))))
 			}
 		}
 		for _, t := range targets {
@@ -200,31 +217,31 @@ fi
 			s := header + fmt.Sprintf(`
 if [[ ${_CW_IN_CONTAINER+defined} ]];then
     export PATH="$OLD_PATH"
-    exec -a $_O_SOURCE $DIR/../_bin/%s "$@"
+    exec -a "$_O_SOURCE" "$DIR/../_bin/%s" "$@"
 else
 `, t)
 			if conda {
 				s += fmt.Sprintf(`
-        _venvd=$(/usr/bin/dirname $_O_SOURCE )
-        test -e $_venvd/../pyvenv.cfg
+        _venvd=$(/usr/bin/dirname "$_O_SOURCE" )
+        test -e "$_venvd/../pyvenv.cfg"
         _v_in_use=$?
         if [[ ( $_v_in_use -eq 0 && ! ${CW_FORCE_CONDA_ACTIVATE+defined} ) || ${CW_NO_CONDA_ACTIVATE+defined} ]];then
         export PATH="$OLD_PATH"
-        %[1]s %[2]s exec -a $_O_SOURCE $DIR/%[3]s %[4]s
+        %[1]s %[2]s exec -a %[6]s %[7]s/%[3]s %[4]s
     else
         export PATH="$OLD_PATH"
         _venv_act=":"
-        test 0 -eq $_v_in_use && _venv_act="source $_venvd/activate"
-        %[1]s  %[5]s $_venv_act && exec -a $_O_SOURCE $DIR/%[3]s %[4]s
+        test 0 -eq $_v_in_use && _venv_act="source $(printf %%q "$_venvd")/activate"
+        %[1]s  %[5]s $_venv_act && exec -a %[6]s %[7]s/%[3]s %[4]s
     fi
 fi
-`, runCmd, defaultCws, t, cwe, cws)
+`, runCmd, defaultCws, t, cwe, cws, qSrc, qDir)
 			} else {
 				s += fmt.Sprintf(`
     export PATH="$OLD_PATH"
-    %s  %s exec -a $_O_SOURCE $DIR/%s %s
+    %s  %s exec -a %s %s/%s %s
 fi
-`, runCmd, cws, t, cwe)
+`, runCmd, cws, qSrc, qDir, t, cwe)
 			}
 			if err := os.WriteFile(d+"/bin/"+t, []byte(s), 0o777); err != nil {
 				return err
@@ -246,7 +263,7 @@ fi
 	}
 
 	if len(libPaths) > 0 {
-		pr("SINGULARITYENV_LD_LIBRARY_PATH=\"%s:$SINGULARITYENV_LD_LIBRARY_PATH\"\n", strings.Join(libPaths, ":"))
+		pr("SINGULARITYENV_LD_LIBRARY_PATH=%s\":$SINGULARITYENV_LD_LIBRARY_PATH\"\n", shq(strings.Join(libPaths, ":")))
 	}
 	pr(`_tmp_arr=($(echo $SINGULARITYENV_PATH | /usr/bin/tr ':' '\n' ))
 SINGULARITYENV_PATH=$(echo "${_tmp_arr[@]}" | /usr/bin/tr ' ' ':')
@@ -256,16 +273,16 @@ SINGULARITYENV_LD_LIBRARY_PATH=$(echo "${_tmp_arr[@]}" | /usr/bin/tr ' ' ':')
 	if wrapcont {
 		// a venv made on top of a wrapped container should keep finding its own python
 		pr(`
-    _venvd=$(/usr/bin/dirname $_O_SOURCE )
-test -e $_venvd/../pyvenv.cfg
+    _venvd=$(/usr/bin/dirname "$_O_SOURCE" )
+test -e "$_venvd/../pyvenv.cfg"
  _v_in_use=$?
- [[  $_v_in_use -eq 0  && "$(dirname $(readlink -f $_venvd/python))" == "$(readlink -f $_C_DIR/bin)"  ]] && SINGULARITYENV_PATH="$(readlink -f $_venvd):$SINGULARITYENV_PATH"
+ [[  $_v_in_use -eq 0  && "$(dirname "$(readlink -f "$_venvd/python")")" == "$(readlink -f "$_C_DIR/bin")"  ]] && SINGULARITYENV_PATH="$(readlink -f "$_venvd"):$SINGULARITYENV_PATH"
 
 `)
 	} else {
-		pr("export install_root=%s\n", ipath)
+		pr("export install_root=%s\n", shq(ipath))
 		if r := b.envRoot(); r != "" {
-			pr("export env_root=%s\n", r)
+			pr("export env_root=%s\n", shq(r))
 		}
 	}
 	for _, e := range list(c["extra_envs"]) {
@@ -278,7 +295,7 @@ test -e $_venvd/../pyvenv.cfg
 			w.Write(s)
 			continue
 		}
-		name, val := str(m["name"]), str(m["value"])
+		name, val := str(m["name"]), dq(str(m["value"]))
 		switch str(m["type"]) {
 		case "set":
 			pr("export %s=\"%s\"\n", name, val)
