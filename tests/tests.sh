@@ -22,7 +22,7 @@ for cmd in "${cmds[@]}"; do
    t_run "$cmd --help | grep -- '--wrapper-paths'" "$cmd has wrapper-paths flag"
    t_run "$cmd 2>&1 | grep -- 'arguments are required\|^usage:'" "$cmd error/help on no arg"
 done
-cmd=(wrap-container)
+cmds=(wrap-container)
 for cmd in "${cmds[@]}"; do
    t_run "$cmd --help | grep -- '--environ'" "$cmd has environ flag"
    t_run "$cmd --help | grep -- '--wrapper-paths'" "$cmd has wrapper-paths flag"

@@ -2,9 +2,6 @@
 set -e
 
 
-
-cd $CW_INSTALLATION_PATH
-
 cd $CW_WORKDIR
 source $CW_INSTALLATION_PATH/_pre_install.sh
 cd $CW_INSTALLATION_PATH
@@ -50,8 +47,8 @@ if [[ ${CW_REQUIREMENTS_FILE+defined}  ]];then
         pip install --disable-pip-version-check $_NC -r "$( basename "$CW_REQUIREMENTS_FILE")" > "$CW_BUILD_TMPDIR/_pip.log" &
     fi
     bg_pid=$!
-    wait $bg_pid
     follow_log $bg_pid $CW_BUILD_TMPDIR/_pip.log 20
+    wait $bg_pid
 fi
 cd $CW_WORKDIR
 print_info "Running user supplied commands" 1

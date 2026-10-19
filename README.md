@@ -223,6 +223,18 @@ Don't delete build files when failing.
 `CW_FORCE_CONDA_ACTIVATE`
 Force conda to be activated even if called through a virtual environment. 
 
+`CW_NO_CONDA_ACTIVATE`
+Never activate conda in the wrappers.
+
+`CW_BUILD_TMPDIR`
+Overrides `build_tmpdir_base` from the config.
+
+`CW_NO_FIX_PERM`
+Don't make files inside the squashfs image world readable.
+
+`CW_EXTRA_BIND_MOUNTS`
+Extra bind mounts for the wrappers (not used for isolated installations).
+
 `CW_LOG_LEVEL`
 How verbosely to report program actions
 
@@ -235,7 +247,7 @@ How verbosely to report program actions
 A `tykky` convenience shell function is provided to mimic the conda activate and
 deactivate helpers. To use it, you must load those functions into your shell with:
 
-`source etc/profile.d/tykky`
+`source etc/profile.d/tykky.sh`
 
 Then you may activate a tykky installation with
 
@@ -250,29 +262,8 @@ You may deactivate the tykky environment in your shell with:
 
 Alternatively, you may also manually add `<env_dir>/bin` to your `$PATH`.
 
-## License 
+## Conda Terms of Service
 
 Getting errors like `CondaToSNonInteractiveError: Terms of Service have not been accepted for the following channels. Please accept or remove them before proceeding:`
 
 Newer versions of conda have finer management of channels licenses, which might stop the installatoion if using miniconda (currently tykky versions < 0.4), set `CONDA_PLUGINS_AUTO_ACCEPT_TOS=true` to mitigate this ( https://www.anaconda.com/docs/getting-started/tos-plugin#docker-in-ci%2Fcd-environments ). Understand that this means accepting the channel TOS, make sure you have read and understood them and what they imply for your use case and organization. 
-
-## Misc features ideas
-
-- Keep container name based on src name
-
-## Notes (This is most likely no longer the case for both apptainer and singularity but needs validation)
-`SINGULARITY_BIND` handled after `-B`
-ordering within both matter! -> nested bind mounts possible.
-Note that while loop devices can be mounted on bind mounts,
-any extra bind mounts will be applied after extra loop device (image mounts) 
-so to mask dirs on disk with an image mount, the path can not be bind mounted.
-(exception is a default $HOME mount, which is applied before loop device mounts).
-Note that this has been fixed in apptainer and you can now apply image mounts over bind mounts. 
-
-
-## wrap-install
-
-Technically updating masked disk installations
-is not an issue, but let's not do that until there is a specific
-request. The tool now drops the full path leading to the target
-from the bind list, if more binds are needed a yaml input needs to be constructed. 

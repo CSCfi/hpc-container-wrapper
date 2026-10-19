@@ -30,7 +30,6 @@ force:
     build_tmpdir_base: $PWD
     conda_arch: 'Linux-x86_64'
     max_num_cpus: 4
-    # No logic currently to refer to other variables here
     # So either implement that, throw them to $TMPDIR 
     workdir: $PWD   
     # What executable name or path to use for singularity

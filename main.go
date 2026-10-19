@@ -111,7 +111,7 @@ func frontend(prog string, argv []string, global map[string]any) map[string]any 
 				{long: "--slim", flag: true, help: "Use minimal base python container"},
 				{long: "--pyver", help: "Python version to use for slim or uv modes"},
 				{long: "--system-site-packages", flag: true, help: "Enable system and user site packages for the created installation"},
-				nocacheOpt}, baseOpts...), exclusive: [][2]string{{"uv", "slim"}}},
+				nocacheOpt}, baseOpts...)},
 			&cmd{opts: append([]opt{{long: "--requirements-file", short: "-r", file: true, help: "requirements file for pip"}, nocacheOpt}, baseOpts...)})
 	case "wrap-container":
 		c = &cmd{prog: prog, desc: "Create wrappers for executables inside a container",
@@ -132,6 +132,9 @@ func frontend(prog string, argv []string, global map[string]any) map[string]any 
 	a := c.parse(argv)
 	if c.subs != nil && a["command"] == "" {
 		c.fail("a subcommand is required")
+	}
+	if a["uv"] != "" && a["slim"] != "" {
+		c.fail("argument --slim: not allowed with argument --uv")
 	}
 
 	conf := map[string]any{}
@@ -215,12 +218,8 @@ func frontend(prog string, argv []string, global map[string]any) map[string]any 
 	case "update":
 		conf["update_installation"] = "yes"
 		oldConf(a["dir"], conf)
-	case "advanced":
-		for k, v := range loadYAML(a["yaml"]) {
-			conf[k] = v
-		}
 	}
-	if a["yaml"] != "" && a["command"] == "" {
+	if a["yaml"] != "" { // advanced subcommand or -y
 		for k, v := range loadYAML(a["yaml"]) {
 			conf[k] = v
 		}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"embed"
 	"fmt"
 	"os"
@@ -57,7 +58,7 @@ func run(globalPath string, global, user map[string]any) int {
 	info(1, "Done, duration: %ds", int(time.Since(start).Seconds()))
 	if os.Getenv("BASH_FUNC_tykky%%") != "" { // tykky shell function is exported
 		name := c.get("installation_prefix")
-		for _, p := range filepath.SplitList(envOr("TYKKY_PATH", os.Getenv("HOME")+"/.tykky")) {
+		for _, p := range filepath.SplitList(cmp.Or(os.Getenv("TYKKY_PATH"), os.Getenv("HOME")+"/.tykky")) {
 			if realpath(filepath.Dir(b.prefix)) == realpath(p) {
 				name = filepath.Base(name)
 				break
@@ -68,13 +69,6 @@ func run(globalPath string, global, user map[string]any) int {
 		info(1, "Program has been installed to %s\n\tTo use add the bin folder to your path e.g:\n\texport PATH=\"%s/bin:$PATH\"", c.get("installation_prefix"), b.prefix)
 	}
 	return 0
-}
-
-func envOr(k, def string) string {
-	if v := os.Getenv(k); v != "" {
-		return v
-	}
-	return def
 }
 
 func (b *build) cleanup() {
@@ -205,7 +199,7 @@ func (b *build) prepare() error {
 
 func (b *build) fetch() error {
 	c := b.c
-	src, img := c.get("container_src"), b.deploy+"/"+c.get("container_image")
+	src, img := c.get("container_src"), b.img()
 	switch {
 	case !exists(src):
 		info(1, "Fetching container %s", src)
@@ -233,7 +227,7 @@ func (b *build) fetch() error {
 			return fmt.Errorf("SQFS image %s does not exist", sq)
 		}
 		info(1, "Copying image %s", sq)
-		return b.cmd(nil, "cp", sq, b.deploy+"/"+c.get("sqfs_image")).Run()
+		return b.cmd(nil, "cp", sq, b.sqfs()).Run()
 	}
 	return nil
 }
@@ -332,13 +326,13 @@ func (b *build) install() error {
 		env = append(env, "env_root="+r)
 	}
 
-	img := b.deploy + "/" + c.get("container_image")
+	img := b.img()
 	execArgs := []string{"--silent", "exec", img}
 	binds = append(binds, inst+":"+ipath)
 	switch {
 	case c.yes("update_installation"):
 		smp := c.get("source_mount_point")
-		execArgs = []string{"--silent", "exec", "-B", b.deploy + "/" + c.get("sqfs_image") + ":" + smp + ":image-src=/", img}
+		execArgs = []string{"--silent", "exec", "-B", b.sqfs() + ":" + smp + ":image-src=/", img}
 		binds = append(binds, b.prefix+"/_bin:"+b.prefix+"/bin")
 	case c.get("mode") == "wrapdisk":
 		binds = append(binds, c.get("wrap_src")+":"+c.get("source_mount_point"))
@@ -364,7 +358,6 @@ func (b *build) install() error {
 	for name := range helpers {
 		os.Remove(inst + "/" + name)
 	}
-	os.Remove(inst + "/condarc_override")
 	// keep inputs of every build in a separate folder so they are not overwritten
 	prev := ""
 	for n := 0; ; n++ {
@@ -396,7 +389,7 @@ func (b *build) install() error {
 	if m, _ := strconv.Atoi(c.get("max_num_cpus")); m > 0 && cpus > m {
 		cpus = m
 	}
-	sqfs := b.deploy + "/" + c.get("sqfs_image")
+	sqfs := b.sqfs()
 	args := append([]string{inst + "/", sqfs, "-processors", strconv.Itoa(max(cpus, 1))}, strings.Fields(c.get("sqfs_options"))...)
 	if err := b.cmd(nil, "mksquashfs", args...).Run(); err != nil {
 		return err
@@ -406,6 +399,9 @@ func (b *build) install() error {
 	}
 	return nil
 }
+
+func (b *build) img() string  { return b.deploy + "/" + b.c.get("container_image") }
+func (b *build) sqfs() string { return b.deploy + "/" + b.c.get("sqfs_image") }
 
 func statPerm(p string) os.FileMode { st, _ := os.Stat(p); return st.Mode().Perm() }
 

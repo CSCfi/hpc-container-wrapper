@@ -13,7 +13,7 @@ if [[ ${CW_LOG_LEVEL+defined} ]];then
     unset CW_LOG_LEVEL
 fi
 unset CW_DEBUG_KEEP_FILES
-set PYTHONNOUSERSITE=1
+export PYTHONNOUSERSITE=1
 : [[ $(type -t module ) == function ]] && module purge
 
 if [[ -t 1 &&  "$USE_COLOR" = "yes" ]];then

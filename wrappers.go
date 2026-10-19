@@ -11,7 +11,8 @@ import (
 
 // Generated launchers resolve their own location first. PATH is reset so a
 // wrapper can not end up calling itself in a loop.
-const realPathCmd = `
+const header = `#!/bin/bash
+
 export OLD_PATH=$PATH
 export PATH="/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/bin"
 SOURCE="${BASH_SOURCE[0]}"
@@ -23,26 +24,24 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 
-`
 
-const header = "#!/bin/bash\n" + realPathCmd + "\nsource $DIR/../common.sh\n"
+source $DIR/../common.sh
+`
 
 // probe runs a command inside the built container and returns its stdout.
 func (b *build) probe(args ...string) (string, error) {
 	c := b.c
 	pre := []string{"--silent", "exec"}
 	if c.get("mode") != "wrapcont" {
-		pre = append(pre, "-B", b.deploy+"/"+c.get("sqfs_image")+":"+c.get("installation_path")+":image-src=/")
+		pre = append(pre, "-B", b.sqfs()+":"+c.get("installation_path")+":image-src=/")
 	}
-	cmd := b.cmd(nil, b.sing, append(append(pre, b.deploy+"/"+c.get("container_image")), args...)...)
+	cmd := b.cmd(nil, b.sing, append(append(pre, b.img()), args...)...)
 	cmd.Stdout, cmd.Stderr = nil, nil
 	out, err := cmd.Output()
 	return string(out), err
 }
 
 var libDir = regexp.MustCompile(`lib[64]*$`)
-
-func lines(s string) []string { return strings.Fields(s) }
 
 func (b *build) wrappers() error {
 	c, d := b.c, b.deploy
@@ -69,8 +68,8 @@ func (b *build) wrappers() error {
 	}
 	if isolate == "yes" {
 		pr("_DIRS=(%s $_C_DIR )\n", strings.Join(c.list("mount_points"), " "))
-		path, _ := b.probe("sh", "-c", "echo $PATH")
-		ld, _ := b.probe("sh", "-c", "echo $LD_LIBRARY_PATH")
+		out, _ := b.probe("sh", "-c", "echo $PATH; echo $LD_LIBRARY_PATH")
+		path, ld, _ := strings.Cut(out, "\n")
 		pr(`
 SINGULARITYENV_DEFAULT_PATH="%s"
 SINGULARITYENV_DEFAULT_LD_LIBRARY_PATH="%s"
@@ -111,19 +110,7 @@ else
 fi
 
 if [[ ! ${_CW_IN_CONTAINER+defined} && ${SINGULARITY_NAME+defined} ]] ;then
-    unset SINGULARITY_NAME
-    unset SINGULARITY_COMMAND
-    unset SINGULARITY_NAME
-    unset SINGULARITY_ENVIRONMENT
-    unset SINGULARITY_BIND
-    unset SINGULARITY_CONTAINER
-
-    unset APPTAINER_NAME
-    unset APPTAINER_COMMAND
-    unset APPTAINER_NAME
-    unset APPTAINER_ENVIRONMENT
-    unset APPTAINER_BIND
-    unset APPTAINER_CONTAINER
+    unset {SINGULARITY,APPTAINER}_{NAME,COMMAND,ENVIRONMENT,BIND,CONTAINER}
 fi
 
 
@@ -172,7 +159,7 @@ fi
 			targets, wp = []string{path.Base(wp)}, path.Dir(wp)
 		} else {
 			ls, _ := b.probe("ls", "-F", wp)
-			for _, t := range lines(ls) {
+			for _, t := range strings.Fields(ls) {
 				kind := t[len(t)-1]
 				if c.yes("wrap_all") && kind != '/' {
 					targets = append(targets, strings.TrimRight(t, "*@|="))
@@ -182,7 +169,7 @@ fi
 			}
 			if c.yes("add_ld") {
 				parent, _ := b.probe("ls", wp+"/..")
-				for _, l := range lines(parent) {
+				for _, l := range strings.Fields(parent) {
 					if libDir.MatchString(l) {
 						libPaths = append(libPaths, path.Dir(path.Clean(wp))+"/"+l)
 					}
@@ -258,7 +245,7 @@ fi
 		}
 	}
 
-	if c.yes("add_ld") && len(libPaths) > 0 {
+	if len(libPaths) > 0 {
 		pr("SINGULARITYENV_LD_LIBRARY_PATH=\"%s:$SINGULARITYENV_LD_LIBRARY_PATH\"\n", strings.Join(libPaths, ":"))
 	}
 	pr(`_tmp_arr=($(echo $SINGULARITYENV_PATH | /usr/bin/tr ':' '\n' ))
@@ -311,14 +298,11 @@ test -e $_venvd/../pyvenv.cfg
 // venvs created from the wrapped python work.
 func (b *build) venvLinks(wp string) error {
 	info(2, "Found python, checking if venv")
-	if out, _ := b.probe("ls", wp+"/../pyvenv.cfg"); out == "" {
+	cfg, err := b.probe("cat", wp+"/../pyvenv.cfg")
+	if err != nil {
 		return nil
 	}
 	info(2, "Target is a venv")
-	cfg, err := b.probe("cat", wp+"/../pyvenv.cfg")
-	if err != nil {
-		return err
-	}
 	if err := os.WriteFile(b.deploy+"/pyvenv.cfg", []byte(cfg), 0o666); err != nil {
 		return err
 	}

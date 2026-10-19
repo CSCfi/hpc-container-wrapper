@@ -37,7 +37,6 @@ force:
     build_tmpdir_base: /tmp/$USER
     conda_arch: 'Linux-x86_64'
     max_num_cpus: 16
-    # No logic currently to refer to other variables here
     # So either implement that, throw them to $TMPDIR
     #
     workdir: $PWD 

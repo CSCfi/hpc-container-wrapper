@@ -72,7 +72,4 @@ func TestWrappersConda(t *testing.T) {
 			t.Errorf("common.sh lacks %q", want)
 		}
 	}
-	if d := os.Getenv("TYKKY_DUMP"); d != "" { // for comparing with the old bash generator
-		os.CopyFS(d, os.DirFS(b.deploy))
-	}
 }

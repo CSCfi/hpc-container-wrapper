@@ -12,7 +12,7 @@ __tykky_get_env_path() {
         *)
             oldIFS=$IFS
             IFS=:
-            for __tykky_path in ${TYKKY_PATH:-""}; do
+            for __tykky_path in ${TYKKY_PATH:-$HOME/.tykky}; do
                 IFS=$oldIFS
                 if [ -d "$__tykky_path/$1" ]; then
                     if [ -n "$__candidate"  ]; then

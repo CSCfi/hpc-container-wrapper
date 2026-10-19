@@ -11,7 +11,7 @@ echo "pyyaml" > req.txt
 echo "pip install requests" > post.sh
 
 default_container=$(cat $SCRIPT_DIR/../default_config/config.yaml  | grep container_src | cut -d ":" -f2- | sed "s/'//g" )
-if [[ "$default_container"=="auto" ]];then
+if [[ "$default_container" == "auto" ]];then
     default_container=$(. /etc/os-release; case $ID in
         sles) echo "registry.suse.com/bci/bci-base:$VERSION_ID";; rhel) echo "redhat/ubi${VERSION_ID%%.*}:$VERSION_ID";;
         almalinux) echo "almalinux:$VERSION_ID";; rocky) echo "rockylinux/rockylinux:$VERSION_ID";; *) echo "$ID:$VERSION_ID";; esac)
@@ -20,7 +20,7 @@ set -e
 t_run "singularity pull test_container.sif docker://$default_container" "default or auto determined container exists and can be downloaded" 
 set +e
 
-cat ../../default_config/config.yaml | sed  "s@container_src.*\$@container_src: $PWD/test_container.sif@g" > my_config.yaml | sed 's/container_image.*$/container_image: container.sif/g'
+cat ../../default_config/config.yaml | sed  "s@container_src.*\$@container_src: $PWD/test_container.sif@g" > my_config.yaml
 if  grep -q share_container my_config.yaml   ; then
     sed -i 's/share_container.*$/share_container: yes/g' my_config.yaml
 else

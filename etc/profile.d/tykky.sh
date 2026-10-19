@@ -34,8 +34,8 @@ if [ "${FPATH#*$__tykky_dir/share/sh_functions:}" = "$FPATH" ]; then
 fi
 
 # Enable BASH autocompletion
-if [ -n "${BASH_VERSIONi:-}" ] && [ -n "${PS1:-}" ]; then
-    __tykky_bash_completion_file="$_tykky_dir/etc/bash_completion.d/tykky_completion"
+if [ -n "${BASH_VERSION:-}" ] && [ -n "${PS1:-}" ]; then
+    __tykky_bash_completion_file="$__tykky_dir/etc/bash_completion.d/tykky_completion"
     [ -f "$__tykky_bash_completion_file" ] && . "$__tykky_bash_completion_file"
     unset __tykky_bash_completion_file
 fi

@@ -25,7 +25,6 @@ type cmd struct {
 	opts       []opt
 	pos        [][2]string // name, help
 	subs       []*cmd      // subcommands; prog is the subcommand name
-	exclusive  [][2]string // mutually exclusive option keys
 }
 
 type args map[string]string
@@ -188,11 +187,6 @@ func (c *cmd) parse(argv []string) args {
 	}
 	for i, p := range c.pos {
 		r[p[0]] = pos[i]
-	}
-	for _, ex := range c.exclusive {
-		if r[ex[0]] != "" && r[ex[1]] != "" {
-			c.fail(fmt.Sprintf("argument --%s: not allowed with argument --%s", ex[1], ex[0]))
-		}
 	}
 	return r
 }

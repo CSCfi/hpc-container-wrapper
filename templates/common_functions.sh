@@ -63,7 +63,6 @@ erase_lines(){
 
 }
 export -f erase_lines
-counter=1
 follow_log(){
     set -e
     p_pid=$1
@@ -82,7 +81,6 @@ follow_log(){
         res_lines="$(echo -e "$res" | wc -l )"
         echo -e "$res"
         echo "========================="
-        counter=$(($counter +1))
         sleep 1
         if [[   "$output_length" -gt "$res_lines" ]];then
             erase_lines $res_lines

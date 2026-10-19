@@ -150,16 +150,11 @@ func construct(globalPath string, global, user map[string]any) (conf, error) {
 		c["container_src"] = "docker://" + img
 	}
 	if c.get("conda_arch") == "auto" {
-		var u syscall.Utsname
-		syscall.Uname(&u)
-		var m []byte
-		for _, ch := range u.Machine {
-			if ch == 0 {
-				break
-			}
-			m = append(m, byte(ch))
+		m, err := exec.Command("uname", "-m").Output()
+		if err != nil {
+			return nil, fmt.Errorf("Unable to determine conda_arch: %v", err)
 		}
-		c["conda_arch"] = "Linux-" + string(m)
+		c["conda_arch"] = "Linux-" + strings.TrimSpace(string(m))
 	}
 	if d := os.Getenv("CW_BUILD_TMPDIR"); d != "" {
 		c["build_tmpdir_base"] = d
