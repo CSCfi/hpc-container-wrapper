@@ -1,0 +1,36 @@
+__tykky_completions() {
+    if [ "${#COMP_WORDS[@]}" == "2" ]; then
+        COMPREPLY=($(compgen -W "activate deactivate" "${COMP_WORDS[1]}"))
+        return
+    fi
+    if [[ ${#COMP_WORDS[@]} -gt 2 ]]; then
+        if [[ "${COMP_WORDS[1]}" == "activate" && "${COMP_WORDS[2]}" != *"/"* ]]; then
+            local __tykky_env_list=""
+            local __tykky_path __candidate
+            local oldIFS=$IFS
+            IFS=:
+            for __tykky_path in ${TYKKY_PATH:-~/.tykky}; do
+                IFS=$oldIFS
+                for __candidate in $__tykky_path/*; do
+                    if [[ -d "$__candidate" && -f "$__candidate/common.sh" && -d "$__candidate/bin" ]]; then
+                        __tykky_env_list+="$(basename $__candidate) "
+                    fi
+                done
+            done
+            COMPREPLY=($(compgen -W "$__tykky_env_list" "${COMP_WORDS[2]}"))
+            return
+        elif [[ "${COMP_WORDS[1]}" == "activate" && "${COMP_WORDS[2]}" == *"/"* ]]; then
+            COMPREPLY=( $(compgen -d -- "${COMP_WORDS[2]}") )
+            local i
+            for i in "${!COMPREPLY[@]}"; do
+                if [[ -d "${COMPREPLY[$i]}" && ! -f "${COMPREPLY[$i]}/common.sh" && ! -d "${COMPREPLY[$i]}/bin" ]]; then
+                    COMPREPLY[$i]="${COMPREPLY[$i]}/"
+                fi
+            done
+            compopt -o nospace
+        fi
+    fi
+    return
+}
+
+complete -F __tykky_completions tykky

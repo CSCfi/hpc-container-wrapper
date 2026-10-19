@@ -1,0 +1,17 @@
+# Tykky shell functions to activate/deactivate environments
+tykky() {
+    # Top level shell function to activate and deactivate Tykky environments
+
+    case "${1:-}" in
+        activate)
+            __tykky_activate "$@"
+            ;;
+        deactivate)
+            __tykky_deactivate "$@"
+            ;;
+        *)
+            echo "Usage: tykky activate <env_name_or_dir>"
+            echo "       tykky deactivate"
+            ;;
+    esac
+}

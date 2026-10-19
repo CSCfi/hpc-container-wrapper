@@ -1,0 +1,13 @@
+# Tykky shell functions to activate/deactivate environments
+__tykky_deactivate() {
+    # Deactivate a Tykky environment. Change PS1 if interactive by default,
+
+    if [ -n "${TYKKY_PREFIX:-}" ]; then
+        export PATH=$(echo $PATH | sed -e "s|$TYKKY_PREFIX/bin:||g")
+        if [ -n "${PS1:-}" ]; then 
+            PS1="$(echo "$PS1" | sed -e "s|^($(basename $TYKKY_PREFIX)) ||")"
+        fi
+        unset TYKKY_PREFIX
+    fi
+}
+

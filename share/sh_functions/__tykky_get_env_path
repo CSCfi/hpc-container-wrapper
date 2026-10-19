@@ -1,0 +1,68 @@
+# Tykky shell functions to activate/deactivate environments
+__tykky_get_env_path() {
+    # Get and validate installation path of a tykky environment.
+    # If a name is passed as an argument, try to find it in colon-separated
+    # list TYKKY_PATH
+
+    __candidate=""
+    case "$1" in
+        */*)
+            __candidate="${1%/}"
+            ;;
+        *)
+            oldIFS=$IFS
+            IFS=:
+            for __tykky_path in ${TYKKY_PATH:-""}; do
+                IFS=$oldIFS
+                if [ -d "$__tykky_path/$1" ]; then
+                    if [ -n "$__candidate"  ]; then
+                        echo "WARNING: Additional candidate tykky environments found in TYKKY_PATH for $1, only the first one will be considered" >&2
+                        echo -e "\tfirst candidate: $__candidate"  >&2
+                        echo -e "\tnew candidate: $__tykky_path/$1" >&2
+                    else 
+                        __candidate="${__tykky_path%/}/${1%/}"
+                    fi
+                    #break
+                fi
+            done
+            if [ -d "$1" ];then
+                # If there is a matching foldername in the current directory
+                # and the name does not match anyhing in tykky_path, also test that for convinience
+                # this is to be consistent with that the first case allows relative paths 
+                # so then relative paths in the current directory withouth / should also work
+                if [ -z "$__candidate" ];then
+                 __candidate=$PWD/$1
+
+                # Ambiguous reference as we might have multiple matches
+                else 
+                   _tp_candidate=$(readlink -f $__candidate) 
+                   _d_candidate=$(readlink -f $1)
+                   # if same folder let's not emit a warning 
+                   # following pseudo standard -> command line arguments override environment settings
+                   if [ ! "$_tp_candidate" = "$_d_candidate" ];then
+                        echo "WARNING: Multiple candidate tykky environments for $1, activating the one in the current directory"  >&2
+                        echo -e "\tfrom TYKKY_PATH: $_tp_candidate"  >&2
+                        echo -e "\tfrom current directory: $_d_candidate"  >&2
+                   fi
+
+                fi
+            fi
+               
+            ;;
+    esac
+
+    # Validation of genunine tykky installation
+    if [ -f "$__candidate/common.sh" ] && [ -d "$__candidate/bin" ]; then
+        echo "$__candidate"
+        unset __candidate __tykky_path 
+    else
+        unset __candidate __tykky_path 
+        echo "ERROR: $1 is not a valid tykky environment" >&2
+        if [ ! -d "$1" ] ; then
+           echo -e "\t$1 does not exists or parent folder is not in TYKKY_PATH" >&2
+           echo -e "\tCurrent value: TYKKY_PATH=$TYKKY_PATH" >&2
+        fi
+        false
+    fi
+
+}

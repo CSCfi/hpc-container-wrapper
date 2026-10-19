@@ -1,0 +1,25 @@
+# Tykky shell functions to activate/deactivate environments
+__tykky_activate() {
+    # Activate a Tykky environment. Change PS1 if interactive by default,
+    # unless TYKKY_CHANGE_PS1 is set to 0
+
+    if [ -z "${2:-}" ]; then
+        echo "ERROR: You must specify a valid tykky environment to activate" >&2
+        false
+        return
+    fi
+    __candidate=$(__tykky_get_env_path $2)
+    if [ "$?" -ne 0 ]; then
+        false
+        return
+    fi
+    if [ -n "$__candidate" ]; then
+        __tykky_deactivate
+        export TYKKY_PREFIX="$(realpath $__candidate)"
+        export PATH=$TYKKY_PREFIX/bin:$PATH
+        if [ -n "${PS1:-}" ] && [ "${TYKKY_CHANGE_PS1:-}" != "0" ]; then
+            PS1="($(basename $(echo $TYKKY_PREFIX))) $PS1"
+        fi
+    fi
+    unset __candidate
+}
