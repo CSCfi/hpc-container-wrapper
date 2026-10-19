@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -99,18 +100,25 @@ func (c *cmd) help(w io.Writer) {
 	}
 }
 
-func (c *cmd) fail(msg string) {
-	fmt.Fprintln(os.Stderr, c.usageLine())
-	fmt.Fprintf(os.Stderr, "%s: error: %s\n", c.prog, msg)
-	os.Exit(2)
+// errHelp is returned after the help has been printed.
+var errHelp = errors.New("help requested")
+
+// usageError is a command line error, reported like argparse: usage line, message, exit 2.
+type usageError struct {
+	c   *cmd
+	msg string
 }
 
-func (c *cmd) lookup(name string) *opt {
+func (e usageError) Error() string { return e.c.prog + ": error: " + e.msg }
+
+func (c *cmd) fail(msg string) error { return usageError{c, msg} }
+
+func (c *cmd) lookup(name string) (*opt, error) {
 	var hits []*opt
 	for i := range c.opts {
 		o := &c.opts[i]
 		if name == o.long || (o.short != "" && name == o.short) {
-			return o
+			return o, nil
 		}
 		if strings.HasPrefix(name, "--") && strings.HasPrefix(o.long, name) {
 			hits = append(hits, o)
@@ -118,33 +126,35 @@ func (c *cmd) lookup(name string) *opt {
 	}
 	switch len(hits) {
 	case 0:
-		c.fail("unrecognized arguments: " + name)
+		return nil, c.fail("unrecognized arguments: " + name)
 	case 1:
-		return hits[0]
+		return hits[0], nil
 	}
-	c.fail("ambiguous option: " + name)
-	return nil
+	return nil, c.fail("ambiguous option: " + name)
 }
 
-func (c *cmd) parse(argv []string) args {
+func (c *cmd) parse(argv []string) (args, error) {
 	r := args{}
 	var pos []string
 	for i := 0; i < len(argv); i++ {
 		a := argv[i]
 		if a == "-h" || (len(a) > 2 && strings.HasPrefix("--help", a)) {
 			c.help(os.Stdout)
-			os.Exit(0)
+			return nil, errHelp
 		}
 		if !strings.HasPrefix(a, "-") || a == "-" {
 			if len(c.subs) > 0 {
 				for _, s := range c.subs {
 					if s.name() == a {
-						r = s.parse(argv[i+1:])
+						r, err := s.parse(argv[i+1:])
+						if err != nil {
+							return nil, err
+						}
 						r["command"] = a
-						return r
+						return r, nil
 					}
 				}
-				c.fail(fmt.Sprintf("argument command: invalid choice: '%s' (choose from %s)", a, c.subNames()))
+				return nil, c.fail(fmt.Sprintf("argument command: invalid choice: '%s' (choose from %s)", a, c.subNames()))
 			}
 			pos = append(pos, a)
 			continue
@@ -153,24 +163,26 @@ func (c *cmd) parse(argv []string) args {
 		if !hasVal && !strings.HasPrefix(a, "--") && len(a) > 2 { // -rFILE
 			name, val, hasVal = a[:2], a[2:], true
 		}
-		o := c.lookup(name)
+		o, err := c.lookup(name)
+		if err != nil {
+			return nil, err
+		}
 		if o.flag {
 			if hasVal {
-				c.fail(fmt.Sprintf("argument %s: ignored explicit argument '%s'", o.long, val))
+				return nil, c.fail(fmt.Sprintf("argument %s: ignored explicit argument '%s'", o.long, val))
 			}
 			r[o.key()] = "true"
 			continue
 		}
 		if !hasVal {
 			if i++; i >= len(argv) {
-				c.fail(fmt.Sprintf("argument %s: expected one argument", o.long))
+				return nil, c.fail(fmt.Sprintf("argument %s: expected one argument", o.long))
 			}
 			val = argv[i]
 		}
 		if o.file {
 			if _, err := os.Stat(val); err != nil {
-				errorf("The file %s does not exist!", val)
-				os.Exit(1)
+				return nil, fmt.Errorf("The file %s does not exist!", val)
 			}
 		}
 		r[o.key()] = val
@@ -180,13 +192,13 @@ func (c *cmd) parse(argv []string) args {
 		for _, p := range c.pos[len(pos):] {
 			missing = append(missing, p[0])
 		}
-		c.fail("the following arguments are required: " + strings.Join(missing, ", "))
+		return nil, c.fail("the following arguments are required: " + strings.Join(missing, ", "))
 	}
 	if len(pos) > len(c.pos) {
-		c.fail("unrecognized arguments: " + strings.Join(pos[len(c.pos):], " "))
+		return nil, c.fail("unrecognized arguments: " + strings.Join(pos[len(c.pos):], " "))
 	}
 	for i, p := range c.pos {
 		r[p[0]] = pos[i]
 	}
-	return r
+	return r, nil
 }

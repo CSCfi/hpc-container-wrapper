@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"reflect"
 	"testing"
@@ -13,9 +14,68 @@ func TestParse(t *testing.T) {
 	// post.sh must exist for the file check
 	t.Chdir(t.TempDir())
 	os.WriteFile("post.sh", nil, 0o644)
-	got := c.parse([]string{"env.yml", "--pref", "P", "--mamba", "-w", "bin", "--post-install=post.sh"})
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v want %v", got, want)
+	got, err := c.parse([]string{"env.yml", "--pref", "P", "--mamba", "-w", "bin", "--post-install=post.sh"})
+	if err != nil || !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v, %v want %v", got, err, want)
+	}
+	var ue usageError
+	for _, argv := range [][]string{{"--nope"}, {"env.yml", "--prefix"}, {}, {"a", "b"}} {
+		if _, err := c.parse(argv); !errors.As(err, &ue) {
+			t.Errorf("%q: got %v, want usage error", argv, err)
+		}
+	}
+	if _, err := c.parse([]string{"env.yml", "--post-install", "missing.sh"}); err == nil || errors.As(err, &ue) {
+		t.Errorf("missing file: got %v", err)
+	}
+}
+
+func TestFrontend(t *testing.T) {
+	t.Chdir(t.TempDir())
+	os.WriteFile("env.yml", nil, 0o644)
+	os.WriteFile("req.txt", nil, 0o644)
+	global := map[string]any{"defaults": map[string]any{"installation_path": "/I"}}
+	for _, tc := range []struct {
+		prog string
+		argv []string
+		want map[string]any // subset of the result
+	}{
+		{"conda-containerize", []string{"new", "--mamba", "--uv", "-r", "req.txt", "env.yml"},
+			map[string]any{"mode": modeConda, "mamba": "yes", "use_uv": "yes", "update_installation": "no",
+				"installation_file_paths": []any{"env.yml", "req.txt"}, "pipcache": "yes"}},
+		{"pip-containerize", []string{"new", "--slim", "--pyver", "3.12", "--nocache", "req.txt"},
+			map[string]any{"mode": modeVenv, "container_src": "docker://python:3.12-slim", "isolate": "yes", "pipcache": "no"}},
+		{"wrap-container", []string{"-w", "/opt/bin", "img.sif"},
+			map[string]any{"mode": modeWrapCont, "wrapper_paths": []any{"/opt/bin"}}},
+	} {
+		got, err := frontend(tc.prog, tc.argv, global)
+		if err != nil {
+			t.Errorf("%s: %v", tc.prog, err)
+			continue
+		}
+		for k, v := range tc.want {
+			if !reflect.DeepEqual(got[k], v) {
+				t.Errorf("%s: %s = %v want %v", tc.prog, k, got[k], v)
+			}
+		}
+	}
+	var ue usageError
+	for _, tc := range []struct {
+		prog  string
+		argv  []string
+		usage bool
+	}{
+		{"nope", []string{"x"}, false},
+		{"pip-containerize", []string{"new", "--slim", "--uv", "req.txt"}, true},
+		{"conda-containerize", []string{"--prefix", "P"}, true},
+		{"conda-containerize", []string{"new", "missing.yml"}, false},
+		{"conda-containerize", []string{"update", "nodir"}, false},
+		{"wrap-container", []string{"img.sif"}, false},
+		{"wrap-container", []string{"-w", "rel/bin", "img.sif"}, false},
+	} {
+		_, err := frontend(tc.prog, tc.argv, global)
+		if err == nil || errors.As(err, &ue) != tc.usage {
+			t.Errorf("%s %q: got %v", tc.prog, tc.argv, err)
+		}
 	}
 }
 

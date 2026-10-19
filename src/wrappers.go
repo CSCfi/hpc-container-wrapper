@@ -32,8 +32,8 @@ source "$DIR/../common.sh"
 func (b *build) probe(args ...string) (string, error) {
 	c := b.c
 	pre := []string{"--silent", "exec"}
-	if c.get("mode") != "wrapcont" {
-		pre = append(pre, "-B", b.sqfs()+":"+c.get("installation_path")+":image-src=/")
+	if c.get("mode") != modeWrapCont {
+		pre = append(pre, "-B", imageBind(b.sqfs(), c.get("installation_path")))
 	}
 	cmd := b.cmd(nil, b.sing, append(append(pre, b.img()), args...)...)
 	cmd.Stdout, cmd.Stderr = nil, nil
@@ -62,7 +62,7 @@ const qSrc, qDir = `$(printf %q "$_O_SOURCE")`, `$(printf %q "$DIR")`
 
 func (b *build) wrappers() error {
 	c, d := b.c, b.deploy
-	isolate, wrapcont := c.get("isolate"), c.get("mode") == "wrapcont"
+	isolate, wrapcont := c.yes("isolate"), c.get("mode") == modeWrapCont
 	ipath := c.get("installation_path")
 	if err := os.MkdirAll(d+"/bin", 0o777); err != nil {
 		return err
@@ -83,7 +83,7 @@ func (b *build) wrappers() error {
 	if c.has("wrapper_ld_library_paths") {
 		pr("export SINGULARITYENV_LD_LIBRARY_PATH=\"$SINGULARITYENV_LD_LIBRARY_PATH:\"%s\n", shq(strings.Join(c.list("wrapper_ld_library_paths"), ":")))
 	}
-	if isolate == "yes" {
+	if isolate {
 		pr("_DIRS=(%s \"$_C_DIR\" )\n", shqAll(c.list("mount_points")))
 		out, _ := b.probe("sh", "-c", "echo $PATH; echo $LD_LIBRARY_PATH")
 		path, ld, _ := strings.Cut(out, "\n")
@@ -95,6 +95,7 @@ export SINGULARITYENV_LD_LIBRARY_PATH="$SINGULARITYENV_LD_LIBRARY_PATH:$SINGULAR
 
 `, shq(strings.TrimSpace(path)), shq(strings.TrimSpace(ld)))
 	} else {
+		// the launch time version of rootDirs in build.go
 		pr(`_DIRS=($(/usr/bin/ls -1 / | /usr/bin/awk '!/dev/' | /usr/bin/sed 's/^/\//g' ))
 export SINGULARITYENV_PATH="$OLD_PATH"
 export SINGULARITYENV_LD_LIBRARY_PATH="$SINGULARITYENV_LD_LIBRARY_PATH:$LD_LIBRARY_PATH"
@@ -142,21 +143,21 @@ if [[ "${TMPDIR+defined}" ]];then
     SINGULARITY_BIND="$SINGULARITY_BIND,$TMPDIR,$TMPDIR:/tmp"
 fi
 SINGULARITY_BIND="$SINGULARITY_BIND,$( /usr/bin/readlink -f "$_C_DIR/_bin"):$( /usr/bin/readlink -f "$_C_DIR/bin")"
-`, shq(isolate), shq(ipath))
+`, shq(yesno(isolate)), shq(ipath))
 	// readlink above: on LUMI some folders are symlinks to lustre mount points
 	if wrapcont {
 		pr("export SINGULARITY_BIND\n")
 	} else {
-		pr("export SINGULARITY_BIND=$SINGULARITY_BIND,$DIR/../$SQFS_IMAGE:$INSTALLATION_PATH:image-src=/\n")
+		pr("export SINGULARITY_BIND=$SINGULARITY_BIND,%s\n", imageBind("$DIR/../$SQFS_IMAGE", "$INSTALLATION_PATH"))
 	}
 	pr(`if [[ ${CW_EXTRA_BIND_MOUNTS+defined} && %s == "no" ]]; then
     export SINGULARITY_BIND=$SINGULARITY_BIND,$(echo $CW_EXTRA_BIND_MOUNTS |  sed "s@[^,]*:$INSTALLATION_PATH:image-src=/@@g")
 fi
-`, shq(isolate))
+`, shq(yesno(isolate)))
 
 	info(1, "Creating wrappers")
 	defaultCws := `bash -c "`
-	if v, _ := b.probe("bash", "--version"); v == "" && isolate == "yes" { // the container may lack bash
+	if v, _ := b.probe("bash", "--version"); v == "" && isolate { // the container may lack bash
 		info(1, "Using sh inside the container as bash was not found")
 		defaultCws = `sh -c "`
 	}

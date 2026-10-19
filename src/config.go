@@ -15,6 +15,14 @@ import (
 // share/conf.yaml round-trips; get/list expand environment variables on read.
 type conf map[string]any
 
+// Installation modes, the "mode" setting.
+const (
+	modeConda    = "conda"
+	modeVenv     = "venv"
+	modeWrapDisk = "wrapdisk" // wrap-install
+	modeWrapCont = "wrapcont" // wrap-container
+)
+
 func str(v any) string {
 	switch v := v.(type) {
 	case nil:
@@ -46,7 +54,10 @@ func list(v any) []any {
 
 func (c conf) get(k string) string { return os.ExpandEnv(str(c[k])) }
 func (c conf) yes(k string) bool   { return c.get(k) == "yes" }
-func (c conf) has(k string) bool   { _, ok := c[k]; return ok }
+
+// no is true only for an explicit "no"; unset is neither yes nor no.
+func (c conf) no(k string) bool  { return c.get(k) == "no" }
+func (c conf) has(k string) bool { _, ok := c[k]; return ok }
 
 func (c conf) list(k string) []string {
 	var r []string
@@ -124,7 +135,7 @@ func merge(shared, user map[string]any) conf {
 // construct merges the configs and creates the build directory.
 func construct(globalPath string, global, user map[string]any) (conf, error) {
 	c := merge(global, user)
-	if c.yes("composable") && str(c["update_installation"]) == "no" && !c.has("mask_wrap_install") {
+	if c.yes("composable") && c.no("update_installation") && !c.yes("mask_wrap_install") {
 		c["installation_path"] = str(c["installation_path"]) + "_" + randName(7, alnum)
 	}
 	if c.has("wrapper_paths") {
@@ -160,7 +171,7 @@ func construct(globalPath string, global, user map[string]any) (conf, error) {
 		c["build_tmpdir_base"] = d
 	}
 	if active := installationsInPath(); len(active) > 0 {
-		if str(c["update_installation"]) == "no" {
+		if c.no("update_installation") {
 			return nil, fmt.Errorf("Remove %v from PATH before running the tool, otherwise the tool might not work correctly", active)
 		}
 		warn("Found existing installation(s) %v in PATH. It's recommended to remove these from PATH when running the tool", active)

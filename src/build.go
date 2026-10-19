@@ -89,7 +89,7 @@ func (b *build) all() error {
 	if err := b.fetch(); err != nil {
 		return fmt.Errorf("Failed getting container image: %w", err)
 	}
-	if b.c.get("mode") != "wrapcont" { // nothing to install when just wrapping a container
+	if b.c.get("mode") != modeWrapCont { // nothing to install when just wrapping a container
 		if err := b.install(); err != nil {
 			return fmt.Errorf("Installation failed: %w", err)
 		}
@@ -247,9 +247,9 @@ func userScript(entries any) (string, error) {
 // envRoot is where the install script creates the environment; empty if none.
 func (b *build) envRoot() string {
 	switch b.c.get("mode") {
-	case "conda":
+	case modeConda:
 		return b.c.get("installation_path") + "/miniforge/envs/" + b.c.get("env_name") + "/"
-	case "venv":
+	case modeVenv:
 		return b.c.get("installation_path") + "/" + b.c.get("env_name") + "/"
 	}
 	return ""
@@ -313,9 +313,9 @@ func (b *build) install() error {
 	switch {
 	case c.yes("update_installation"):
 		smp := c.get("source_mount_point")
-		execArgs = []string{"--silent", "exec", "-B", b.sqfs() + ":" + smp + ":image-src=/", img}
+		execArgs = []string{"--silent", "exec", "-B", imageBind(b.sqfs(), smp), img}
 		binds = append(binds, b.prefix+"/_bin:"+b.prefix+"/bin")
-	case c.get("mode") == "wrapdisk":
+	case c.get("mode") == modeWrapDisk:
 		binds = append(binds, c.get("wrap_src")+":"+c.get("source_mount_point"))
 	}
 	env = append(env, "SINGULARITY_BIND="+strings.Join(binds, ","))
@@ -393,9 +393,13 @@ func (b *build) install() error {
 func (b *build) img() string  { return b.deploy + "/" + b.c.get("container_image") }
 func (b *build) sqfs() string { return b.deploy + "/" + b.c.get("sqfs_image") }
 
+// imageBind is the bind mount of squashfs image src at dst.
+func imageBind(src, dst string) string { return src + ":" + dst + ":image-src=/" }
+
 func statPerm(p string) os.FileMode { st, _ := os.Stat(p); return st.Mode().Perm() }
 
 // rootDirs lists the top level host directories, except device ones.
+// common.sh in wrappers.go does the same with ls and awk when a launcher starts.
 func rootDirs() []string {
 	ents, _ := os.ReadDir("/")
 	var r []string

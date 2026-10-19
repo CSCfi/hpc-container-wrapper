@@ -3,7 +3,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -59,16 +61,16 @@ func fatal(f string, a ...any) {
 	os.Exit(1)
 }
 
-func loadYAML(path string) map[string]any {
+func loadYAML(path string) (map[string]any, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		fatal("%v", err)
+		return nil, err
 	}
 	m := map[string]any{}
 	if err := yaml.Unmarshal(b, &m); err != nil {
-		fatal("Failed to parse %s: %v", path, err)
+		return nil, fmt.Errorf("Failed to parse %s: %v", path, err)
 	}
-	return m
+	return m, nil
 }
 
 var (
@@ -90,65 +92,30 @@ func subcommands(prog, desc string, newCmd, updCmd *cmd) *cmd {
 	return &cmd{prog: prog, desc: desc, subs: []*cmd{newCmd, updCmd, adv}}
 }
 
-// frontend parses argv into the user configuration, like frontends/*.py did.
-func frontend(prog string, argv []string, global map[string]any) map[string]any {
-	var c *cmd
-	switch prog {
-	case "conda-containerize":
-		req := opt{long: "--requirement", short: "-r", file: true, help: "requirements file for pip"}
-		c = subcommands(prog, "Create or modify a Conda installation inside a container",
-			&cmd{pos: [][2]string{{"env_file", "conda env file"}}, opts: append([]opt{prefixOpt,
-				{long: "--mamba", flag: true, help: "use mamba for installation"},
-				{long: "--uv", flag: true, help: "use uv for pip dependencies (only with mamba)"},
-				nocacheOpt, req}, baseOpts...)},
-			&cmd{opts: append([]opt{nocacheOpt, req}, baseOpts...)})
-	case "pip-containerize":
-		c = subcommands(prog, "Create or modify a python installation inside a container",
-			&cmd{pos: [][2]string{{"requirements_file", "requirements file for pip"}}, opts: append([]opt{prefixOpt,
-				{long: "--uv", flag: true, help: "Use uv"},
-				{long: "--slim", flag: true, help: "Use minimal base python container"},
-				{long: "--pyver", help: "Python version to use for slim or uv modes"},
-				{long: "--system-site-packages", flag: true, help: "Enable system and user site packages for the created installation"},
-				nocacheOpt}, baseOpts...)},
-			&cmd{opts: append([]opt{{long: "--requirements-file", short: "-r", file: true, help: "requirements file for pip"}, nocacheOpt}, baseOpts...)})
-	case "wrap-container":
-		c = &cmd{prog: prog, desc: "Create wrappers for executables inside a container",
-			pos:  [][2]string{{"container", "Container to wrap, can be docker/singularity url"}},
-			opts: []opt{yamlOpt, environOpt, wrapOpt, prefixOpt}}
-	case "wrap-install":
-		c = &cmd{prog: prog, desc: "Wrap an existing installation into a container",
-			pos: [][2]string{{"dir", "Installation to wrap"}},
-			opts: append(append([]opt{}, baseOpts...), prefixOpt, yamlOpt,
-				opt{long: "--mask", flag: true, help: "Mask installation on disk"})}
-	default:
-		fatal("Unknown tool name %s, call through one of the bin/ symlinks", prog)
-	}
-	if len(argv) == 0 {
-		c.help(os.Stdout)
-		os.Exit(0)
-	}
-	a := c.parse(argv)
-	if c.subs != nil && a["command"] == "" {
-		c.fail("a subcommand is required")
-	}
-	if a["uv"] != "" && a["slim"] != "" {
-		c.fail("argument --slim: not allowed with argument --uv")
-	}
+// toConf sets the tool specific user configuration from the parsed arguments.
+type toConf func(a args, conf map[string]any) error
 
-	conf := map[string]any{}
-	if a["requirements_file"] != "" { // pip only; conda's -r is "requirement"
-		if !exists(a["requirements_file"]) {
-			fatal("The file %s does not exist!", a["requirements_file"])
-		}
-		conf["requirements_file"] = a["requirements_file"]
-		conf["installation_file_paths"] = []any{a["requirements_file"]}
-	}
-	switch prog {
-	case "conda-containerize":
-		conf["add_ld"], conf["use_uv"], conf["mode"] = "no", "no", "conda"
+// tools maps each frontend name to its command line and its toConf.
+var tools = map[string]func(prog string) (*cmd, toConf){
+	"conda-containerize": condaTool,
+	"pip-containerize":   pipTool,
+	"wrap-container":     wrapContainerTool,
+	"wrap-install":       wrapInstallTool,
+}
+
+func condaTool(prog string) (*cmd, toConf) {
+	req := opt{long: "--requirement", short: "-r", file: true, help: "requirements file for pip"}
+	c := subcommands(prog, "Create or modify a Conda installation inside a container",
+		&cmd{pos: [][2]string{{"env_file", "conda env file"}}, opts: append([]opt{prefixOpt,
+			{long: "--mamba", flag: true, help: "use mamba for installation"},
+			{long: "--uv", flag: true, help: "use uv for pip dependencies (only with mamba)"},
+			nocacheOpt, req}, baseOpts...)},
+		&cmd{opts: append([]opt{nocacheOpt, req}, baseOpts...)})
+	return c, func(a args, conf map[string]any) error {
+		conf["add_ld"], conf["use_uv"], conf["mode"] = "no", "no", modeConda
 		if a["command"] == "new" {
 			if st, err := os.Stat(a["env_file"]); err != nil || st.IsDir() {
-				fatal("Env file %s does not exist", a["env_file"])
+				return fmt.Errorf("Env file %s does not exist", a["env_file"])
 			}
 			conf["env_file"] = a["env_file"]
 			conf["update_installation"] = "no"
@@ -164,63 +131,137 @@ func frontend(prog string, argv []string, global map[string]any) map[string]any 
 			conf["requirements_file"] = a["requirement"]
 			conf["installation_file_paths"] = append(list(conf["installation_file_paths"]), a["requirement"])
 		}
-	case "pip-containerize":
-		if a["command"] == "new" {
-			conf["mode"], conf["use_uv"], conf["update_installation"] = "venv", "no", "no"
-			if a["system_site_packages"] != "" {
-				conf["enable_site_packages"] = "yes"
-			}
-			switch pv := a["pyver"]; {
-			case a["slim"] != "":
-				conf["pyver"] = "slim"
-				if pv != "" {
-					if strings.Contains(pv, "-slim") || pv == "slim" {
-						conf["pyver"] = pv
-					} else {
-						conf["pyver"] = pv + "-slim"
-					}
-				}
-				conf["container_src"] = fmt.Sprintf("docker://python:%s", conf["pyver"])
-				conf["isolate"] = "yes"
-			case a["uv"] != "":
-				conf["use_uv"] = "yes"
-				conf["pyver"] = "3"
-				if pv != "" {
-					conf["pyver"] = pv
-				}
-			case pv != "":
-				warn("Using --pyver without --slim or --uv does not have an effect")
-			}
+		return nil
+	}
+}
+
+func pipTool(prog string) (*cmd, toConf) {
+	c := subcommands(prog, "Create or modify a python installation inside a container",
+		&cmd{pos: [][2]string{{"requirements_file", "requirements file for pip"}}, opts: append([]opt{prefixOpt,
+			{long: "--uv", flag: true, help: "Use uv"},
+			{long: "--slim", flag: true, help: "Use minimal base python container"},
+			{long: "--pyver", help: "Python version to use for slim or uv modes"},
+			{long: "--system-site-packages", flag: true, help: "Enable system and user site packages for the created installation"},
+			nocacheOpt}, baseOpts...)},
+		&cmd{opts: append([]opt{{long: "--requirements-file", short: "-r", file: true, help: "requirements file for pip"}, nocacheOpt}, baseOpts...)})
+	return c, func(a args, conf map[string]any) error {
+		if a["uv"] != "" && a["slim"] != "" {
+			return c.fail("argument --slim: not allowed with argument --uv")
 		}
-	case "wrap-container":
-		conf["container_src"], conf["isolate"], conf["mode"] = a["container"], "yes", "wrapcont"
-	case "wrap-install":
+		if a["requirements_file"] != "" {
+			if !exists(a["requirements_file"]) {
+				return fmt.Errorf("The file %s does not exist!", a["requirements_file"])
+			}
+			conf["requirements_file"] = a["requirements_file"]
+			conf["installation_file_paths"] = []any{a["requirements_file"]}
+		}
+		if a["command"] != "new" {
+			return nil
+		}
+		conf["use_uv"], conf["update_installation"] = "no", "no"
+		if a["system_site_packages"] != "" {
+			conf["enable_site_packages"] = "yes"
+		}
+		switch pv := a["pyver"]; {
+		case a["slim"] != "":
+			conf["pyver"] = "slim"
+			if pv != "" {
+				if strings.Contains(pv, "-slim") || pv == "slim" {
+					conf["pyver"] = pv
+				} else {
+					conf["pyver"] = pv + "-slim"
+				}
+			}
+			conf["container_src"] = fmt.Sprintf("docker://python:%s", conf["pyver"])
+			conf["isolate"] = "yes"
+		case a["uv"] != "":
+			conf["use_uv"] = "yes"
+			conf["pyver"] = "3"
+			if pv != "" {
+				conf["pyver"] = pv
+			}
+		case pv != "":
+			warn("Using --pyver without --slim or --uv does not have an effect")
+		}
+		return nil
+	}
+}
+
+func wrapContainerTool(prog string) (*cmd, toConf) {
+	c := &cmd{prog: prog, desc: "Create wrappers for executables inside a container",
+		pos:  [][2]string{{"container", "Container to wrap, can be docker/singularity url"}},
+		opts: []opt{yamlOpt, environOpt, wrapOpt, prefixOpt}}
+	return c, func(a args, conf map[string]any) error {
+		conf["container_src"], conf["isolate"], conf["mode"] = a["container"], "yes", modeWrapCont
+		return requireWrapperPaths(prog, a)
+	}
+}
+
+func wrapInstallTool(prog string) (*cmd, toConf) {
+	c := &cmd{prog: prog, desc: "Wrap an existing installation into a container",
+		pos: [][2]string{{"dir", "Installation to wrap"}},
+		opts: append(append([]opt{}, baseOpts...), prefixOpt, yamlOpt,
+			opt{long: "--mask", flag: true, help: "Mask installation on disk"})}
+	return c, func(a args, conf map[string]any) error {
 		src := realpath(a["dir"])
-		conf["isolate"], conf["mode"], conf["wrap_src"] = "no", "wrapdisk", src
+		conf["isolate"], conf["mode"], conf["wrap_src"] = "no", modeWrapDisk, src
 		conf["update_installation"] = "no"
 		if a["mask"] != "" {
 			conf["installation_path"] = src
 			if !hasApptainer() {
 				conf["excluded_mount_points"] = "/" + strings.Split(src, "/")[1]
 			}
-			conf["mask_wrap_install"] = true
+			conf["mask_wrap_install"] = "yes"
 		}
+		return requireWrapperPaths(prog, a)
 	}
-	if strings.HasPrefix(prog, "wrap-") && a["wrapper_paths"] == "" {
-		fatal("Tool %s requires -w/--wrapper-paths to be used", prog)
+}
+
+func requireWrapperPaths(prog string, a args) error {
+	if a["wrapper_paths"] == "" {
+		return fmt.Errorf("Tool %s requires -w/--wrapper-paths to be used", prog)
+	}
+	return nil
+}
+
+// frontend parses argv into the user configuration, like frontends/*.py did.
+func frontend(prog string, argv []string, global map[string]any) (map[string]any, error) {
+	tool, ok := tools[prog]
+	if !ok {
+		return nil, fmt.Errorf("Unknown tool name %s, call through one of the bin/ symlinks", prog)
+	}
+	c, toolConf := tool(prog)
+	if len(argv) == 0 {
+		c.help(os.Stdout)
+		return nil, errHelp
+	}
+	a, err := c.parse(argv)
+	if err != nil {
+		return nil, err
+	}
+	if c.subs != nil && a["command"] == "" {
+		return nil, c.fail("a subcommand is required")
+	}
+
+	conf := map[string]any{}
+	if err := toolConf(a, conf); err != nil {
+		return nil, err
 	}
 	if a["prefix"] != "" {
 		conf["installation_prefix"] = a["prefix"]
 	}
-	switch a["command"] {
-	case "update":
+	if a["command"] == "update" {
 		conf["update_installation"] = "yes"
-		oldConf(a["dir"], conf)
+		if err := oldConf(a["dir"], conf); err != nil {
+			return nil, err
+		}
 	}
 	if a["yaml"] != "" { // advanced subcommand or -y
-		for k, v := range loadYAML(a["yaml"]) {
-			conf[k] = v
+		y, err := loadYAML(a["yaml"])
+		if err != nil {
+			return nil, err
 		}
+		maps.Copy(conf, y)
 	}
 	if a["command"] != "advanced" {
 		if a["environ"] != "" {
@@ -233,21 +274,23 @@ func frontend(prog string, argv []string, global map[string]any) map[string]any 
 			conf["pre_install"] = []any{map[string]any{"file": a["pre_install"]}}
 		}
 	}
-	addWrapperPaths(conf, global, a["wrapper_paths"], prog == "wrap-container")
-	if prog == "pip-containerize" {
-		conf["mode"] = "venv"
+	if err := addWrapperPaths(conf, global, a["wrapper_paths"], prog == "wrap-container"); err != nil {
+		return nil, err
+	}
+	if prog == "pip-containerize" { // also over an updated installation's mode or the advanced yaml
+		conf["mode"] = modeVenv
 	}
 	if strings.HasSuffix(prog, "-containerize") && a["command"] != "advanced" {
-		conf["pipcache"] = a["nocache"] == ""
+		conf["pipcache"] = yesno(a["nocache"] == "")
 	}
-	return conf
+	return conf, nil
 }
 
 // addWrapperPaths appends -w paths; relative ones are resolved against
 // installation_path later.
-func addWrapperPaths(conf, global map[string]any, w string, reqAbs bool) {
+func addWrapperPaths(conf, global map[string]any, w string, reqAbs bool) error {
 	if w == "" {
-		return
+		return nil
 	}
 	_, hasIP := conf["installation_path"]
 	for _, sec := range []string{"force", "defaults"} {
@@ -256,24 +299,28 @@ func addWrapperPaths(conf, global map[string]any, w string, reqAbs bool) {
 		}
 	}
 	if !hasIP && !reqAbs {
-		fatal("Failed to parse wrapper paths, missing installation path")
+		return fmt.Errorf("Failed to parse wrapper paths, missing installation path")
 	}
 	paths := list(conf["wrapper_paths"])
 	for _, p := range strings.Split(w, ",") {
 		if reqAbs && !strings.HasPrefix(p, "/") {
-			fatal("Only absolute paths are accepted for --wrapper-paths/-w")
+			return fmt.Errorf("Only absolute paths are accepted for --wrapper-paths/-w")
 		}
 		paths = append(paths, p)
 	}
 	conf["wrapper_paths"] = paths
+	return nil
 }
 
 // oldConf loads the settings of an existing installation for "update".
-func oldConf(d string, conf map[string]any) {
+func oldConf(d string, conf map[string]any) error {
 	if _, err := os.Stat(d + "/share/conf.yaml"); err != nil {
-		fatal("Directory %s does not exist or is not a valid installation ( missing share/conf.yaml )", d)
+		return fmt.Errorf("Directory %s does not exist or is not a valid installation ( missing share/conf.yaml )", d)
 	}
-	old := loadYAML(d + "/share/conf.yaml")
+	old, err := loadYAML(d + "/share/conf.yaml")
+	if err != nil {
+		return err
+	}
 	// an installation using a shared container keeps doing so
 	if yes(old["share_container"]) {
 		conf["container_src"] = old["container_src"]
@@ -290,6 +337,7 @@ func oldConf(d string, conf map[string]any) {
 			conf[k] = v
 		}
 	}
+	return nil
 }
 
 func main() {
@@ -302,8 +350,22 @@ func main() {
 		exe, _ := os.Executable()
 		globalPath = filepath.Join(filepath.Dir(realpath(exe)), "../default_config/config.yaml")
 	}
-	global := loadYAML(globalPath)
-	user := frontend(prog, os.Args[1:], global)
+	global, err := loadYAML(globalPath)
+	if err != nil {
+		fatal("%v", err)
+	}
+	user, err := frontend(prog, os.Args[1:], global)
+	var ue usageError
+	switch {
+	case errors.Is(err, errHelp):
+		os.Exit(0)
+	case errors.As(err, &ue):
+		fmt.Fprintln(os.Stderr, ue.c.usageLine())
+		fmt.Fprintln(os.Stderr, ue)
+		os.Exit(2)
+	case err != nil:
+		fatal("%v", err)
+	}
 	info(2, "Calling parsers script %s", prog)
 	info(2, "Using %s as default config", realpath(globalPath))
 	os.Exit(run(globalPath, global, user))

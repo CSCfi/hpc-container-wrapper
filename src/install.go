@@ -43,7 +43,7 @@ func (b *build) installScript(inst string) (string, []string, error) {
 	post := `cd "$CW_WORKDIR"` + "\n" + say(1, "Running user supplied commands") + `source "$CW_INSTALLATION_PATH/_post_install.sh"` + "\n"
 	pip := "_cw_step pip install"
 	switch c.get("mode") {
-	case "conda":
+	case modeConda:
 		if !exists(inst + "/miniforge") {
 			if exists(inst + "/miniconda") {
 				info(1, "Updating older installation which is using miniconda and not miniforge\nCreating symlink miniforge -> miniconda")
@@ -96,7 +96,7 @@ if [[ -d $_cw_bin ]]; then
     chmod +x "$_cw_bin/list-packages"
 else :
 ` + say(0, "Created env is empty") + "fi\n"
-	case "venv":
+	case modeVenv:
 		s += preInstall + `cd "$CW_INSTALLATION_PATH"` + "\n"
 		if uv {
 			if !exists(inst + "/uv/bin/uv") {
@@ -111,7 +111,7 @@ else :
 		}
 		if !exists(envRoot + "bin/activate") {
 			sp := ""
-			if c.has("enable_site_packages") {
+			if c.yes("enable_site_packages") {
 				info(1, "Enabling system and user site packages")
 				sp = " --system-site-packages"
 			} else {
@@ -133,7 +133,7 @@ else :
 			s += say(1, "Installing requirements file") + pip + ` -r "$(basename "$CW_REQUIREMENTS_FILE")"` + "\n"
 		}
 		s += post
-	case "wrapdisk":
+	case modeWrapDisk:
 		s += `cp -a "$CW_SOURCE_MOUNT_POINT/." "$CW_INSTALLATION_PATH"` + "\n" + preInstall + post
 	}
 	return s, env, nil
