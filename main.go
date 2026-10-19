@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// set with -ldflags by install.sh
+// set with -ldflags by the Makefile
 var version, commit string
 
 var (

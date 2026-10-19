@@ -193,11 +193,11 @@ some have subcommands.
 
 ## Installation
 
-Requires Go (only for building) and run install.sh with the desired config as argument.
+Requires Go and make (only for building). Run make with the desired config.
 Available configs are in `configs` folder
 
 ```
-bash install.sh <config>
+make CONFIG=<config>
 ```
 
 This will symlink the config to `default_config` and build `libexec/containerize`.
