@@ -9,3 +9,5 @@ all:
 	mkdir -p default_config
 	ln -sf ../configs/$(CONFIG).yaml default_config/config.yaml
 	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o libexec/containerize .
+	mkdir -p bin
+	for p in conda-containerize pip-containerize wrap-container wrap-install; do ln -sf ../libexec/containerize bin/$$p; done

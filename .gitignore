@@ -1,6 +1,7 @@
 # Created by make
 /default_config
 /libexec/
+/bin/
 
 # Build directories, kept on failure with CW_DEBUG_KEEP_FILES
 # (the local config builds in $PWD)

@@ -90,7 +90,7 @@ can lead to the compute node feeling a bit unwell.
 
 ## Basic program structure
 
-Users call the commands under `bin`, which are symlinks to the Go binary
+Users call the commands under `bin`, which make creates as symlinks to the Go binary
 `libexec/containerize`. The binary picks the frontend from the name it was called by.
 
 1. `main.go` parses the command line (argparse compatible) into a user config. 
@@ -200,7 +200,7 @@ Available configs are in `configs` folder
 make CONFIG=<config>
 ```
 
-This will symlink the config to `default_config` and build `libexec/containerize`.
+This will symlink the config to `default_config`, build `libexec/containerize` and create the `bin` symlinks.
 The binary has no runtime dependencies besides apptainer/singularity, mksquashfs and coreutils.
 
 If you are not satisfied with the config you can simply edit 
