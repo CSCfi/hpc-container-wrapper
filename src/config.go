@@ -96,9 +96,13 @@ const (
 	alnum       = "abcdefghijklmnopqrstuvwxyz" + upperDigits
 )
 
+// concat joins strings with a space, as for option strings like sqfs_options,
+// and anything involving a list as lists.
 func concat(a, b any) any {
 	if as, ok := a.(string); ok {
-		return as + str(b)
+		if _, isList := b.([]any); !isList {
+			return strings.TrimSpace(as + " " + str(b))
+		}
 	}
 	return append(append([]any{}, list(a)...), list(b)...)
 }

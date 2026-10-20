@@ -81,13 +81,13 @@ func TestFrontend(t *testing.T) {
 
 func TestMerge(t *testing.T) {
 	shared := map[string]any{
-		"defaults": map[string]any{"a": "d", "b": "d", "l": []any{"x"}},
+		"defaults": map[string]any{"a": "d", "b": "d", "l": []any{"x"}, "s": "-noappend", "m": "x"},
 		"prepends": map[string]any{"l": []any{"p"}},
-		"appends":  map[string]any{"l": []any{"z"}, "n": "new"},
+		"appends":  map[string]any{"l": []any{"z"}, "n": "new", "s": "-mem 10000M", "m": []any{"y"}},
 		"force":    map[string]any{"b": "f"},
 	}
 	got := merge(shared, map[string]any{"a": "u", "b": "u", "l": []any{"u"}})
-	want := conf{"a": "u", "b": "f", "l": []any{"p", "u", "z"}, "n": "new"}
+	want := conf{"a": "u", "b": "f", "l": []any{"p", "u", "z"}, "n": "new", "s": "-noappend -mem 10000M", "m": []any{"x", "y"}}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v want %v", got, want)
 	}
