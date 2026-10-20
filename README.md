@@ -1,271 +1,246 @@
 # Tykky
 
+Tykky wraps software installations inside an Apptainer/Singularity container
+to improve startup times, reduce IO load, and cut the number of files on large
+parallel filesystems.
 
-Tykky is a set of tools which wrap installations inside 
-an Apptainer/Singularity container to improve startup times, 
-reduce IO load, and lessen the number of files on large parallel filesystems.
+You install software through a container, Tykky packs the result into a
+single squashfs image, and generated launchers mount that image whenever a
+program runs. To the end user it looks like a normal installation: it is a
+drop-in replacement in most cases, and the container stays hidden.
 
-
-
-## Intro
-
-This is a tool to create installations using existing containers.
-The basic idea is to install software through a container,
-convert this into a filesystem image and mount this filesystem image
-when running the container. 
-
-The main goal is to reduce the number of files on disk,
-and reduce the IO load when installations are started. If you 
-are not running on a parallel filesystem with a lot of users and load,
-the points might not be that relevant. Only tested and developed
-on Lustre so benefits might be different on other parallel filesystems
-
-The tool originally started as a way to package conda 
-installations using container, as they cause a significant load on the filesystem.
-The idea being that using the tool should be very simple
-and as similar as possible to an un-containerized installation (drop in replacement for the majority of cases). 
-This means that we try to hide the container as much as possible 
-from the end-user. 
-
-It's singularity based, but nothing inherently prohibits usage
-of some other runtime (granted singularity is quite hardcoded atm ).
-All which is needed is the ability to mount filesystem images and control  over bind mounts
-
-### Design choices    
-
-Containers are used for two main things:
-- Automatic mounting and demounting of filesystem-image 
-- Per process private  (mount) namespace 
-
-From the point of view of the parallel filesystem, the image
-just looks like one single file -> much less load on the parallel filesystem.
-(I'm not a Lustre expert so I don't know if it's more the OST,OSS or MDT being saved)
-The image could be mounted using other tools, but then we would have to keep 
-track of unmounting it all kinds of error handling -> things we get for free using a container. The private namespaces means that we don't have to worry about 
-conflicts between multiple users, finding folders where to mount or breaking
-software which does not want to be moved. 
-
-Existing containers are used as this provides an easier way 
-to interface with the host software environment and a user does not have to
-have singularity build access on the HPC machine ( user namespaces might be temporarily disabled on a system due to security  reasons ). 
-
-The tool generates a lot of wrappers with some relatively nasty tricks. This
-is so that most things which should work without a container works within the container
-and the installation looks like a normal installation to the end-user 
-
-The tool is also explicitly meant to allow intertwining with the host
-software environment. For this there are two basic modes of operation:
-
-1. Mount everything from the host
- - All host paths will be mounted, used when it makes sense and compatibility can be assumend
- - Internally there are some additional variables so exclude paths 
- - Note! due to this the default container should always be the same as the host system. 
-2. Mount specified defaults
- - defaults set in config
-
-
-The tool is a single statically compiled Go program. Bash is only used
-for the script it generates to run inside the container during installation
-(conda/venv activation and the user's pre/post install commands share one shell)
-and for the generated launchers in the finished installation.
-
-### Limitations
-
-What things break / work differently when compared to a normal installation
-
-- ssh commands will drop you out of the container, there is a fix for this, but then
-some pre commands have to be run to start any required ssh services 
-- you can't start other containers (singularity can not be nested), Ugly hack is
-to ssh to `localhost`, but that makes environment management tricky and requires sshd to be running on the current node. 
-- Resolving binary paths will result in paths which do not exist outside the container. 
-As the image is mounted on a directory which is not present on the host. Bind mounts
-are always applied after the image mount which means an image mount can not mask
-a directory on disk, without us dropping the whole preceeding path from the mount point list. 
-There is a fix for this as a PR for apptainer (as of 1.2.2022) but we do not rely on this
-as the future is unclear if singularityCE or apptainer will become dominant.
-The workaround is to mount all directories on the same level as each component
-of the image mount path -> possibly very expensive -> not done automatically. 
-- A bit untested, but running one container per core when you have 128 of them
-can lead to the compute node feeling a bit unwell. 
-
-
-## Basic program structure
-
-Users call the commands under `bin`, which make creates as symlinks to the Go binary
-`libexec/containerize`. The binary picks the frontend from the name it was called by.
-
-1. `src/main.go` parses the command line (argparse compatible) into a user config. 
-2. `src/config.go` merges it with the default config (`configs/<config>.yaml` chosen at build time, or `CW_GLOBAL_YAML`):
-   `defaults` < user values (`prepends` are prepended) < `appends` < `force`.
-    - Values are expanded with environment variables (`$VAR`) when used; unset variables become empty.
-    - `pre_install`, `post_install` and `extra_envs` are not expanded.
-    - `build_tmpdir_base` is checked to be a valid directory and a `cw-XXXXXX` build directory is created in it.
-    - `conda_arch: auto` resolves to `Linux-<uname -m>`.
-3. `src/build.go` runs the steps and cleans up on failure:
-    - Fetch the container by downloading, copying or linking (`share_container`). When updating, also copy the squashfs image. 
-    - Run the installation script generated by `src/install.go` through the container (every scalar setting is visible as `CW_<KEY>`), 
-      Miniforge and uv are downloaded on the host. Output of the heavy steps goes to `build.log` in the build directory.
-      then compress the installation into a squashfs image. 
-        - The installation can be isolated or mount the complete host filesystem. 
-        - When modifying an existing installation, the whole installation has to be copied which might take a while
-    - Copy the result to the installation directory and save the build inputs and config to `<install_dir>/share`.
-4. `src/wrappers.go` (this is where most tricks live) generates the launchers so the installation can be used like a normal one. The wrappers:
-    - Define common variables such as image name, container name  
-    - Define runtime bind mounts
-    - Unset singularity envs if not actually inside a container (e.g srun called from container -> some SINGULARITY are still active) 
-    - Add an extra symlink layer in `_bin` to trick the likes of dask into generating valid executable paths
-    - Copy the venv definition when wrapping a python venv
-    - Activate conda if a conda env is wrapped
-    - Set executable argv0 to enable python virtual envs. 
-
-
-**NOTE** 
-
-Permissions for installation files 
-are determined by the current umask and permissions for the 
-target installation folder! Files inside the the squashfs are set to
-world readable to allow copying when installations are updated by other
-that the original creator. Limit access by setting correct permissions on
-on the sqfs image itself. This behavior can be disabled by setting `CW_NO_FIX_PERM`
-
-**BASH MAGIC**
-
-```
-/usr/bin/singularity --silent exec -B $DIR/../$SQFS_IMAGE:$INSTALLATION_PATH:image-src=/ $DIR/../$CONTAINER_IMAGE  bash -c "eval \"\$(/CSC_CONTAINER/miniforge/bin/conda shell.bash hook )\"  && conda activate env1 &>/dev/null &&  exec -a $_O_SOURCE $DIR/python $( test $# -eq 0 || printf " %q" "$@" )"
-```
-
-- `exec -a` is there to enable creating virtual environments as otherwise the venv symlink -> tykky wrapper -> executable in container chain is broken and python does not consider itself to be a venv. 
-- `bash -c` is required when conda is involved as we have to initialize the environment for some commands to work properly. Also partially due to exec being a builtin instead of a binary. 
-- `$( test $# -eq 0 || printf " %q" "$@" )` without printf special characters will not be escaped correctly and the command will error out. printf will print an empty string '' if no arguments so we need to be quiet in that case.
-
-
-## Implemented Frontends
-
-- `conda-containerize`
- - Wrap new conda installation or edit existing
- - requires a conda YML file as input
-- `pip-containerize`
- - Wrap new venv installation or edit existing
- - Will by default use currently available python
- - Option to use uv to manage python and venv
- - Option to also use slim container image  (will then not mount full host)
-- `wrap-container`
- - Generate wrappers for existing container. Mainly
- so that applications in existing containers can be used "almost" as a normal installation.
- - Full host will not be mounted
-- `wrap-install`
- - Wrap an installation on disk to a container.
- - Useful for containerizing existing installations which can not be re-installed
- - Option to mount in exact place, so that external and internal paths are identical. This
- will however require dropping the top parent path mount so only works when no dependencies required. E.g
-`wrap-install --mask -w bin /appl/soft/prog --prefix Dir` will not mount `/appl` at all.
-Understand the implications of this before using this frontend. For manual workaround
-and more explanation see [limitations section](#limitations).
-
-
-All tools support `-h/--help` for displaying info
-some have subcommands. 
-
-## Examples
-
-- `conda-containerize new --prefix /path/to_install conda_env.yaml`
-    - Where `conda_env.yaml`
-    ```
-    channels:
-      - conda-forge
-    dependencies:
-      - numpy
-    ```
-
-- `conda-containerize update --post-install post.sh /path/to_install`
-    - Where `post.sh`
-    ```
-    conda install scipy  --channel conda-forge
-    pip install pyyaml 
-    ```
-- `pip-containerize new --prefix /path/to_install req.txt`
-   - Where `req.txt`
-   ```
-   numpy 
-   ```
-
-- `wrap-container --wrapper-paths /opt/prog/bin --prefix /path/to_install /path/to/container` 
-- `wrap-install --wrapper-paths bin --mask --prefix /path/to/install /program/on/disk`
-
+Tykky started as a way to package conda environments, which put a heavy load
+on parallel filesystems. If your filesystem is not a busy shared parallel
+filesystem, the gains may be small. It has only been developed and tested on
+Lustre.
 
 ## Installation
 
-Requires Go and make (only for building). Run make with the desired config.
-Available configs are in `configs` folder
+Building requires Go and make. Pick a default config from `configs/`
+(`local`, `lumi`, `mahti`, `puhti`, `roihu`):
 
 ```
 make CONFIG=<config> [PREFIX=<dir>]
 ```
 
-This will build `$PREFIX/libexec/containerize` with `configs/<config>.yaml` as its default config, create the `$PREFIX/bin` symlinks, and copy `etc` and the config to `$PREFIX`. `PREFIX` defaults to `./build`.
-The binary has no runtime dependencies besides apptainer/singularity, mksquashfs and coreutils.
+This builds `$PREFIX/libexec/containerize` with `configs/<config>.yaml` as its
+default config, creates the commands in `$PREFIX/bin` as symlinks to it, and
+copies `etc` and the config to `$PREFIX`. `PREFIX` defaults to `./build`.
 
-If you are not satisfied with the config you can simply edit 
-`configs/<config>.yaml` (it is read at runtime, no rebuild needed) or supply 
-a custom config file path using `CW_GLOBAL_YAML`. 
+At runtime the binary only needs apptainer/singularity, mksquashfs and
+coreutils.
 
-## Special vars
+To change settings, edit `$PREFIX/configs/<config>.yaml` (it is read at
+runtime, so no rebuild is needed) or point `CW_GLOBAL_YAML` at your own config
+file.
 
-These can be set before starting the tool
+## Commands
 
-`CW_GLOBAL_YAML`
-path to config to use
+All commands support `-h/--help`. Some have subcommands (`new`, `update`).
 
-`CW_ENABLE_CONDARC`
-enable user condarc during installation
+- `conda-containerize`: create a new conda installation or update an existing one.
+  Takes a conda environment YAML file as input.
+- `pip-containerize`: create a new venv installation or update an existing one.
+  Uses the currently available python by default. Can use uv to manage python
+  and the venv, and can use a slim container image (the full host is then not
+  mounted).
+- `wrap-container`: generate launchers for an existing container, so its
+  applications can be used almost like a normal installation. The host
+  filesystem is not mounted.
+- `wrap-install`: wrap an existing installation on disk into a container.
+  Useful for installations that cannot be reinstalled. `--mask` mounts the
+  image at the original path so paths inside and outside match, but this drops
+  the top-level parent directory from the mounts, so it only works for software
+  without external dependencies. For example
+  `wrap-install --mask -w bin /appl/soft/prog --prefix Dir` does not mount
+  `/appl` at all. Read the [limitations](#limitations) before using it.
 
-`CW_DEBUG_KEEP_FILES`
-Don't delete build files when failing. 
+## Examples
 
-`CW_FORCE_CONDA_ACTIVATE`
-Force conda to be activated even if called through a virtual environment. 
+Create a conda installation:
 
-`CW_NO_CONDA_ACTIVATE`
-Never activate conda in the wrappers.
+```
+conda-containerize new --prefix /path/to_install conda_env.yaml
+```
 
-`CW_BUILD_TMPDIR`
-Overrides `build_tmpdir_base` from the config.
+where `conda_env.yaml` is
 
-`CW_NO_FIX_PERM`
-Don't make files inside the squashfs image world readable.
+```yaml
+channels:
+  - conda-forge
+dependencies:
+  - numpy
+```
 
-`CW_EXTRA_BIND_MOUNTS`
-Extra bind mounts for the wrappers (not used for isolated installations).
+Add packages to it later:
 
-`CW_LOG_LEVEL`
-How verbosely to report program actions
+```
+conda-containerize update --post-install post.sh /path/to_install
+```
 
-- 0 only error
-- 1 only warnings
-- 2 general (default)
-- `>2` debug
+where `post.sh` is
 
-## Activating and Deactivating wrapped environments
-A `tykky` convenience shell function is provided to mimic the conda activate and
-deactivate helpers. To use it, you must load those functions into your shell with:
+```
+conda install scipy --channel conda-forge
+pip install pyyaml
+```
 
-`source $PREFIX/etc/profile.d/tykky.sh`
+Create a venv installation from a requirements file:
 
-Then you may activate a tykky installation with
+```
+pip-containerize new --prefix /path/to_install req.txt
+```
 
-`tykky activate <env_dir>`
+Wrap an existing container or installation:
 
-If you define the environment variable `TYKKY_PATH`, environments may also be
-found by name inside that colon-separated list of paths in `TYKKY_PATH`.
+```
+wrap-container --wrapper-paths /opt/prog/bin --prefix /path/to_install /path/to/container
+wrap-install --wrapper-paths bin --mask --prefix /path/to/install /program/on/disk
+```
 
-You may deactivate the tykky environment in your shell with:
+## Using an installation
 
-`tykky deactivate`
+Add `<install_dir>/bin` to your `PATH`, or use the `tykky` shell function,
+which mimics `conda activate` and `conda deactivate`:
 
-Alternatively, you may also manually add `<env_dir>/bin` to your `$PATH`.
+```
+source $PREFIX/etc/profile.d/tykky.sh
+tykky activate <install_dir>
+tykky deactivate
+```
 
-## Conda Terms of Service
+If `TYKKY_PATH` is set to a colon-separated list of directories,
+`tykky activate` also finds installations in them by name.
 
-Getting errors like `CondaToSNonInteractiveError: Terms of Service have not been accepted for the following channels. Please accept or remove them before proceeding:`
+**Permissions:** installation files get their permissions from your umask and
+the target directory. Files inside the squashfs image are made world readable
+so that other users can update the installation; restrict access by setting
+permissions on the `.sqfs` image itself. Set `CW_NO_FIX_PERM` to disable this.
 
-Newer versions of conda have finer management of channels licenses, which might stop the installatoion if using miniconda (currently tykky versions < 0.4), set `CONDA_PLUGINS_AUTO_ACCEPT_TOS=true` to mitigate this ( https://www.anaconda.com/docs/getting-started/tos-plugin#docker-in-ci%2Fcd-environments ). Understand that this means accepting the channel TOS, make sure you have read and understood them and what they imply for your use case and organization. 
+## Environment variables
+
+Set these before running a command.
+
+| Variable | Effect |
+|---|---|
+| `CW_GLOBAL_YAML` | Path to the config file to use. |
+| `CW_ENABLE_CONDARC` | Use the user's condarc during installation. |
+| `CW_DEBUG_KEEP_FILES` | Keep build files when the build fails. |
+| `CW_FORCE_CONDA_ACTIVATE` | Activate conda even when called through a virtual environment. |
+| `CW_NO_CONDA_ACTIVATE` | Never activate conda in the launchers. |
+| `CW_BUILD_TMPDIR` | Overrides `build_tmpdir_base` from the config. |
+| `CW_NO_FIX_PERM` | Don't make files inside the squashfs image world readable. |
+| `CW_EXTRA_BIND_MOUNTS` | Extra bind mounts for the launchers (not used for isolated installations). |
+| `CW_LOG_LEVEL` | Verbosity: `0` errors, `1` warnings, `2` general (default), `>2` debug. |
+
+## Troubleshooting
+
+### Conda Terms of Service
+
+An error like `CondaToSNonInteractiveError: Terms of Service have not been
+accepted for the following channels` comes from newer conda versions, which
+manage channel licenses. It can stop installations that use miniconda (Tykky
+versions before 0.4). Set `CONDA_PLUGINS_AUTO_ACCEPT_TOS=true` to work around
+it ([Anaconda docs](https://www.anaconda.com/docs/getting-started/tos-plugin#docker-in-ci%2Fcd-environments)).
+This accepts the channel terms on your behalf, so read them and make sure they
+fit your use case and organization.
+
+## Limitations
+
+What breaks or behaves differently compared to a normal installation:
+
+- `ssh` drops you out of the container. There is a fix, but it needs pre
+  commands that start the required ssh services.
+- You can't start other containers, because singularity cannot be nested. An
+  ugly workaround is to ssh to `localhost`, but that makes environment
+  management tricky and needs sshd running on the node.
+- Resolved binary paths point to paths that do not exist outside the
+  container, because the image is mounted on a directory that is not on the
+  host. Bind mounts are applied after the image mount, so an image cannot mask
+  a directory on disk unless the whole preceding path is dropped from the
+  mounts. An apptainer PR fixes this (as of February 2022), but Tykky does not
+  rely on it. The manual workaround is to mount every directory at the same
+  level as each component of the image mount path, which can be very
+  expensive, so it is not done automatically.
+- Running one container per core on a 128-core node is largely untested and
+  can strain the compute node.
+
+## How it works
+
+### Design
+
+Containers do two jobs:
+
+- Mount and unmount the filesystem image automatically.
+- Give each process a private mount namespace.
+
+To the parallel filesystem the image is a single file, which means far less
+load. The image could be mounted with other tools, but then Tykky would have
+to handle unmounting and error cases itself; the container provides that for
+free. Private namespaces mean there are no conflicts between users, no need to
+find mount points, and no breakage of software that refuses to be moved.
+
+Tykky uses existing containers rather than building them, because that makes
+it easier to interface with the host software environment, and users don't
+need singularity build access on the HPC system (user namespaces may be
+disabled for security reasons).
+
+Tykky is meant to mix with the host software environment. There are two
+modes:
+
+1. Mount everything from the host. Used when compatibility can be assumed.
+   Some paths can be excluded through internal variables. Because of this the
+   default container should always match the host OS.
+2. Mount only the defaults set in the config.
+
+Tykky is a single statically compiled Go program and is currently tied to
+singularity, although any runtime that can mount filesystem images and control
+bind mounts would work. Bash is only used for the script it runs inside the
+container during installation (conda/venv activation and the user's pre/post
+install commands share one shell) and for the generated launchers.
+
+### Program structure
+
+The commands in `bin` are symlinks to the Go binary `libexec/containerize`,
+which picks the frontend from the name it was called by.
+
+1. `src/main.go` parses the command line (argparse compatible) into a user config.
+2. `src/config.go` merges it with the default config (`configs/<config>.yaml`
+   chosen at build time, or `CW_GLOBAL_YAML`), in increasing priority:
+   `defaults` < user values (`prepends` are prepended) < `appends` < `force`.
+    - Values are expanded with environment variables (`$VAR`) when used; unset variables become empty.
+    - `pre_install`, `post_install` and `extra_envs` are not expanded.
+    - `build_tmpdir_base` must be a valid directory; a `cw-XXXXXX` build directory is created in it.
+    - `conda_arch: auto` resolves to `Linux-<uname -m>`.
+3. `src/build.go` runs the build steps and cleans up on failure:
+    - Fetch the container by downloading, copying or linking it (`share_container`). When updating, also copy the squashfs image.
+    - Run the installation script generated by `src/install.go` in the container. Every scalar setting is visible as `CW_<KEY>`.
+      Miniforge and uv are downloaded on the host. Output of the heavy steps goes to `build.log` in the build directory.
+      The installation can be isolated or mount the whole host filesystem.
+      Updating an installation copies all of it, which can take a while.
+    - Compress the installation into a squashfs image.
+    - Copy the result to the installation directory and save the build inputs and config to `<install_dir>/share`.
+4. `src/wrappers.go` generates the launchers, and is where most of the tricks live. The launchers:
+    - Define common variables such as the image and container names.
+    - Define runtime bind mounts.
+    - Unset singularity variables when not actually inside a container (e.g. `srun` called from a container leaves some `SINGULARITY*` variables set).
+    - Add an extra symlink layer in `_bin` so tools like dask generate valid executable paths.
+    - Copy the venv definition when wrapping a python venv.
+    - Activate conda when wrapping a conda environment.
+    - Set the executable's `argv0` so python virtual environments work.
+
+### Launcher example
+
+```
+/usr/bin/singularity --silent exec -B $DIR/../$SQFS_IMAGE:$INSTALLATION_PATH:image-src=/ $DIR/../$CONTAINER_IMAGE  bash -c "eval \"\$(/CSC_CONTAINER/miniforge/bin/conda shell.bash hook )\"  && conda activate env1 &>/dev/null &&  exec -a $_O_SOURCE $DIR/python $( test $# -eq 0 || printf " %q" "$@" )"
+```
+
+- `exec -a` makes virtual environments work. Without it the chain
+  venv symlink → Tykky launcher → executable in container breaks, and python
+  does not see itself as a venv.
+- `bash -c` is needed with conda, because the environment must be initialized
+  for some commands to work, and because `exec` is a shell builtin rather than
+  a binary.
+- `printf " %q"` escapes special characters in the arguments; without it the
+  command fails. With no arguments `printf` would print an empty `''`, so the
+  `test $# -eq 0` guard skips it.
