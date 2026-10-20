@@ -97,3 +97,59 @@ func TestConsole(t *testing.T) {
 		t.Errorf("redraw %q", out.String())
 	}
 }
+
+func TestPrepare(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(dir+"/sing", []byte(stubSing), 0o755)
+	os.WriteFile(dir+"/broken", []byte("#!/bin/sh\nexit 0\n"), 0o755)
+	os.Mkdir(dir+"/nowrite", 0o555)
+	os.Mkdir(dir+"/noexe", 0o666)
+	for _, tc := range []struct{ prefix, sing, want string }{
+		{dir + "/new/inst", dir + "/sing", ""},
+		{dir + "/nowrite", dir + "/sing", "not writable"},
+		{dir + "/noexe", dir + "/sing", "not writable"},
+		{dir + "/ok", "ThisIsNotACommand", "does not exists"},
+		{dir + "/ok", dir + "/broken", "not seem to be a valid"},
+	} {
+		if tc.want == "not writable" && os.Geteuid() == 0 {
+			continue // root ignores permissions
+		}
+		b := &build{c: conf{"installation_prefix": tc.prefix, "singularity_executable_path": tc.sing}, dir: t.TempDir()}
+		err := b.prepare()
+		if tc.want == "" {
+			if err != nil || !isDir(tc.prefix) {
+				t.Errorf("%s: %v", tc.prefix, err)
+			}
+		} else if err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s %s: got %v want %q", tc.prefix, tc.sing, err, tc.want)
+		}
+	}
+}
+
+func TestCleanup(t *testing.T) {
+	dir := t.TempDir() + "/cw-X"
+	os.Mkdir(dir, 0o755)
+	t.Setenv("CW_DEBUG_KEEP_FILES", "1")
+	(&build{dir: dir}).cleanup()
+	if !isDir(dir) {
+		t.Error("removed despite CW_DEBUG_KEEP_FILES")
+	}
+	os.Unsetenv("CW_DEBUG_KEEP_FILES")
+	(&build{dir: dir}).cleanup()
+	if exists(dir) {
+		t.Error("build dir not removed")
+	}
+}
+
+func TestFetchShared(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(dir+"/src.sif", nil, 0o644)
+	t.Chdir(dir)
+	b := &build{c: conf{"container_src": "src.sif", "share_container": "yes", "container_image": "c.sif"}, deploy: dir}
+	if err := b.fetch(); err != nil {
+		t.Fatal(err)
+	}
+	if l, _ := os.Readlink(dir + "/c.sif"); l != dir+"/src.sif" {
+		t.Errorf("link %q", l)
+	}
+}

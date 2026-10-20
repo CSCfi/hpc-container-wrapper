@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -120,5 +121,65 @@ func TestDockerImage(t *testing.T) {
 	}
 	if _, err := dockerImage("/nonexistent"); err == nil {
 		t.Error("expected error for missing file")
+	}
+}
+
+func TestHelp(t *testing.T) {
+	for prog, tool := range tools {
+		c, _ := tool(prog)
+		var top strings.Builder
+		c.help(&top)
+		if !strings.Contains(top.String(), "show this help message") {
+			t.Errorf("%s: no -h in help", prog)
+		}
+		if _, err := frontend(prog, nil, nil); err != errHelp {
+			t.Errorf("%s: no args gave %v, want help", prog, err)
+		}
+		want := []string{"--environ", "--wrapper-paths"}
+		if c.subs != nil {
+			c = c.subs[0] // new
+		}
+		if prog != "wrap-container" {
+			want = append(want, "--post-install", "--pre-install")
+			var ue usageError
+			if _, err := c.parse(nil); !errors.As(err, &ue) {
+				t.Errorf("%s: no args gave %v, want usage error", c.prog, err)
+			}
+		}
+		var h strings.Builder
+		c.help(&h)
+		for _, w := range want {
+			if !strings.Contains(h.String(), w) {
+				t.Errorf("%s: help lacks %s", c.prog, w)
+			}
+		}
+	}
+}
+
+func TestConstruct(t *testing.T) {
+	dir := t.TempDir()
+	t.Chdir(dir)
+	user := map[string]any{"update_installation": "no"}
+	for env, want := range map[string]string{
+		"/proc/not_a_dir": "Could not create build directory",
+		"A/B/C":           "path is not absolute",
+		dir + "/A/B/C":    "",
+	} {
+		t.Setenv("CW_BUILD_TMPDIR", env)
+		c, err := construct("g.yaml", nil, user)
+		if want == "" {
+			if err != nil || !strings.HasPrefix(str(c["build_tmpdir"]), env+"/cw-") {
+				t.Errorf("%s: got %v, %v", env, c["build_tmpdir"], err)
+			}
+		} else if err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("%s: got %v want %q", env, err, want)
+		}
+	}
+	os.MkdirAll("fake/bin", 0o755)
+	os.MkdirAll("fake/_bin", 0o755)
+	os.WriteFile("fake/common.sh", nil, 0o644)
+	t.Setenv("PATH", dir+"/fake/bin:"+os.Getenv("PATH"))
+	if _, err := construct("g.yaml", nil, user); err == nil || !strings.Contains(err.Error(), "Remove") {
+		t.Errorf("active installation: got %v", err)
 	}
 }

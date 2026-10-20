@@ -8,28 +8,6 @@ rm -fr TEST_DIR
 mkdir TEST_DIR
 cd TEST_DIR
 
-cmds=(conda-containerize pip-containerize wrap-container wrap-install)
-
-for cmd in "${cmds[@]}"; do
-    t_run "$cmd -h | grep 'show this help message'" "$cmd has help flag"
-    t_run "$cmd" "$cmd help returns 0"
-done
-cmds=("conda-containerize new " "pip-containerize new" wrap-install)
-for cmd in "${cmds[@]}"; do
-   t_run "$cmd --help | grep -- '--post-install'" "$cmd has post-install flag"
-   t_run "$cmd --help | grep -- '--pre-install'" "$cmd has pre-install flag"
-   t_run "$cmd --help | grep -- '--environ'" "$cmd has environ flag"
-   t_run "$cmd --help | grep -- '--wrapper-paths'" "$cmd has wrapper-paths flag"
-   t_run "$cmd 2>&1 | grep -- 'arguments are required\|^usage:'" "$cmd error/help on no arg"
-done
-cmds=(wrap-container)
-for cmd in "${cmds[@]}"; do
-   t_run "$cmd --help | grep -- '--environ'" "$cmd has environ flag"
-   t_run "$cmd --help | grep -- '--wrapper-paths'" "$cmd has wrapper-paths flag"
-   t_run "$cmd 2>&1 | grep -- 'arguments are required\|^usage:'" "$cmd error/help on no arg"
-done
-
-
 echo "pyyaml" > req.txt
 echo "pyyyaml" > req_typo.txt
 echo "pip install requests" > post.sh
@@ -67,28 +45,12 @@ dependencies:
     - requests
 " > hybrid.yaml
 
-t_run "conda-containerize new conda_base.yml --prefix NOT_A_DIR" "Missing install dir is created"
-mkdir A_DIR_NO_WRITE
-chmod ugo-w A_DIR_NO_WRITE
-t_run "conda-containerize new conda_base.yml --prefix A_DIR_NO_WRITE | grep ERROR" "Installation dir has to be writable"
-mkdir A_DIR_NO_EXE
-chmod ugo-x A_DIR_NO_EXE
-t_run "conda-containerize new conda_base.yml --prefix A_DIR_NO_EXE | grep ERROR" "Installation dir has to be executable"
-
 mkdir CONDA_INSTALL_DIR
 
 t_run "conda-containerize new conda_broken.yaml --prefix CONDA_INSTALL_DIR | tee conda_inst.out | grep 'ResolvePackageNotFound\|PackagesNotFoundError'" "Conda errors are propagated to the user"
 t_run "grep ERROR conda_inst.out" "Failed run contains error" 
 t_run "grep INFO conda_inst.out"  "Info is present"
 t_run "test -z \"\$(grep ' DEBUG ' conda_inst.out )\" "  "Default no debug message"
-tmp_dir=$(cat conda_inst.out | grep -o "[^ ]*/cw-[A-Z,0-9]\{6\} ")
-t_run "\[ ! -e $tmp_dir \]" "Build dir is deleted on error"
-export CW_DEBUG_KEEP_FILES=1
-conda-containerize new conda_broken.yaml --prefix CONDA_INSTALL_DIR &> conda_inst.out
-tmp_dir=$(cat conda_inst.out | grep -o "[^ ]*/cw-[A-Z,0-9]\{6\} ")
-t_run "\[ -e $tmp_dir \]" "Build dir is saved if CW_DEBUG_KEEP_FILES set"
-test -d $tmp_dir && rm -rf $tmp_dir
-unset CW_DEBUG_KEEP_FILES
 
 unset CW_ENABLE_CONDARC
 echo "conda config --show-sources;conda config --show pkgs_dirs;exit 1" > pre.sh
@@ -152,7 +114,6 @@ print(cluster.job_script())
 ' > dask_test.py
 t_run "python dask_test.py | grep \"$(realpath -s $PWD/CONDA_INSTALL_DIR/bin/python )\"" "Dask uses correct python path"
 PATH=$OLD_PATH
-
 
 OLD_PATH=$PATH
 mkdir PIP_INSTALL_DIR
