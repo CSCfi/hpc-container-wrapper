@@ -199,10 +199,10 @@ Requires Go and make (only for building). Run make with the desired config.
 Available configs are in `configs` folder
 
 ```
-make CONFIG=<config>
+make CONFIG=<config> [PREFIX=<dir>]
 ```
 
-This will build `libexec/containerize` with `configs/<config>.yaml` as its default config and create the `bin` symlinks.
+This will build `$PREFIX/libexec/containerize` with `configs/<config>.yaml` as its default config, create the `$PREFIX/bin` symlinks, and copy `etc` and the config to `$PREFIX`. `PREFIX` defaults to `./build`.
 The binary has no runtime dependencies besides apptainer/singularity, mksquashfs and coreutils.
 
 If you are not satisfied with the config you can simply edit 
@@ -249,7 +249,7 @@ How verbosely to report program actions
 A `tykky` convenience shell function is provided to mimic the conda activate and
 deactivate helpers. To use it, you must load those functions into your shell with:
 
-`source etc/profile.d/tykky.sh`
+`source $PREFIX/etc/profile.d/tykky.sh`
 
 Then you may activate a tykky installation with
 

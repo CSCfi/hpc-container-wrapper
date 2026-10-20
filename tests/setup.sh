@@ -1,7 +1,7 @@
 #!/bin/bash -eu
 M_SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-export PATH="$(realpath $M_SCRIPT_DIR/../bin):$PATH"
+export PATH="$(realpath $M_SCRIPT_DIR/../build/bin):$PATH"
 
 rm -f test.log
 
