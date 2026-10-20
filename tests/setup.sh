@@ -15,7 +15,7 @@ fi
 unset CW_DEBUG_KEEP_FILES
 export PYTHONNOUSERSITE=1
 [[ $(type -t module) == function ]] && module purge || true
-export CONFIG_YAML="$M_SCRIPT_DIR/../default_config/config.yaml"
+export CONFIG_YAML="$M_SCRIPT_DIR/../configs/${CONFIG:?run tests with CONFIG=<config>}.yaml"
 
 if [[ -t 1 &&  "$USE_COLOR" = "yes" ]];then
   export   _RED='\033[0;31m'

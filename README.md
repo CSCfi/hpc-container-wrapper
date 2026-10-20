@@ -95,7 +95,7 @@ Users call the commands under `bin`, which make creates as symlinks to the Go bi
 `libexec/containerize`. The binary picks the frontend from the name it was called by.
 
 1. `src/main.go` parses the command line (argparse compatible) into a user config. 
-2. `src/config.go` merges it with the default config (`default_config/config.yaml` or `CW_GLOBAL_YAML`):
+2. `src/config.go` merges it with the default config (`configs/<config>.yaml` chosen at build time, or `CW_GLOBAL_YAML`):
    `defaults` < user values (`prepends` are prepended) < `appends` < `force`.
     - Values are expanded with environment variables (`$VAR`) when used; unset variables become empty.
     - `pre_install`, `post_install` and `extra_envs` are not expanded.
@@ -202,11 +202,11 @@ Available configs are in `configs` folder
 make CONFIG=<config>
 ```
 
-This will symlink the config to `default_config`, build `libexec/containerize` and create the `bin` symlinks.
+This will build `libexec/containerize` with `configs/<config>.yaml` as its default config and create the `bin` symlinks.
 The binary has no runtime dependencies besides apptainer/singularity, mksquashfs and coreutils.
 
 If you are not satisfied with the config you can simply edit 
-the config under `default_config` or supply 
+`configs/<config>.yaml` (it is read at runtime, no rebuild needed) or supply 
 a custom config file path using `CW_GLOBAL_YAML`. 
 
 ## Special vars

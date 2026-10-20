@@ -16,7 +16,7 @@ import (
 )
 
 // set with -ldflags by the Makefile
-var version, commit string
+var version, commit, config string
 
 var (
 	logLevel = 2
@@ -348,7 +348,7 @@ func main() {
 	globalPath := os.Getenv("CW_GLOBAL_YAML")
 	if globalPath == "" {
 		exe, _ := os.Executable()
-		globalPath = filepath.Join(filepath.Dir(realpath(exe)), "../default_config/config.yaml")
+		globalPath = filepath.Join(filepath.Dir(realpath(exe)), "../configs", config+".yaml")
 	}
 	global, err := loadYAML(globalPath)
 	if err != nil {
