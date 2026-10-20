@@ -11,17 +11,6 @@ whatis("URL: https://github.com/CSCfi/hpc-container-wrapper")
 
 -- Set paths
 prepend_path("PATH", pathJoin(base, version, "bin"))
-prepend_path("FPATH", pathJoin(base, version, "share/sh_functions"))
 
--- Set shell functions:
-local function read_file(filename)
-    local file = io.open(filename, "r")
-    if not file then return nil end
-    local content = file:read("*all")
-    file:close()
-    return content
-end
-set_shell_function("__tykky_activate", read_file(pathJoin(base, version, "share/sh_functions/__tykky_activate")), "")
-set_shell_function("__tykky_deactivate", read_file(pathJoin(base, version, "share/sh_functions/__tykky_deactivate")), "")
-set_shell_function("__tykky_get_env_path", read_file(pathJoin(base, version, "share/sh_functions/__tykky_get_env_path")), "")
-set_shell_function("tykky", read_file(pathJoin(base, version, "share/sh_functions/tykky")), "")
+-- Defines the tykky shell functions (needs Lmod >= 8.6)
+source_sh("bash", pathJoin(base, version, "etc/profile.d/tykky.sh"))
