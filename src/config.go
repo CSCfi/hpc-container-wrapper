@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -132,9 +133,49 @@ func merge(shared, user map[string]any) conf {
 	return full
 }
 
+// settings lists every known key with the kind of value it takes, "" for any.
+var settings = map[string]string{
+	"add_ld": "bool", "composable": "bool", "create_wrappers": "bool", "enable_site_packages": "bool",
+	"isolate": "bool", "mamba": "bool", "mask_wrap_install": "bool", "pipcache": "bool",
+	"share_container": "bool", "update_installation": "bool", "use_uv": "bool", "wrap_all": "bool",
+	"log_level": "int", "max_num_cpus": "int", "num_cpus": "int",
+	"build_tmpdir": "", "build_tmpdir_base": "", "conda_arch": "", "conda_version": "",
+	"container_image": "", "container_src": "", "env_file": "", "env_name": "",
+	"excluded_mount_points": "", "extra_envs": "", "installation_file_paths": "",
+	"installation_path": "", "installation_prefix": "", "mode": "", "mount_points": "",
+	"post_install": "", "pre_install": "", "pyver": "", "requirements_file": "",
+	"singularity_executable_path": "", "source_mount_point": "", "sqfs_image": "",
+	"sqfs_options": "", "sqfs_src": "", "workdir": "", "wrap_src": "",
+	"wrapper_ld_library_paths": "", "wrapper_paths": "",
+}
+
+// check warns about unknown keys and rejects values of the wrong kind;
+// empty values count as unset.
+func (c conf) check() error {
+	for k := range c {
+		kind, known := settings[k]
+		v := c.get(k)
+		switch {
+		case !known:
+			warn("Unknown setting '%s' is ignored", k)
+		case v == "":
+		case kind == "bool" && v != "yes" && v != "no":
+			return fmt.Errorf("Setting '%s' must be yes or no, got '%s'", k, v)
+		case kind == "int":
+			if _, err := strconv.Atoi(v); err != nil {
+				return fmt.Errorf("Setting '%s' must be an integer, got '%s'", k, v)
+			}
+		}
+	}
+	return nil
+}
+
 // construct merges the configs and creates the build directory.
 func construct(globalPath string, global, user map[string]any) (conf, error) {
 	c := merge(global, user)
+	if err := c.check(); err != nil {
+		return nil, err
+	}
 	if c.yes("composable") && c.no("update_installation") && !c.yes("mask_wrap_install") {
 		c["installation_path"] = str(c["installation_path"]) + "_" + randName(7, alnum)
 	}

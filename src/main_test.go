@@ -93,6 +93,18 @@ func TestMerge(t *testing.T) {
 	}
 }
 
+func TestCheck(t *testing.T) {
+	ok := conf{"isolate": true, "add_ld": "no", "num_cpus": 8, "log_level": "", "workdir": "$PWD", "typo_key": 1}
+	if err := ok.check(); err != nil {
+		t.Errorf("unexpected error %v", err)
+	}
+	for _, bad := range []conf{{"isolate": "true"}, {"use_uv": "on"}, {"num_cpus": "eight"}} {
+		if bad.check() == nil {
+			t.Errorf("%v: expected error", bad)
+		}
+	}
+}
+
 func TestDockerImage(t *testing.T) {
 	for rel, want := range map[string]string{
 		"ID=\"rhel\"\nVERSION_ID=\"8.10\"\n\n":   "redhat/ubi8:8.10",
