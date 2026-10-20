@@ -1,11 +1,9 @@
-#!/bin/bash -eu
+#!/bin/bash -u
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source $SCRIPT_DIR/setup.sh
 # Test are run in current directory
 
-rm -fr T_TEST_DIR
-mkdir T_TEST_DIR
-cd T_TEST_DIR
+t_workdir T_TEST_DIR
 mkdir Gdal
 mkdir S
 echo 'channels:
@@ -32,7 +30,7 @@ rule ghelp:
         """
 ' > Snakefile
 
-cat ../../default_config/config.yaml | sed  "s@singularity_executable_path.*@singularity_executable_path: 'singularity'@g" > my_config.yaml 
+sed "s@singularity_executable_path.*@singularity_executable_path: 'singularity'@g" "$CONFIG_YAML" > my_config.yaml
 export CW_GLOBAL_YAML=$( readlink -f my_config.yaml)
 
 
@@ -82,8 +80,7 @@ mkdir 2.1.0
 t_run 'wrap-container -w /whitebox_tools docker://crazyzlj/whitebox-tools:2.1.0 --prefix 2.1.0' "Wrap container from external source" 
 t_run "2.1.0/bin/whitebox_tools --help" "Using sh if bash not available for wrap container"
 t_run 'Gdal/bin/_debug_exec 2.1.0/bin/whitebox_tools --help  | grep  "wrapper called from another container" -q' "Wrapped container gives error when cross called"
-res=$(2.1.0/bin/_debug_exec sh -c "echo \$SINGULARITY_BIND" | grep -q -- "image-src")
-t_run "test -z $res" "No extra bind mounts into wrapped container"
+t_run '! 2.1.0/bin/_debug_exec sh -c "echo \$SINGULARITY_BIND" | grep -q -- image-src' "No extra bind mounts into wrapped container"
 t_run "grep -q $(git describe --tags) 2.1.0/share/VERSION.yml" "Version information saved"
 
 

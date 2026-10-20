@@ -3,10 +3,7 @@ SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/setup.sh
 # Test are run in current directory
 
-#cd "${TMPDIR:-/tmp}"
-rm -fr TEST_DIR
-mkdir TEST_DIR
-cd TEST_DIR
+t_workdir TEST_DIR
 
 echo "pyyaml" > req.txt
 echo "pyyyaml" > req_typo.txt
@@ -79,14 +76,14 @@ rm -fr CONDA_INSTALL_DIR && mkdir CONDA_INSTALL_DIR
 t_run "conda-containerize new --mamba dask_env.yaml --prefix CONDA_INSTALL_DIR &>/dev/null" "yaml ending is also supported"
 OLD_PATH=$PATH
 PATH="CONDA_INSTALL_DIR/bin:$PATH"
-t_run " \[  $(which python)==$(_debug_exec which python)  \] " "Which returns same in and out"
+t_run '[[ "$(which python)" == "$(_debug_exec which python)" ]]' "Which returns same in and out"
 str1="$(python -c "print('Hello world --a g -b \\\ ')" )"
 str2="Hello world --a g -b \ "
 t_run "\[ \"$str1\" = \"$str2\" \]" "Wrapper passed quotes correctly"
 t_run "python -c \"import os; os.environ['CONDA_DEFAULT_ENV']\"" "Conda is activated"
 g=$(python -c "import dask;print(dask.__file__)" 2>/dev/null )
-t_run "\[ -n $g \]" "Package found in container"
-t_run "\[ ! -f \"$g\" \]" "Package not on host"
+t_run "[[ -n '$g' ]]" "Package found in container"
+t_run "[[ ! -f '$g' ]]" "Package not on host"
 echo '
 import dask
 import dask_jobqueue
@@ -118,7 +115,7 @@ PATH=$OLD_PATH
 OLD_PATH=$PATH
 mkdir PIP_INSTALL_DIR
 
-cat $SCRIPT_DIR/../default_config/config.yaml | sed  's/container_image.*$/container_image: My_very_cool_name.sif/g' > my_config.yaml
+sed  's/container_image.*$/container_image: My_very_cool_name.sif/g' "$CONFIG_YAML" > my_config.yaml
 t_run "pip-containerize new --prefix PIP_INSTALL_DIR req_typo.txt  2>&1 | grep 'No matching distribution'" "pip error shown to user"
 export CW_GLOBAL_YAML=my_config.yaml
 t_run "pip-containerize new --prefix PIP_INSTALL_DIR req.txt " "pip install works"
@@ -130,7 +127,6 @@ t_run "python -c 'import sys;sys.exit(sys.prefix == sys.base_prefix)'" "Installa
 in_p=$(python3 -c 'import sys;print(sys.executable)') 
 out_p="$PWD/PIP_INSTALL_DIR/bin/python3"                                  
 t_run "[[ $in_p == $out_p ]]" "Executable name is same on in and out"                         
-rm -fr PIP_INSTALL_DIR && mkdir PIP_INSTALL_DIR
 t_run "pip-containerize new --uv --prefix PIP_UV_INSTALL_DIR req_typo.txt  2>&1 | grep -o 'not found in the package registry'" "uv error shown to user"
 t_run "pip-containerize new --uv --prefix PIP_UV_INSTALL_DIR req.txt " "pip install with uv works"
 t_run "pip-containerize update PIP_UV_INSTALL_DIR --post-install post_uv.sh" "Update with uv works"

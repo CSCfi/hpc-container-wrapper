@@ -1,13 +1,9 @@
-#!/bin/bash
+#!/bin/bash -u
 
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source $SCRIPT_DIR/setup.sh
 
-#cd "${TMPDIR:-/tmp}"
-rm -rf TYKKY_V_TEST
-mkdir -p TYKKY_V_TEST
-
-cd TYKKY_V_TEST
+t_workdir TYKKY_V_TEST
 echo "distro" > requirements.txt
 echo "pip install lxml" > extra.txt
 

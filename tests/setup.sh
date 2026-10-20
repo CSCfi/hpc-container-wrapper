@@ -14,7 +14,8 @@ if [[ ${CW_LOG_LEVEL+defined} ]];then
 fi
 unset CW_DEBUG_KEEP_FILES
 export PYTHONNOUSERSITE=1
-: [[ $(type -t module ) == function ]] && module purge
+[[ $(type -t module) == function ]] && module purge || true
+export CONFIG_YAML="$M_SCRIPT_DIR/../default_config/config.yaml"
 
 if [[ -t 1 &&  "$USE_COLOR" = "yes" ]];then
   export   _RED='\033[0;31m'
@@ -46,14 +47,19 @@ _fail(){
 }
 
 
+_failures=0
+trap 'exit $(( _failures > 0 ))' EXIT
+
+t_workdir(){
+    rm -fr "$1" && mkdir "$1" && cd "$1"
+}
+
 t_run(){
     _msg "$2"
-    eval "$1" &>>test.log 
-    if [[ $? -eq 0 ]];then
+    if eval "$1" &>>test.log; then
         _ok "$2"
     else
         _fail "$2"
+        _failures=$((_failures + 1))
     fi
-
-
 }

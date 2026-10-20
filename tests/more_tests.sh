@@ -1,26 +1,22 @@
-#!/bin/bash -eu
+#!/bin/bash -u
 # Test specific to LUMI super computer
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source $SCRIPT_DIR/setup.sh
 # Test are run in current directory
 
-rm -fr L_TEST_DIR
-mkdir L_TEST_DIR
-cd L_TEST_DIR
+t_workdir L_TEST_DIR
 echo "pyyaml" > req.txt
 echo "pip install requests" > post.sh
 
-default_container=$(cat $SCRIPT_DIR/../default_config/config.yaml  | grep container_src | cut -d ":" -f2- | sed "s/'//g" )
+default_container=$(grep container_src "$CONFIG_YAML" | cut -d ":" -f2- | sed "s/'//g" )
 if [[ "$default_container" == "auto" ]];then
     default_container=$(. /etc/os-release; case $ID in
         sles) echo "registry.suse.com/bci/bci-base:$VERSION_ID";; rhel) echo "redhat/ubi${VERSION_ID%%.*}:$VERSION_ID";;
         almalinux) echo "almalinux:$VERSION_ID";; rocky) echo "rockylinux/rockylinux:$VERSION_ID";; *) echo "$ID:$VERSION_ID";; esac)
 fi
-set -e
-t_run "singularity pull test_container.sif docker://$default_container" "default or auto determined container exists and can be downloaded" 
-set +e
+t_run "singularity pull test_container.sif docker://$default_container" "default or auto determined container exists and can be downloaded"
 
-cat ../../default_config/config.yaml | sed  "s@container_src.*\$@container_src: $PWD/test_container.sif@g" > my_config.yaml
+sed "s@container_src.*\$@container_src: $PWD/test_container.sif@g" "$CONFIG_YAML" > my_config.yaml
 if  grep -q share_container my_config.yaml   ; then
     sed -i 's/share_container.*$/share_container: yes/g' my_config.yaml
 else
@@ -101,7 +97,6 @@ export real=($(PIP_INSTALL_DIR_2/bin/_debug_exec sh -c 'echo $PATH' | tr ':' '\n
 t_run "forall elementIn \"\${ref[@]}\" " "External path retained"
 
 export real=($(PIP_INSTALL_DIR/bin/_debug_exec sh -c 'echo $PATH' | tr ':' '\n' ))
-t_string=$( echo "$real" | grep "/some/extra1" )
-t_run "test -z $t_string " "External path removed when isolating"
+t_run '! printf "%s\n" "${real[@]}" | grep -q /some/extra1' "External path removed when isolating"
 
 
