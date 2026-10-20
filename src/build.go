@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -442,7 +443,12 @@ func (b *build) post() error {
 	if err := os.WriteFile(p+"/share/VERSION.yml", []byte(v), 0o666); err != nil {
 		return err
 	}
-	y, err := yaml.Marshal(map[string]any(c))
+	// build state that means nothing once the installation exists
+	saved := maps.Clone(map[string]any(c))
+	delete(saved, "build_tmpdir")
+	delete(saved, "log_level")
+	delete(saved, "update_installation")
+	y, err := yaml.Marshal(saved)
 	if err != nil {
 		return err
 	}
