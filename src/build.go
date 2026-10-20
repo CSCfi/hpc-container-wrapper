@@ -188,7 +188,7 @@ func (b *build) prepare() error {
 			b.env = append(b.env, "CW_"+strings.ToUpper(k)+"="+c.get(k))
 		}
 	}
-	b.env = append(b.env, "SINGULARITY_TMPDIR="+b.dir, "SINGULARITY_CACHEDIR="+c.get("build_tmpdir_base"))
+	b.env = append(b.env, "SINGULARITY_TMPDIR="+b.dir)
 	b.deploy = b.dir + "/_deploy"
 	return os.MkdirAll(b.deploy, 0o777)
 }
