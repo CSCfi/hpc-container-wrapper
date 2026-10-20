@@ -194,9 +194,6 @@ func construct(globalPath string, global, user map[string]any) (conf, error) {
 		}
 		c["wrapper_paths"] = w
 	}
-	if l := os.Getenv("CW_LOG_LEVEL"); l != "" {
-		c["log_level"] = l
-	}
 	if c.get("container_src") == "auto" {
 		img, err := dockerImage("/etc/os-release")
 		if err != nil {
@@ -236,8 +233,9 @@ func construct(globalPath string, global, user map[string]any) (conf, error) {
 		return nil, err
 	}
 	c["build_tmpdir"] = dir
-	if l, err := fmt.Sscan(c.get("log_level"), &logLevel); l != 1 || err != nil {
-		logLevel = 2
+	// main already applied CW_LOG_LEVEL, which wins over the config
+	if l, err := strconv.Atoi(c.get("log_level")); err == nil && os.Getenv("CW_LOG_LEVEL") == "" {
+		logLevel = l
 	}
 	return c, nil
 }
