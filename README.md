@@ -17,7 +17,7 @@ Lustre.
 ## Installation
 
 Building requires Go and make. Pick a default config from `configs/`
-(`local`, `lumi`, `mahti`, `puhti`, `roihu`):
+(`local`, `lumi`, `roihu`):
 
 ```
 make CONFIG=<config> [PREFIX=<dir>]
