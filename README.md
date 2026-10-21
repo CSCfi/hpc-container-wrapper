@@ -20,11 +20,14 @@ Building requires Go and make. Pick a default config from `configs/`
 (`local`, `lumi`, `roihu-cpu`, `roihu-gpu`):
 
 ```
-make CONFIG=<config> [PREFIX=<dir>]
+make CONFIG=<config> [PREFIX=<dir>] [MODULEFILES_DIR=<dir>]
 ```
 
 This builds `$PREFIX/bin/containerize` with `configs/<config>.yaml` as its
 default config and copies `etc` and the config to `$PREFIX`. `PREFIX` defaults to `./build`.
+It also writes the Lmod modulefile `$MODULEFILES_DIR/tykky/<version>.lua`
+(`MODULEFILES_DIR` defaults to `PREFIX`), load it with
+`module use $MODULEFILES_DIR && module load tykky`.
 
 At runtime the binary only needs apptainer/singularity, mksquashfs and
 coreutils.

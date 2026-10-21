@@ -1,5 +1,5 @@
 local version = myModuleVersion()
-local base = "/appl/soft/manual/general/common/tykky"
+local prefix = "@PREFIX@"
 
 help([[
 Tykky - HPC Container Wrapper
@@ -10,7 +10,7 @@ whatis("Description: HPC Container Wrapper")
 whatis("URL: https://github.com/CSCfi/hpc-container-wrapper")
 
 -- Set paths
-prepend_path("PATH", pathJoin(base, version, "bin"))
+prepend_path("PATH", pathJoin(prefix, "bin"))
 
 -- Defines the tykky shell functions (needs Lmod >= 8.6)
-source_sh("bash", pathJoin(base, version, "etc/profile.d/tykky.sh"))
+source_sh("bash", pathJoin(prefix, "etc/profile.d/tykky.sh"))

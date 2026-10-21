@@ -1,7 +1,9 @@
-# Build the tool and select the default config: make CONFIG=<config> [PREFIX=<dir>]
+# Build the tool and select the default config: make CONFIG=<config> [PREFIX=<dir>] [MODULEFILES_DIR=<dir>]
 PREFIX ?= ./build
+MODULEFILES_DIR ?= $(PREFIX)
+VERSION := $(or $(shell git describe --tags 2>/dev/null),dev)
 CONFIGS := $(basename $(notdir $(wildcard configs/*.yaml)))
-LDFLAGS := -X main.config=$(CONFIG) -X main.version=$(shell git describe --tags 2>/dev/null) -X main.commit=$(shell git rev-parse --short HEAD 2>/dev/null)
+LDFLAGS := -X main.config=$(CONFIG) -X main.version=$(VERSION) -X main.commit=$(shell git rev-parse --short HEAD 2>/dev/null)
 
 .PHONY: all
 all:
@@ -10,3 +12,5 @@ all:
 	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(PREFIX)/bin/containerize ./src
 	cp -r etc $(PREFIX)/
 	mkdir -p $(PREFIX)/configs && cp configs/$(CONFIG).yaml $(PREFIX)/configs/
+	mkdir -p $(MODULEFILES_DIR)/tykky
+	sed 's|@PREFIX@|$(abspath $(PREFIX))|' modulefiles/tykky.lua > $(MODULEFILES_DIR)/tykky/$(VERSION).lua
