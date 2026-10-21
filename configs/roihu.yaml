@@ -1,58 +1,108 @@
-# Value will be selected if no user provided value
-# Otherwise ignored
+# Site configuration of containerize for Roihu.
+#
+# Build with `make CONFIG=roihu`. The installed copy in $PREFIX/configs/ is
+# read at runtime, and CW_GLOBAL_YAML can point to another file instead.
+#
+# Values are merged with the user's settings (command line and user YAML)
+# in increasing priority:
+#   defaults < prepends + user < appends < force
+#
+# Value types:
+#   bool    yes | no
+#   int     a whole number
+#   string  any text; environment variables such as $USER or $PWD are
+#           expanded when the value is read during the build, not at runtime
+#   list    a YAML list; a single value is treated as a one-element list
+# An empty value counts as unset. Unknown keys print a warning and are ignored.
+
+# Used when the user does not set the value, otherwise ignored.
 defaults:
+    # Verbosity (int): 0 errors only, 1 adds warnings, 2 adds info,
+    # 3 or more adds debug messages and timestamps.
+    # The CW_LOG_LEVEL environment variable overrides this.
     log_level: 2
-    env_name: env1 
-    conda_version: latest
-    installation_prefix: $PWD
+    # Name of the conda environment or venv created inside the installation (string).
+    env_name: "env1"
+    # Miniforge version to install (string): "latest" or a release
+    # version such as 24.11.3-0.
+    conda_version: "latest"
+    # Directory on the host where the installation is written (string).
+    # The --prefix option sets this.
+    installation_prefix: "$PWD"
+    # Absolute path inside the container where the installation is mounted (string).
+    # Use a path that does not exist on the host or in the base container.
     installation_path: "/ROIHU_TYKKY"
-    # Adds a random hash to the end of the path so
-    # That multiple installations can be active at the same time
+    # Append a random suffix to installation_path (bool) so that several
+    # installations can be active at the same time.
     composable: true
-    # if this is not a thing which exist
-    # I will do a singularity pull
-    container_src: auto 
-    # name of the container image when on disk
-    container_image: container.sif 
-    sqfs_image: img.sqfs 
-    source_mount_point: /TMP_MP 
+    # Base container image (string):
+    #   auto            pick a docker image matching the host OS from /etc/os-release
+    #   <path>          an existing local .sif image
+    #   <uri>           anything `singularity pull` accepts, e.g. docker://ubuntu:24.04
+    container_src: "auto"
+    # File name of the container image inside the installation (string).
+    container_image: "container.sif"
+    # File name of the squashfs image holding the installation (string).
+    sqfs_image: "img.sqfs"
+    # Path inside the container where existing sources are mounted when
+    # wrapping an installation or updating one (string).
+    source_mount_point: "/TMP_MP"
+    # Host directories to mount into the container when isolate is yes (list).
+    # Directories that do not exist are skipped.
     mount_points:
-            - /projappl
-            - /tmp
-            - /scratch
-            - /users
-            - /appl
-            - /run
-            - /dataset
+        - "/projappl"
+        - "/tmp"
+        - "/scratch"
+        - "/users"
+        - "/appl"
+        - "/run"
+        - "/dataset"
+    # Host directories to leave out when isolate is no (list, optional).
+    # excluded_mount_points:
+    #     - "/scratch"
+    # Mount only mount_points (yes) or every top-level host directory except /dev (no) (bool).
     isolate: no
+    # Generate wrapper scripts in <installation_prefix>/bin (bool).
     create_wrappers: yes
+    # Wrap every file in the wrapped bin directories (yes) or only
+    # executables and symlinks (no) (bool).
     wrap_all: no
+    # Number of processors mksquashfs uses (int), capped by max_num_cpus.
     num_cpus: 8
+    # Extra options passed to mksquashfs, separated by spaces (string).
     sqfs_options: "-noappend -mem 10000M"
+    # Add lib directories next to wrapped bin directories to LD_LIBRARY_PATH
+    # in the wrappers (bool).
     add_ld: yes
+
+# Overrides any value the user sets.
 force:
-    # I will create some random dir under here 
-    build_tmpdir_base: $TMPDIR
-    conda_arch: auto # Linux-<uname -m>
+    # Directory where a random cw-XXXXXX build directory is created (string).
+    # Must be writable. The CW_BUILD_TMPDIR environment variable overrides this.
+    build_tmpdir_base: "$TMPDIR"
+    # Miniforge installer architecture (string): "auto" uses Linux-<uname -m>,
+    # or set it explicitly, e.g. Linux-x86_64 or Linux-aarch64.
+    conda_arch: "auto"
+    # Upper limit for num_cpus (int); 0 or unset means no limit.
     max_num_cpus: 16
-    # So either implement that, throw them to $TMPDIR
-    #
-    workdir: $PWD   
-    # What executable name or path to use for singularity
-    # For fully dynamic behavior 
-    # You can just set singularity or apptainer here.
-    # Keep in mind that this could break installations
-    # if e.g the user installs singularity via conda
-    # when user namespaces are not enabled 
-    # Environment variables can be used here 
-    # but they will be expanded during build,
-    # not during runtime
+    # Not used by the tool.
+    workdir: "$PWD"
+    # Apptainer or Singularity command, a name in PATH or an absolute path (string).
+    # A bare name such as "singularity" or "apptainer" is resolved at build time
+    # and can break installations if the user later has another one in PATH,
+    # e.g. installed via conda on a system without user namespaces.
     singularity_executable_path: "/usr/bin/singularity"
-    
-# Value will override any user set value
 
-# Value will be appendend to user defined list 
-appends:
-
-# Value will be prepended to user defined list
+# Prepended to the user's value: lists are concatenated, strings are joined with a space.
+# Example:
+#   prepends:
+#       mount_points:
+#           - "/appl"
 prepends:
+
+# Appended to the user's value (or used as is if the user sets none):
+# lists are concatenated, strings are joined with a space.
+# Example:
+#   appends:
+#       sqfs_options: "-mem 10000M"
+appends:
