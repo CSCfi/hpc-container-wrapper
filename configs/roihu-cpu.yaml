@@ -1,6 +1,6 @@
-# Site configuration of containerize for Roihu.
+# Site configuration of containerize for Roihu CPU nodes (x86_64).
 #
-# Build with `make CONFIG=roihu`. The installed copy in $PREFIX/configs/ is
+# Build with `make CONFIG=roihu-cpu`. The installed copy in $PREFIX/configs/ is
 # read at runtime, and CW_GLOBAL_YAML can point to another file instead.
 #
 # Values are merged with the user's settings (command line and user YAML)
@@ -82,7 +82,7 @@ force:
     build_tmpdir_base: "$TMPDIR"
     # Miniforge installer architecture (string): "auto" uses Linux-<uname -m>,
     # or set it explicitly, e.g. Linux-x86_64 or Linux-aarch64.
-    conda_arch: "auto"
+    conda_arch: "Linux-x86_64"
     # Upper limit for num_cpus (int); 0 or unset means no limit.
     max_num_cpus: 16
     # Directory where pre_install and post_install commands run (string),

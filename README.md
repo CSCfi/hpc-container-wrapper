@@ -17,7 +17,7 @@ Lustre.
 ## Installation
 
 Building requires Go and make. Pick a default config from `configs/`
-(`local`, `lumi`, `roihu`):
+(`local`, `lumi`, `roihu-cpu`, `roihu-gpu`):
 
 ```
 make CONFIG=<config> [PREFIX=<dir>]
