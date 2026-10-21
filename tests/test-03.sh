@@ -34,8 +34,8 @@ sed "s@singularity_executable_path.*@singularity_executable_path: 'singularity'@
 export CW_GLOBAL_YAML=$( readlink -f my_config.yaml)
 
 
-t_run "conda-containerize new --mamba env2.yml --prefix S" "mamba works" 
-t_run "conda-containerize new --mamba env.yml --prefix Gdal" "gdal installed"
+t_run "containerize conda-containerize new --mamba env2.yml --prefix S" "mamba works" 
+t_run "containerize conda-containerize new --mamba env.yml --prefix Gdal" "gdal installed"
 export OPATH=$PATH
 export PATH=$PWD/Gdal/bin:$PATH
 export PATH=$PWD/S/bin:$PATH
@@ -61,10 +61,10 @@ mkdir -p M MyProg/bin N
 echo 'echo HELLO' > MyProg/bin/PP
 chmod +x MyProg/bin/PP
 export PATH=$OPATH
-t_run "wrap-install MyProg/ -w bin --mask --prefix M" "Wrap install --mask"
+t_run "containerize wrap-install MyProg/ -w bin --mask --prefix M" "Wrap install --mask"
 t_run "M/bin/PP | grep -q HELLO" "wrap-install with --mask works"
 t_run "M/bin/_debug_exec touch MyProg/A 2>&1 | grep -q 'Read-only file system'" "--mask covers disk" 
-t_run "wrap-install MyProg/ -w bin --prefix N" "Wrap install nomask"
+t_run "containerize wrap-install MyProg/ -w bin --prefix N" "Wrap install nomask"
 t_run "N/bin/PP | grep -q HELLO" "wrap-install without --mask works"
 t_run "N/bin/_debug_exec touch MyProg/A" "disk installation is not masked"
 export CW_EXTRA_BIND_MOUNTS=$PWD/MyProg/img.sqfs:$PWD/MyProg:image-src=/,$PWD/S/img.sqfs:$(S/bin/_debug_exec bash -c "echo \$install_root"):image-src=/,$PWD/Gdal/img.sqfs:$(Gdal/bin/_debug_exec bash -c "echo \$install_root"):image-src=/
@@ -77,7 +77,7 @@ t_run "MyProg/bin/_debug_exec gdaladdo --help-general | grep -q 'Generic GDAL ut
 t_run 'MyProg/bin/_debug_exec S/bin/snakemake -j 1' "Nested composition works"
 t_run 'MyProg/bin/_debug_exec bash -c "echo \$SINGULARITY_BIND" | grep -q "/$(echo $PWD | cut -d "/" -f2),"' "Top mount point is not excluded"
 mkdir 2.1.0
-t_run 'wrap-container -w /whitebox_tools docker://crazyzlj/whitebox-tools:2.1.0 --prefix 2.1.0' "Wrap container from external source" 
+t_run 'containerize wrap-container -w /whitebox_tools docker://crazyzlj/whitebox-tools:2.1.0 --prefix 2.1.0' "Wrap container from external source" 
 t_run "2.1.0/bin/whitebox_tools --help" "Using sh if bash not available for wrap container"
 t_run 'Gdal/bin/_debug_exec 2.1.0/bin/whitebox_tools --help  | grep  "wrapper called from another container" -q' "Wrapped container gives error when cross called"
 t_run '! 2.1.0/bin/_debug_exec sh -c "echo \$SINGULARITY_BIND" | grep -q -- image-src' "No extra bind mounts into wrapped container"

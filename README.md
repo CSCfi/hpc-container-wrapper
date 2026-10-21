@@ -23,9 +23,8 @@ Building requires Go and make. Pick a default config from `configs/`
 make CONFIG=<config> [PREFIX=<dir>]
 ```
 
-This builds `$PREFIX/libexec/containerize` with `configs/<config>.yaml` as its
-default config, creates the commands in `$PREFIX/bin` as symlinks to it, and
-copies `etc` and the config to `$PREFIX`. `PREFIX` defaults to `./build`.
+This builds `$PREFIX/bin/containerize` with `configs/<config>.yaml` as its
+default config and copies `etc` and the config to `$PREFIX`. `PREFIX` defaults to `./build`.
 
 At runtime the binary only needs apptainer/singularity, mksquashfs and
 coreutils.
@@ -36,7 +35,8 @@ file.
 
 ## Commands
 
-All commands support `-h/--help`. Some have subcommands (`new`, `update`).
+The commands are subcommands of `containerize`, e.g.
+`containerize pip-containerize new ...`. All support `-h/--help`. Some have subcommands (`new`, `update`).
 
 - `conda-containerize`: create a new conda installation or update an existing one.
   Takes a conda environment YAML file as input.
@@ -52,7 +52,7 @@ All commands support `-h/--help`. Some have subcommands (`new`, `update`).
   image at the original path so paths inside and outside match, but this drops
   the top-level parent directory from the mounts, so it only works for software
   without external dependencies. For example
-  `wrap-install --mask -w bin /appl/soft/prog --prefix Dir` does not mount
+  `containerize wrap-install --mask -w bin /appl/soft/prog --prefix Dir` does not mount
   `/appl` at all. Read the [limitations](#limitations) before using it.
 
 ## Examples
@@ -60,7 +60,7 @@ All commands support `-h/--help`. Some have subcommands (`new`, `update`).
 Create a conda installation:
 
 ```
-conda-containerize new --prefix /path/to_install conda_env.yaml
+containerize conda-containerize new --prefix /path/to_install conda_env.yaml
 ```
 
 where `conda_env.yaml` is
@@ -75,7 +75,7 @@ dependencies:
 Add packages to it later:
 
 ```
-conda-containerize update --post-install post.sh /path/to_install
+containerize conda-containerize update --post-install post.sh /path/to_install
 ```
 
 where `post.sh` is
@@ -88,14 +88,14 @@ pip install pyyaml
 Create a venv installation from a requirements file:
 
 ```
-pip-containerize new --prefix /path/to_install req.txt
+containerize pip-containerize new --prefix /path/to_install req.txt
 ```
 
 Wrap an existing container or installation:
 
 ```
-wrap-container --wrapper-paths /opt/prog/bin --prefix /path/to_install /path/to/container
-wrap-install --wrapper-paths bin --mask --prefix /path/to/install /program/on/disk
+containerize wrap-container --wrapper-paths /opt/prog/bin --prefix /path/to_install /path/to/container
+containerize wrap-install --wrapper-paths bin --mask --prefix /path/to/install /program/on/disk
 ```
 
 ## Using an installation
@@ -201,8 +201,8 @@ install commands share one shell) and for the generated launchers.
 
 ### Program structure
 
-The commands in `bin` are symlinks to the Go binary `libexec/containerize`,
-which picks the frontend from the name it was called by.
+`bin/containerize` is a single Go binary that picks the frontend from its
+first argument.
 
 1. `src/main.go` parses the command line (argparse compatible) into a user config.
 2. `src/config.go` merges it with the default config (`configs/<config>.yaml`

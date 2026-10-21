@@ -1,5 +1,5 @@
 // Tykky: wrap installations inside an Apptainer/Singularity container.
-// One binary; the frontend is picked from the name it is called by.
+// One binary; the frontend is picked by its first argument.
 package main
 
 import (
@@ -8,6 +8,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -228,9 +229,15 @@ func requireWrapperPaths(prog string, a args) error {
 func frontend(prog string, argv []string, global map[string]any) (map[string]any, error) {
 	tool, ok := tools[prog]
 	if !ok {
-		return nil, fmt.Errorf("Unknown tool name %s, call through one of the bin/ symlinks", prog)
+		names := slices.Sorted(maps.Keys(tools))
+		usage := fmt.Sprintf("usage: containerize {%s} ...", strings.Join(names, ","))
+		if prog == "" || prog == "-h" || prog == "--help" {
+			fmt.Println(usage)
+			return nil, errHelp
+		}
+		return nil, fmt.Errorf("%s\nUnknown subcommand %s", usage, prog)
 	}
-	c, toolConf := tool(prog)
+	c, toolConf := tool("containerize " + prog)
 	if len(argv) == 0 {
 		c.help(os.Stdout)
 		return nil, errHelp
@@ -344,7 +351,10 @@ func main() {
 	if l, err := strconv.Atoi(os.Getenv("CW_LOG_LEVEL")); err == nil {
 		logLevel = l
 	}
-	prog := filepath.Base(os.Args[0])
+	prog, argv := "", []string{}
+	if len(os.Args) > 1 {
+		prog, argv = os.Args[1], os.Args[2:]
+	}
 	globalPath := os.Getenv("CW_GLOBAL_YAML")
 	if globalPath == "" {
 		exe, _ := os.Executable()
@@ -354,7 +364,7 @@ func main() {
 	if err != nil {
 		fatal("%v", err)
 	}
-	user, err := frontend(prog, os.Args[1:], global)
+	user, err := frontend(prog, argv, global)
 	var ue usageError
 	switch {
 	case errors.Is(err, errHelp):
