@@ -36,11 +36,11 @@ file.
 ## Commands
 
 The commands are subcommands of `containerize`, e.g.
-`containerize pip-containerize new ...`. All support `-h/--help`. Some have subcommands (`new`, `update`).
+`containerize pip new ...`. All support `-h/--help`. Some have subcommands (`new`, `update`).
 
-- `conda-containerize`: create a new conda installation or update an existing one.
+- `conda`: create a new conda installation or update an existing one.
   Takes a conda environment YAML file as input.
-- `pip-containerize`: create a new venv installation or update an existing one.
+- `pip`: create a new venv installation or update an existing one.
   Uses the currently available python by default. Can use uv to manage python
   and the venv, and can use a slim container image (the full host is then not
   mounted).
@@ -60,7 +60,7 @@ The commands are subcommands of `containerize`, e.g.
 Create a conda installation:
 
 ```
-containerize conda-containerize new --prefix /path/to_install conda_env.yaml
+containerize conda new --prefix /path/to_install conda_env.yaml
 ```
 
 where `conda_env.yaml` is
@@ -75,7 +75,7 @@ dependencies:
 Add packages to it later:
 
 ```
-containerize conda-containerize update --post-install post.sh /path/to_install
+containerize conda update --post-install post.sh /path/to_install
 ```
 
 where `post.sh` is
@@ -88,7 +88,7 @@ pip install pyyaml
 Create a venv installation from a requirements file:
 
 ```
-containerize pip-containerize new --prefix /path/to_install req.txt
+containerize pip new --prefix /path/to_install req.txt
 ```
 
 Wrap an existing container or installation:

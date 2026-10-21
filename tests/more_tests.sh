@@ -24,12 +24,12 @@ else
 fi
 export CW_GLOBAL_YAML=$( readlink -f my_config.yaml)
 mkdir PIP_INSTALL_DIR
-t_run "containerize pip-containerize new --system-site-packages --prefix PIP_INSTALL_DIR req.txt" "System site packages flag"
+t_run "containerize pip new --system-site-packages --prefix PIP_INSTALL_DIR req.txt" "System site packages flag"
 t_run "PIP_INSTALL_DIR/bin/python -c 'import site;import sys;sys.exit(not site.ENABLE_USER_SITE  )'" "Site packages can be enabled"
-t_run "containerize pip-containerize new --prefix PIP_INSTALL_DIR req.txt" "Basic pip installation ok"
+t_run "containerize pip new --prefix PIP_INSTALL_DIR req.txt" "Basic pip installation ok"
 t_run "PIP_INSTALL_DIR/bin/python -c 'import site;import sys;sys.exit(site.ENABLE_USER_SITE  )'" "Site packages disabled by default"
 t_run "PIP_INSTALL_DIR/bin/python -c 'import yaml'" "Required package is present"
-t_run "containerize pip-containerize update PIP_INSTALL_DIR --post post.sh" "Basic update is ok with symlink"
+t_run "containerize pip update PIP_INSTALL_DIR --post post.sh" "Basic update is ok with symlink"
 t_run "PIP_INSTALL_DIR/bin/python -c 'import requests'" "Package is present"
 t_run "[[ -L PIP_INSTALL_DIR/container.sif  ]]" "Container is still symlink"
 c1=$(readlink -f test_container.sif )
@@ -43,11 +43,11 @@ t_run "VE/bin/python -c 'import requests;print(requests.__file__)' | grep -q VE 
 mkdir subdir 
 mkdir PIP_INSTALL_DIR_2
 cd subdir
-t_run "containerize pip-containerize new --prefix ../PIP_INSTALL_DIR_2 ../req.txt" "Path resolve for input file works"
+t_run "containerize pip new --prefix ../PIP_INSTALL_DIR_2 ../req.txt" "Path resolve for input file works"
 cd ..
 cp req.txt subdir
 mkdir subdir/PIP_INSTALL_DIR_3
-t_run "containerize pip-containerize new --prefix subdir/PIP_INSTALL_DIR_3 subdir/req.txt" "Path resolve for input file works"
+t_run "containerize pip new --prefix subdir/PIP_INSTALL_DIR_3 subdir/req.txt" "Path resolve for input file works"
 
 rm -fr PIP_INSTALL_DIR
 mkdir PIP_INSTALL_DIR

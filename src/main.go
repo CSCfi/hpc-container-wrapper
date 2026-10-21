@@ -98,10 +98,10 @@ type toConf func(a args, conf map[string]any) error
 
 // tools maps each frontend name to its command line and its toConf.
 var tools = map[string]func(prog string) (*cmd, toConf){
-	"conda-containerize": condaTool,
-	"pip-containerize":   pipTool,
-	"wrap-container":     wrapContainerTool,
-	"wrap-install":       wrapInstallTool,
+	"conda":          condaTool,
+	"pip":            pipTool,
+	"wrap-container": wrapContainerTool,
+	"wrap-install":   wrapInstallTool,
 }
 
 func condaTool(prog string) (*cmd, toConf) {
@@ -284,10 +284,10 @@ func frontend(prog string, argv []string, global map[string]any) (map[string]any
 	if err := addWrapperPaths(conf, global, a["wrapper_paths"], prog == "wrap-container"); err != nil {
 		return nil, err
 	}
-	if prog == "pip-containerize" { // also over an updated installation's mode or the advanced yaml
+	if prog == "pip" { // also over an updated installation's mode or the advanced yaml
 		conf["mode"] = modeVenv
 	}
-	if strings.HasSuffix(prog, "-containerize") && a["command"] != "advanced" {
+	if (prog == "pip" || prog == "conda") && a["command"] != "advanced" {
 		conf["pipcache"] = yesno(a["nocache"] == "")
 	}
 	return conf, nil

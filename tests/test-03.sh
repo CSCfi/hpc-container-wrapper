@@ -34,8 +34,8 @@ sed "s@singularity_executable_path.*@singularity_executable_path: 'singularity'@
 export CW_GLOBAL_YAML=$( readlink -f my_config.yaml)
 
 
-t_run "containerize conda-containerize new --mamba env2.yml --prefix S" "mamba works" 
-t_run "containerize conda-containerize new --mamba env.yml --prefix Gdal" "gdal installed"
+t_run "containerize conda new --mamba env2.yml --prefix S" "mamba works" 
+t_run "containerize conda new --mamba env.yml --prefix Gdal" "gdal installed"
 export OPATH=$PATH
 export PATH=$PWD/Gdal/bin:$PATH
 export PATH=$PWD/S/bin:$PATH

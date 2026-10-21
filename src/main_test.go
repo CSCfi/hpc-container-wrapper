@@ -40,10 +40,10 @@ func TestFrontend(t *testing.T) {
 		argv []string
 		want map[string]any // subset of the result
 	}{
-		{"conda-containerize", []string{"new", "--mamba", "--uv", "-r", "req.txt", "env.yml"},
+		{"conda", []string{"new", "--mamba", "--uv", "-r", "req.txt", "env.yml"},
 			map[string]any{"mode": modeConda, "mamba": "yes", "use_uv": "yes", "update_installation": "no",
 				"installation_file_paths": []any{"env.yml", "req.txt"}, "pipcache": "yes"}},
-		{"pip-containerize", []string{"new", "--slim", "--pyver", "3.12", "--nocache", "req.txt"},
+		{"pip", []string{"new", "--slim", "--pyver", "3.12", "--nocache", "req.txt"},
 			map[string]any{"mode": modeVenv, "container_src": "docker://python:3.12-slim", "isolate": "yes", "pipcache": "no"}},
 		{"wrap-container", []string{"-w", "/opt/bin", "img.sif"},
 			map[string]any{"mode": modeWrapCont, "wrapper_paths": []any{"/opt/bin"}}},
@@ -66,10 +66,10 @@ func TestFrontend(t *testing.T) {
 		usage bool
 	}{
 		{"nope", []string{"x"}, false},
-		{"pip-containerize", []string{"new", "--slim", "--uv", "req.txt"}, true},
-		{"conda-containerize", []string{"--prefix", "P"}, true},
-		{"conda-containerize", []string{"new", "missing.yml"}, false},
-		{"conda-containerize", []string{"update", "nodir"}, false},
+		{"pip", []string{"new", "--slim", "--uv", "req.txt"}, true},
+		{"conda", []string{"--prefix", "P"}, true},
+		{"conda", []string{"new", "missing.yml"}, false},
+		{"conda", []string{"update", "nodir"}, false},
 		{"wrap-container", []string{"img.sif"}, false},
 		{"wrap-container", []string{"-w", "rel/bin", "img.sif"}, false},
 	} {
