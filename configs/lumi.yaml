@@ -86,7 +86,8 @@ force:
     conda_arch: "Linux-x86_64"
     # Upper limit for num_cpus (int); 0 or unset means no limit.
     max_num_cpus: 16
-    # Not used by the tool.
+    # Directory where pre_install and post_install commands run (string),
+    # so relative paths in them resolve against it.
     workdir: "$PWD"
     # Apptainer or Singularity command, a name in PATH or an absolute path (string).
     # A bare name such as "singularity" or "apptainer" is resolved at build time
