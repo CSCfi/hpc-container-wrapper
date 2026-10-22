@@ -1,0 +1,105 @@
+# Site configuration of containerize for local use.
+#
+# Build with `make CONFIG=local`. The installed copy in $PREFIX/configs/ is
+# read at runtime, and CW_GLOBAL_YAML can point to another file instead.
+#
+# Values are merged with the user's settings (command line and user YAML)
+# in increasing priority:
+#   defaults < prepends + user < appends < force
+#
+# Value types:
+#   bool    yes | no
+#   int     a whole number
+#   string  any text; environment variables such as $USER or $PWD are
+#           expanded when the value is read during the build, not at runtime
+#   list    a YAML list; a single value is treated as a one-element list
+# An empty value counts as unset. Unknown keys print a warning and are ignored.
+
+# Used when the user does not set the value, otherwise ignored.
+defaults:
+    # Verbosity (int): 0 errors only, 1 adds warnings, 2 adds info,
+    # 3 or more adds debug messages and timestamps.
+    # The CW_LOG_LEVEL environment variable overrides this.
+    log_level: 3
+    # Name of the conda environment or venv created inside the installation (string).
+    env_name: "env1"
+    # Miniforge version to install (string): "latest" or a release
+    # version such as 24.11.3-0.
+    conda_version: "latest"
+    # Directory on the host where the installation is written (string).
+    # The --prefix option sets this.
+    installation_prefix: "$PWD"
+    # Absolute path inside the container where the installation is mounted (string).
+    # Use a path that does not exist on the host or in the base container.
+    installation_path: "/LOCAL_TYKKY"
+    # Append a random suffix to installation_path (bool) so that several
+    # installations can be active at the same time.
+    composable: false
+    # Base container image (string):
+    #   auto            pick a docker image matching the host OS from /etc/os-release
+    #   <path>          an existing local .sif image
+    #   <uri>           anything `singularity pull` accepts, e.g. docker://ubuntu:24.04
+    container_src: "auto"
+    # File name of the container image inside the installation (string).
+    container_image: "container.sif"
+    # File name of the squashfs image holding the installation (string).
+    sqfs_image: "img.sqfs"
+    # Path inside the container where existing sources are mounted when
+    # wrapping an installation or updating one (string).
+    source_mount_point: "/TMP_MP"
+    # Host directories to mount into the container when isolate is yes (list).
+    # Directories that do not exist are skipped.
+    mount_points:
+        - "/tmp"
+        - "/home"
+        - "/run"
+    # Host directories to leave out when isolate is no (list, optional).
+    # excluded_mount_points:
+    #     - "/scratch"
+    # Mount only mount_points (yes) or every top-level host directory except /dev (no) (bool).
+    isolate: no
+    # Generate wrapper scripts in <installation_prefix>/bin (bool).
+    create_wrappers: yes
+    # Wrap every file in the wrapped bin directories (yes) or only
+    # executables and symlinks (no) (bool).
+    wrap_all: no
+    # Number of processors mksquashfs uses (int), capped by max_num_cpus.
+    num_cpus: 4
+    # Extra options passed to mksquashfs, separated by spaces (string).
+    sqfs_options: "-noappend"
+    # Add lib directories next to wrapped bin directories to LD_LIBRARY_PATH
+    # in the wrappers (bool).
+    add_ld: yes
+
+# Overrides any value the user sets.
+force:
+    # Directory where a random cw-XXXXXX build directory is created (string).
+    # Must be writable. The CW_BUILD_TMPDIR environment variable overrides this.
+    build_tmpdir_base: "$PWD"
+    # Miniforge installer architecture (string): "auto" uses Linux-<uname -m>,
+    # or set it explicitly, e.g. Linux-x86_64 or Linux-aarch64.
+    conda_arch: "Linux-x86_64"
+    # Upper limit for num_cpus (int); 0 or unset means no limit.
+    max_num_cpus: 4
+    # Directory where pre_install and post_install commands run (string),
+    # so relative paths in them resolve against it.
+    workdir: "$PWD"
+    # Apptainer or Singularity command, a name in PATH or an absolute path (string).
+    # A bare name such as "singularity" or "apptainer" is resolved at build time
+    # and can break installations if the user later has another one in PATH,
+    # e.g. installed via conda on a system without user namespaces.
+    singularity_executable_path: "singularity"
+
+# Prepended to the user's value: lists are concatenated, strings are joined with a space.
+# Example:
+#   prepends:
+#       mount_points:
+#           - "/appl"
+prepends:
+
+# Appended to the user's value (or used as is if the user sets none):
+# lists are concatenated, strings are joined with a space.
+# Example:
+#   appends:
+#       sqfs_options: "-mem 10000M"
+appends:
