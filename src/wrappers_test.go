@@ -34,7 +34,7 @@ func fakeConda(t *testing.T, dir string) *build {
 	os.WriteFile(dir+"/envs.sh", []byte("export FOO=\"bar\"\n"), 0o644)
 	c := conf{"mode": "conda", "sqfs_image": "img.sqfs", "container_image": "container.sif",
 		"installation_path": inst, "isolate": false, "wrap_all": false, "add_ld": true, "env_name": "env1",
-		"excluded_mount_points": "/appl", "extra_envs": []any{map[string]any{"file": dir + "/envs.sh"},
+		"excluded_mount_points": "/appl", "excluded_wrappers": []any{"ls"}, "extra_envs": []any{map[string]any{"file": dir + "/envs.sh"},
 			map[string]any{"name": "Q", "value": `say "hi" \o/`, "type": "set"}}}
 	return &build{c: c, dir: dir + "/B", deploy: dir + "/B/_deploy", sing: dir + "/sing", env: os.Environ()}
 }
@@ -47,10 +47,13 @@ func TestWrappersConda(t *testing.T) {
 		t.Fatal(err)
 	}
 	read := func(p string) string { s, _ := os.ReadFile(b.deploy + "/" + p); return string(s) }
-	for _, p := range []string{"python", "pip", "ls", "_debug_exec", "_debug_shell"} {
+	for _, p := range []string{"python", "pip", "_debug_exec", "_debug_shell"} {
 		if !exists(b.deploy + "/bin/" + p) {
 			t.Errorf("missing wrapper %s", p)
 		}
+	}
+	if exists(b.deploy + "/bin/ls") {
+		t.Error("excluded command wrapped")
 	}
 	if exists(b.deploy + "/bin/data.txt") {
 		t.Error("non-executable file wrapped")

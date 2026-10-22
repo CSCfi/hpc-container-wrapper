@@ -67,6 +67,18 @@ defaults:
     # Wrap every file in the wrapped bin directories (yes) or only
     # executables and symlinks (no) (bool).
     wrap_all: no
+    # Commands that get no wrapper when a whole directory is wrapped (list),
+    # so the host's own core tools stay in front in PATH. A single file
+    # given to -w is still wrapped. Set it empty to wrap everything.
+    excluded_wrappers: [
+        ls, cat, cp, mv, rm, mkdir, rmdir, ln, chmod, chown, chgrp, touch,
+        head, tail, cut, sort, uniq, wc, tr, tee, echo, printf, env, pwd,
+        basename, dirname, readlink, realpath, mktemp, date, sleep, "true",
+        "false", test, "[", id, whoami, uname, stat, du, df, dd, "yes", seq,
+        nproc, timeout, nohup, install, md5sum, sha256sum,
+        sh, bash, dash, grep, egrep, fgrep, sed, awk, gawk, find, xargs, tar,
+        gzip, gunzip, zcat, bzip2, xz, less, more, which, ps, kill, hostname,
+        su, sudo, login, mount, umount]
     # Number of processors mksquashfs uses (int), capped by max_num_cpus.
     num_cpus: 8
     # Extra options passed to mksquashfs, separated by spaces (string).

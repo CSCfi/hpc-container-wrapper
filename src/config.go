@@ -145,7 +145,7 @@ var settings = map[string]string{
 	"log_level": "int", "max_num_cpus": "int", "num_cpus": "int",
 	"build_tmpdir": "", "build_tmpdir_base": "", "conda_arch": "", "conda_version": "",
 	"container_image": "", "container_src": "", "env_file": "", "env_name": "",
-	"excluded_mount_points": "", "extra_envs": "", "installation_file_paths": "",
+	"excluded_mount_points": "", "excluded_wrappers": "", "extra_envs": "", "installation_file_paths": "",
 	"installation_path": "", "installation_prefix": "", "mode": "", "mount_points": "",
 	"post_install": "", "pre_install": "", "pyver": "", "requirements_file": "",
 	"singularity_executable_path": "", "source_mount_point": "", "sqfs_image": "",

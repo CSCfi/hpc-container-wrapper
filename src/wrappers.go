@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -177,6 +178,7 @@ fi
 	if r := b.envRoot(); r != "" {
 		wrapperPaths = append(wrapperPaths, r+"bin/")
 	}
+	skip := c.list("excluded_wrappers")
 	for _, wp := range wrapperPaths {
 		cws, conda := defaultCws, false
 		info(2, "Generating wrappers for %s", wp)
@@ -186,11 +188,12 @@ fi
 		} else {
 			ls, _ := b.probe("ls", "-F", wp)
 			for _, t := range strings.Fields(ls) {
-				kind := t[len(t)-1]
-				if c.yes("wrap_all") && kind != '/' {
-					targets = append(targets, strings.TrimRight(t, "*@|="))
-				} else if kind == '*' || kind == '@' {
-					targets = append(targets, t[:len(t)-1])
+				kind, name := t[len(t)-1], t
+				if strings.ContainsRune("*@|=/", rune(kind)) {
+					name = t[:len(t)-1]
+				}
+				if (kind == '*' || kind == '@' || c.yes("wrap_all") && kind != '/') && !slices.Contains(skip, name) {
+					targets = append(targets, name)
 				}
 			}
 			if c.yes("add_ld") {
