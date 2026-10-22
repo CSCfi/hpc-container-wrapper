@@ -422,7 +422,6 @@ func (b *build) post() error {
 		}
 		os.RemoveAll(p + "/_bin")
 		os.RemoveAll(p + "/share")
-		os.Remove(p + "/common.sh") // left by older versions, which sourced it from the wrappers
 	}
 	ents, _ := os.ReadDir(b.deploy)
 	args := []string{"-rd"}

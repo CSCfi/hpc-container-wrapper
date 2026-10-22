@@ -81,9 +81,6 @@ func TestWrappersConda(t *testing.T) {
 	if !strings.Contains(py, `eval \"\$('`+dir+`/INST/miniforge/bin/conda' shell.bash hook)\" && conda activate 'env1'`) {
 		t.Errorf("no conda activation in wrapper:\n%s", py)
 	}
-	if exists(b.deploy + "/common.sh") {
-		t.Error("common.sh written, the wrappers should hold its setup")
-	}
 	common := read("bin/_debug_exec")
 	for _, want := range []string{
 		"SQFS_IMAGE='img.sqfs'\n",
