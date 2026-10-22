@@ -70,7 +70,7 @@ func TestWrappersConda(t *testing.T) {
 		t.Errorf("_bin link %s", l)
 	}
 	py := read("bin/python")
-	if !strings.Contains(py, `eval \"\$('`+dir+`/INST/miniforge/bin/conda' shell.bash hook )\"  && conda activate 'env1'`) {
+	if !strings.Contains(py, `eval \"\$('`+dir+`/INST/miniforge/bin/conda' shell.bash hook)\" && conda activate 'env1'`) {
 		t.Errorf("no conda activation in wrapper:\n%s", py)
 	}
 	common := read("common.sh")
@@ -78,7 +78,7 @@ func TestWrappersConda(t *testing.T) {
 		"SQFS_IMAGE='img.sqfs'\n",
 		"export env_root='" + dir + "/INST/miniforge/envs/env1/'\n",
 		"SINGULARITYENV_LD_LIBRARY_PATH='" + dir + "/INST/miniforge/envs/env1/lib:" + dir + "/INST/miniforge/envs/env1/lib64'\":",
-		"_excludes=( '/appl'  )",
+		"_excludes=('/appl')",
 		"export FOO=\"bar\"\n",
 	} {
 		if !strings.Contains(common, want) {
