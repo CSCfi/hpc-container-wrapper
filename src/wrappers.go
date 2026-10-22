@@ -25,7 +25,7 @@ _venvd=${SOURCE%/*}
 # resolve $SOURCE until the file is no longer a symlink
 while [ -h "$SOURCE" ]; do
     DIR="$(cd -P "${SOURCE%/*}" >/dev/null 2>&1 && pwd)"
-    SOURCE="$(readlink "$SOURCE")"
+    SOURCE="$(/usr/bin/readlink "$SOURCE")"
     # a relative symlink is resolved relative to the directory holding it
     [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
@@ -287,7 +287,7 @@ done
 		pr(`# a venv made on top of the wrapped container should keep finding its own python
 test -e "$_venvd/../pyvenv.cfg"
 _v_in_use=$?
-[[ $_v_in_use -eq 0 ]] && _py=$(readlink -f "$_venvd/python") && [[ "${_py%%/*}" == "$(cd -P "$_C_DIR/bin" && pwd)" ]] && SINGULARITYENV_PATH="$(cd -P "$_venvd" >/dev/null && pwd):$SINGULARITYENV_PATH"
+[[ $_v_in_use -eq 0 ]] && _py=$(/usr/bin/readlink -f "$_venvd/python") && [[ "${_py%%/*}" == "$(cd -P "$_C_DIR/bin" && pwd)" ]] && SINGULARITYENV_PATH="$(cd -P "$_venvd" >/dev/null && pwd):$SINGULARITYENV_PATH"
 `)
 	} else {
 		pr("export install_root=%s\n", shq(ipath))
