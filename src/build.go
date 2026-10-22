@@ -400,7 +400,7 @@ func imageBind(src, dst string) string { return src + ":" + dst + ":image-src=/"
 func statPerm(p string) os.FileMode { st, _ := os.Stat(p); return st.Mode().Perm() }
 
 // rootDirs lists the top level host directories, except device ones.
-// common.sh in wrappers.go does the same with ls and awk when a launcher starts.
+// common.sh in wrappers.go does the same with a glob when a launcher starts.
 func rootDirs() []string {
 	ents, _ := os.ReadDir("/")
 	var r []string

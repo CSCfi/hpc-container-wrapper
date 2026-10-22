@@ -66,6 +66,14 @@ func TestWrappersConda(t *testing.T) {
 	if out, err := run.Output(); err != nil || string(out) != "say \"hi\" \\o/\n" {
 		t.Errorf("_debug_exec: %v %q", err, out)
 	}
+	run = exec.Command(b.deploy+"/bin/_debug_exec", "sh", "-c", `echo "$SINGULARITYENV_PATH|$SINGULARITY_BIND"`)
+	run.Env = append(os.Environ(), "SINGULARITY_NAME=", "PATH=:/a::/b:",
+		"CW_EXTRA_BIND_MOUNTS=/x:"+dir+"/INST:image-src=/,/y")
+	out, _ := run.Output()
+	if p, bind, _ := strings.Cut(strings.TrimSpace(string(out)), "|"); p != "/a:/b" ||
+		!strings.HasSuffix(bind, ",,/y") || !strings.Contains(bind, ","+b.deploy+"/_bin:"+b.deploy+"/bin,") {
+		t.Errorf("_debug_exec env: %q", out)
+	}
 	if l, _ := os.Readlink(b.deploy + "/_bin/python"); l != dir+"/INST/miniforge/envs/env1/bin//python" {
 		t.Errorf("_bin link %s", l)
 	}
