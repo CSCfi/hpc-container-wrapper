@@ -70,7 +70,7 @@ __tykky_get_env_path() {
             ;;
     esac
 
-    if [ -f "$candidate/common.sh" ] && [ -d "$candidate/bin" ]; then
+    if [ -d "$candidate/_bin" ] && [ -d "$candidate/bin" ]; then
         printf '%s\n' "$candidate"
     else
         printf 'ERROR: %s is not a valid tykky environment\n' "$1" >&2

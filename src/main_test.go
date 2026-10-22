@@ -177,7 +177,6 @@ func TestConstruct(t *testing.T) {
 	}
 	os.MkdirAll("fake/bin", 0o755)
 	os.MkdirAll("fake/_bin", 0o755)
-	os.WriteFile("fake/common.sh", nil, 0o644)
 	t.Setenv("PATH", dir+"/fake/bin:"+os.Getenv("PATH"))
 	if _, err := construct("g.yaml", nil, user); err == nil || !strings.Contains(err.Error(), "Remove") {
 		t.Errorf("active installation: got %v", err)

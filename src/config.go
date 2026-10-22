@@ -243,7 +243,7 @@ func construct(globalPath string, global, user map[string]any) (conf, error) {
 func installationsInPath() []string {
 	var r []string
 	for _, p := range filepath.SplitList(os.Getenv("PATH")) {
-		if exists(p+"/../bin") && exists(p+"/../_bin") && exists(p+"/../common.sh") {
+		if exists(p+"/../bin") && exists(p+"/../_bin") {
 			r = append(r, p)
 		}
 	}

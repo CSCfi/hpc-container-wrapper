@@ -12,7 +12,7 @@ __tykky_completions() {
             for __tykky_path in ${TYKKY_PATH:-~/.tykky}; do
                 IFS=$oldIFS
                 for __candidate in $__tykky_path/*; do
-                    if [[ -d "$__candidate" && -f "$__candidate/common.sh" && -d "$__candidate/bin" ]]; then
+                    if [[ -d "$__candidate" && -d "$__candidate/_bin" && -d "$__candidate/bin" ]]; then
                         __tykky_env_list+="$(basename "$__candidate") "
                     fi
                 done
@@ -23,7 +23,7 @@ __tykky_completions() {
             COMPREPLY=( $(compgen -d -- "${COMP_WORDS[2]}") )
             local i
             for i in "${!COMPREPLY[@]}"; do
-                if [[ -d "${COMPREPLY[$i]}" && ! -f "${COMPREPLY[$i]}/common.sh" && ! -d "${COMPREPLY[$i]}/bin" ]]; then
+                if [[ -d "${COMPREPLY[$i]}" && ! -d "${COMPREPLY[$i]}/_bin" && ! -d "${COMPREPLY[$i]}/bin" ]]; then
                     COMPREPLY[$i]="${COMPREPLY[$i]}/"
                 fi
             done

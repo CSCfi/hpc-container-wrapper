@@ -400,7 +400,7 @@ func imageBind(src, dst string) string { return src + ":" + dst + ":image-src=/"
 func statPerm(p string) os.FileMode { st, _ := os.Stat(p); return st.Mode().Perm() }
 
 // rootDirs lists the top level host directories, except device ones.
-// common.sh in wrappers.go does the same with a glob when a launcher starts.
+// The wrappers from wrappers.go do the same with a glob when a launcher starts.
 func rootDirs() []string {
 	ents, _ := os.ReadDir("/")
 	var r []string
@@ -422,6 +422,7 @@ func (b *build) post() error {
 		}
 		os.RemoveAll(p + "/_bin")
 		os.RemoveAll(p + "/share")
+		os.Remove(p + "/common.sh") // left by older versions, which sourced it from the wrappers
 	}
 	ents, _ := os.ReadDir(b.deploy)
 	args := []string{"-rd"}

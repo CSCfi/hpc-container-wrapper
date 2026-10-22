@@ -55,7 +55,7 @@ func TestWrappersConda(t *testing.T) {
 	if exists(b.deploy + "/bin/data.txt") {
 		t.Error("non-executable file wrapped")
 	}
-	for _, p := range []string{"common.sh", "bin/python", "bin/_debug_exec"} {
+	for _, p := range []string{"bin/python", "bin/_debug_exec"} {
 		if out, err := exec.Command("bash", "-n", b.deploy+"/"+p).CombinedOutput(); err != nil {
 			t.Errorf("%s: %s", p, out)
 		}
@@ -81,7 +81,10 @@ func TestWrappersConda(t *testing.T) {
 	if !strings.Contains(py, `eval \"\$('`+dir+`/INST/miniforge/bin/conda' shell.bash hook)\" && conda activate 'env1'`) {
 		t.Errorf("no conda activation in wrapper:\n%s", py)
 	}
-	common := read("common.sh")
+	if exists(b.deploy + "/common.sh") {
+		t.Error("common.sh written, the wrappers should hold its setup")
+	}
+	common := read("bin/_debug_exec")
 	for _, want := range []string{
 		"SQFS_IMAGE='img.sqfs'\n",
 		"export env_root='" + dir + "/INST/miniforge/envs/env1/'\n",
@@ -90,7 +93,7 @@ func TestWrappersConda(t *testing.T) {
 		"export FOO=\"bar\"\n",
 	} {
 		if !strings.Contains(common, want) {
-			t.Errorf("common.sh lacks %q", want)
+			t.Errorf("_debug_exec lacks %q", want)
 		}
 	}
 }

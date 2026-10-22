@@ -13,7 +13,7 @@ func TestTykkyShellFunctions(t *testing.T) {
 	dir := t.TempDir()
 	for _, env := range []string{"tp/e", "cwd/e", "cwd/x y"} {
 		os.MkdirAll(filepath.Join(dir, env, "bin"), 0o755)
-		os.WriteFile(filepath.Join(dir, env, "common.sh"), nil, 0o644)
+		os.MkdirAll(filepath.Join(dir, env, "_bin"), 0o755)
 	}
 	for _, tc := range []struct{ name, cmds, want string }{
 		{"by path with a space, later PATH changes kept",
