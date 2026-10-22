@@ -25,7 +25,7 @@ defaults:
     env_name: "env1"
     # Miniforge version to install (string): "latest" or a release
     # version such as 24.11.3-0.
-    conda_version: "latest"
+    conda_version: "26.7.2-1"
     # Directory on the host where the installation is written (string).
     # The --prefix option sets this.
     installation_prefix: "$PWD"
