@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
 func TestParse(t *testing.T) {
@@ -180,5 +182,22 @@ func TestConstruct(t *testing.T) {
 	t.Setenv("PATH", dir+"/fake/bin:"+os.Getenv("PATH"))
 	if _, err := construct("g.yaml", nil, user); err == nil || !strings.Contains(err.Error(), "Remove") {
 		t.Errorf("active installation: got %v", err)
+	}
+}
+
+func TestConfYAML(t *testing.T) {
+	y, err := confYAML(map[string]any{"isolate": "yes", "mamba": false, "num_cpus": "4", "mode": "conda",
+		"extra_envs": []any{map[string]any{"file": "e.sh"}}, "pyver": "3"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, w := range []string{"isolate: true\n", "mamba: false\n", "num_cpus: 4\n", `mode: "conda"`, `file: "e.sh"`, `pyver: "3"`} {
+		if !strings.Contains(string(y), w) {
+			t.Errorf("missing %q in\n%s", w, y)
+		}
+	}
+	var back map[string]any
+	if err := yaml.Unmarshal(y, &back); err != nil || str(back["isolate"]) != "yes" || str(back["pyver"]) != "3" {
+		t.Errorf("round trip: %v %v", back, err)
 	}
 }

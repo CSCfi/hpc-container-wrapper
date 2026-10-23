@@ -448,7 +448,7 @@ func (b *build) post() error {
 	delete(saved, "build_tmpdir")
 	delete(saved, "log_level")
 	delete(saved, "update_installation")
-	y, err := yaml.Marshal(saved)
+	y, err := confYAML(saved)
 	if err != nil {
 		return err
 	}
@@ -460,4 +460,38 @@ func (b *build) post() error {
 		warn("Failed to remove %s\n\tContinuing anyway", b.dir)
 	}
 	return nil
+}
+
+// confYAML writes bool and int settings as such and double-quotes every string value.
+func confYAML(m map[string]any) ([]byte, error) {
+	for k, v := range m {
+		switch settings[k] {
+		case "bool":
+			if s := str(v); s == "yes" || s == "no" {
+				m[k] = s == "yes"
+			}
+		case "int":
+			if n, err := strconv.Atoi(str(v)); err == nil {
+				m[k] = n
+			}
+		}
+	}
+	var n yaml.Node
+	if err := n.Encode(m); err != nil {
+		return nil, err
+	}
+	var quote func(*yaml.Node)
+	quote = func(n *yaml.Node) {
+		for i, c := range n.Content {
+			if n.Kind == yaml.MappingNode && i%2 == 0 {
+				continue // keys stay plain
+			}
+			if c.Kind == yaml.ScalarNode && c.Tag == "!!str" {
+				c.Style = yaml.DoubleQuotedStyle
+			}
+			quote(c)
+		}
+	}
+	quote(&n)
+	return yaml.Marshal(&n)
 }
