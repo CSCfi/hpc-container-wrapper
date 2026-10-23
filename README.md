@@ -40,6 +40,8 @@ file.
 
 The commands are subcommands of `containerize`, e.g.
 `containerize pip new ...`. All support `-h/--help`. Some have subcommands (`new`, `update`).
+The legacy commands `conda-containerize`, `pip-containerize`, `wrap-container`
+and `wrap-install` still work and call the matching subcommand.
 
 - `conda`: create a new conda installation or update an existing one.
   Takes a conda environment YAML file as input.
