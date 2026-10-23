@@ -78,7 +78,7 @@ defaults:
     # Number of processors mksquashfs uses (int), capped by max_num_cpus.
     num_cpus: 4
     # Extra options passed to mksquashfs, separated by spaces (string).
-    sqfs_options: "-noappend"
+    sqfs_options: "-noappend -comp zstd"
     # Add lib directories next to wrapped bin directories to LD_LIBRARY_PATH
     # in the wrappers (bool).
     add_ld: yes
