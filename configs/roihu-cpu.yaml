@@ -78,7 +78,7 @@ defaults:
         "nproc", "timeout", "nohup", "install", "md5sum", "sha256sum",
         "sh", "bash", "dash", "grep", "egrep", "fgrep", "sed", "awk", "gawk", "find", "xargs", "tar",
         "gzip", "gunzip", "zcat", "bzip2", "xz", "less", "more", "which", "ps", "kill", "hostname",
-        "su", "sudo", "login", "mount", "umount"]
+        "su", "sudo", "login", "mount", "umount", "singularity", "apptainer"]
     # Number of processors mksquashfs uses (int), capped by max_num_cpus.
     num_cpus: 8
     # Extra options passed to mksquashfs, separated by spaces (string).
