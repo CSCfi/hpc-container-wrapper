@@ -42,6 +42,12 @@ func (b *build) installScript(inst string) (string, []string, error) {
 	uv := c.yes("use_uv")
 	post := `cd "$CW_WORKDIR"` + "\n" + say(1, "Running user supplied commands") + `source "$CW_INSTALLATION_PATH/_post_install.sh"` + "\n"
 	pip := "_cw_step pip install"
+	reqs := func() string {
+		if !c.has("requirements_file") {
+			return ""
+		}
+		return say(1, "Installing requirements file") + pip + ` -r "$(basename "$CW_REQUIREMENTS_FILE")"` + "\n"
+	}
 	switch c.get("mode") {
 	case modeConda:
 		if !exists(inst + "/miniforge") {
@@ -87,10 +93,7 @@ func (b *build) installScript(inst string) (string, []string, error) {
 		if uv {
 			pip = "_cw_step uv pip install"
 		}
-		if c.has("requirements_file") {
-			s += say(1, "Installing requirements file") + pip + ` -r "$(basename "$CW_REQUIREMENTS_FILE")"` + "\n"
-		}
-		s += post + `_cw_bin="$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin"
+		s += reqs() + post + `_cw_bin="$CW_INSTALLATION_PATH/miniforge/envs/$CW_ENV_NAME/bin"
 if [[ -d $_cw_bin ]]; then
     { echo 'echo "'; conda list; echo '"'; } > "$_cw_bin/list-packages"
     chmod +x "$_cw_bin/list-packages"
@@ -129,10 +132,7 @@ else :
 		if uv {
 			pip = "_cw_step uv pip install --link-mode=copy --compile-bytecode"
 		}
-		if c.has("requirements_file") {
-			s += say(1, "Installing requirements file") + pip + ` -r "$(basename "$CW_REQUIREMENTS_FILE")"` + "\n"
-		}
-		s += post
+		s += reqs() + post
 	case modeWrapDisk:
 		s += `cp -a "$CW_SOURCE_MOUNT_POINT/." "$CW_INSTALLATION_PATH"` + "\n" + preInstall + post
 	}

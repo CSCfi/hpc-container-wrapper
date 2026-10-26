@@ -271,14 +271,10 @@ func frontend(prog string, argv []string, global map[string]any) (map[string]any
 		maps.Copy(conf, y)
 	}
 	if a["command"] != "advanced" {
-		if a["environ"] != "" {
-			conf["extra_envs"] = []any{map[string]any{"file": a["environ"]}}
-		}
-		if a["post_install"] != "" {
-			conf["post_install"] = []any{map[string]any{"file": a["post_install"]}}
-		}
-		if a["pre_install"] != "" {
-			conf["pre_install"] = []any{map[string]any{"file": a["pre_install"]}}
+		for arg, k := range map[string]string{"environ": "extra_envs", "post_install": "post_install", "pre_install": "pre_install"} {
+			if a[arg] != "" {
+				conf[k] = []any{map[string]any{"file": a[arg]}}
+			}
 		}
 	}
 	if err := addWrapperPaths(conf, global, a["wrapper_paths"], prog == "wrap-container"); err != nil {

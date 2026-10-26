@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"io"
@@ -21,6 +22,14 @@ type opt struct {
 func (o opt) key() string     { return strings.ReplaceAll(strings.TrimLeft(o.long, "-"), "-", "_") }
 func (o opt) metavar() string { return strings.ToUpper(o.key()) }
 
+// withMetavar appends the value placeholder to option name n, as in "--prefix PREFIX".
+func (o opt) withMetavar(n string) string {
+	if !o.flag {
+		n += " " + o.metavar()
+	}
+	return n
+}
+
 type cmd struct {
 	prog, desc string
 	opts       []opt
@@ -35,14 +44,7 @@ func (c *cmd) name() string { return c.prog[strings.LastIndex(c.prog, " ")+1:] }
 func (c *cmd) usageLine() string {
 	s := "usage: " + c.prog + " [-h]"
 	for _, o := range c.opts {
-		n := o.long
-		if o.short != "" {
-			n = o.short
-		}
-		if !o.flag {
-			n += " " + o.metavar()
-		}
-		s += " [" + n + "]"
+		s += " [" + o.withMetavar(cmp.Or(o.short, o.long)) + "]"
 	}
 	if len(c.subs) > 0 {
 		s += " {" + c.subNames() + "} ..."
@@ -93,10 +95,7 @@ func (c *cmd) help(w io.Writer) {
 		if o.short != "" {
 			n = o.short + ", " + n
 		}
-		if !o.flag {
-			n += " " + o.metavar()
-		}
-		row(w, n, o.help)
+		row(w, o.withMetavar(n), o.help)
 	}
 }
 

@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"maps"
 	"math/rand/v2"
 	"os"
 	"os/exec"
@@ -111,12 +112,8 @@ func concat(a, b any) any {
 func merge(shared, user map[string]any) conf {
 	sec := func(k string) map[string]any { m, _ := shared[k].(map[string]any); return m }
 	full := conf{}
-	for k, v := range sec("defaults") {
-		full[k] = v
-	}
-	for k, v := range sec("prepends") {
-		full[k] = v
-	}
+	maps.Copy(full, sec("defaults"))
+	maps.Copy(full, sec("prepends"))
 	for k, v := range user {
 		if _, ok := sec("prepends")[k]; ok {
 			full[k] = concat(full[k], v)
@@ -131,9 +128,7 @@ func merge(shared, user map[string]any) conf {
 			full[k] = v
 		}
 	}
-	for k, v := range sec("force") {
-		full[k] = v
-	}
+	maps.Copy(full, sec("force"))
 	return full
 }
 
