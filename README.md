@@ -225,7 +225,8 @@ first argument.
       Updating an installation copies all of it, which can take a while.
     - Compress the installation into a squashfs image.
     - Copy the result to the installation directory and save the build inputs and config to `<install_dir>/share`.
-4. `src/wrappers.go` generates the launchers, and is where most of the tricks live. The launchers:
+4. `src/wrappers.go` generates the launchers, and is where most of the tricks live. Each wrapper in `bin` is a stub that runs
+   `bin/_containerize_exec <command> <args>`, which holds the shared logic. `_containerize_exec`:
     - Define common variables such as the image and container names.
     - Define runtime bind mounts.
     - Unset singularity variables when not actually inside a container (e.g. `srun` called from a container leaves some `SINGULARITY*` variables set).
@@ -237,7 +238,7 @@ first argument.
 ### Launcher example
 
 ```
-/usr/bin/singularity --silent exec -B $DIR/../$SQFS_IMAGE:$INSTALLATION_PATH:image-src=/ $DIR/../$CONTAINER_IMAGE  bash -c "eval \"\$(/CSC_CONTAINER/miniforge/bin/conda shell.bash hook )\"  && conda activate env1 &>/dev/null &&  exec -a $_O_SOURCE $DIR/python $( test $# -eq 0 || printf " %q" "$@" )"
+/usr/bin/singularity --silent exec -B $DIR/../$SQFS_IMAGE:$INSTALLATION_PATH:image-src=/ $DIR/../$CONTAINER_IMAGE  bash -c "eval \"\$(/CSC_CONTAINER/miniforge/bin/conda shell.bash hook )\"  && conda activate env1 &>/dev/null &&  exec -a $_O_SOURCE $DIR/$_cmd $( test $# -eq 0 || printf " %q" "$@" )"
 ```
 
 - `exec -a` makes virtual environments work. Without it the chain

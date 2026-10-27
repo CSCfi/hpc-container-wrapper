@@ -47,7 +47,7 @@ func TestWrappersConda(t *testing.T) {
 		t.Fatal(err)
 	}
 	read := func(p string) string { s, _ := os.ReadFile(b.deploy + "/" + p); return string(s) }
-	for _, p := range []string{"python", "pip", "_debug_exec", "_debug_shell"} {
+	for _, p := range []string{"python", "pip", "_containerize_exec", "_debug_exec", "_debug_shell"} {
 		if !exists(b.deploy + "/bin/" + p) {
 			t.Errorf("missing wrapper %s", p)
 		}
@@ -58,7 +58,7 @@ func TestWrappersConda(t *testing.T) {
 	if exists(b.deploy + "/bin/data.txt") {
 		t.Error("non-executable file wrapped")
 	}
-	for _, p := range []string{"bin/python", "bin/_debug_exec"} {
+	for _, p := range []string{"bin/python", "bin/_containerize_exec", "bin/_debug_exec"} {
 		if out, err := exec.Command("bash", "-n", b.deploy+"/"+p).CombinedOutput(); err != nil {
 			t.Errorf("%s: %s", p, out)
 		}
@@ -80,9 +80,23 @@ func TestWrappersConda(t *testing.T) {
 	if l, _ := os.Readlink(b.deploy + "/_bin/python"); l != dir+"/INST/miniforge/envs/env1/bin//python" {
 		t.Errorf("_bin link %s", l)
 	}
-	py := read("bin/python")
-	if !strings.Contains(py, `eval \"\$('`+dir+`/INST/miniforge/bin/conda' shell.bash hook)\" && conda activate 'env1'`) {
+	py := read("bin/_containerize_exec")
+	if !strings.Contains(py, `'pip'|'python')`) || !strings.Contains(py, `eval \"\$('`+dir+`/INST/miniforge/bin/conda' shell.bash hook)\" && conda activate 'env1'`) {
 		t.Errorf("no conda activation in wrapper:\n%s", py)
+	}
+	// the wrapper hands the path it was called by to _containerize_exec, also through a venv symlink
+	os.Mkdir(dir+"/VE", 0o755)
+	os.Symlink(b.deploy+"/bin/python", dir+"/VE/python")
+	os.WriteFile(b.sing, []byte("#!/bin/sh\necho \"$@\"\n"), 0o755)
+	run = exec.Command(dir+"/VE/python", "a b", "c")
+	run.Env = append(os.Environ(), "SINGULARITY_NAME=", "CW_NO_CONDA_ACTIVATE=1")
+	out, err := run.CombinedOutput()
+	q := func(s string) string { return strings.ReplaceAll(s, " ", `\ `) }
+	if want := "exec -a " + q(dir+"/VE/python") + " " + q(b.deploy+"/bin") + `/python  a\ b c`; err != nil || !strings.Contains(string(out), want) {
+		t.Errorf("python wrapper: %v %q, want %q", err, out, want)
+	}
+	if err := exec.Command(b.deploy+"/bin/_containerize_exec", "ls").Run(); err == nil {
+		t.Error("_containerize_exec ran a command that is not wrapped")
 	}
 	common := read("bin/_debug_exec")
 	for _, want := range []string{
