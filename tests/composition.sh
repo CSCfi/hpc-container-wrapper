@@ -3,7 +3,7 @@ SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/setup.sh
 # Test are run in current directory
 
-t_workdir T_TEST_DIR
+t_workdir TEST_DIR_COMPOSITION
 mkdir Gdal
 mkdir S
 echo 'channels:

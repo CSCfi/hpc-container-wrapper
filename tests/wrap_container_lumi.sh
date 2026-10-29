@@ -4,7 +4,7 @@ SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/setup.sh
 # Test are run in current directory
 
-t_workdir L_TEST_DIR
+t_workdir TEST_DIR_LUMI
 echo "pyyaml" > req.txt
 echo "pip install requests" > post.sh
 

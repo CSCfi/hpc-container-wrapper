@@ -1,3 +1,5 @@
+deps.html
+
 # Created by make
 /build/
 
@@ -6,8 +8,5 @@
 cw-*/
 
 # Created by the scripts in tests/
-/tests/TEST_DIR/
-/tests/T_TEST_DIR/
-/tests/L_TEST_DIR/
-/tests/TYKKY_V_TEST/
+/tests/TEST_DIR_*/
 *.log
