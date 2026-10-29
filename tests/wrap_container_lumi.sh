@@ -1,8 +1,9 @@
-#!/bin/bash -u
+#!/bin/bash
 # Tests specific to the LUMI supercomputer
 # shellcheck source-path=SCRIPTDIR
 # Single-quoted $ and the ref/real arrays are used by sh -c or t_run's eval
 # shellcheck disable=SC2016,SC2034
+set -u
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # shellcheck source=setup.sh
 source "$SCRIPT_DIR/setup.sh"

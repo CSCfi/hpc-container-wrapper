@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash
 M_SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 # Environment
@@ -49,7 +49,7 @@ _failures=0
 trap 'exit $(( _failures > 0 ))' EXIT
 
 t_workdir(){
-    rm -fr "$1" && mkdir "$1" && cd "$1"
+    rm -fr "$1" && mkdir "$1" && cd "$1" || exit 1
 }
 
 t_run(){

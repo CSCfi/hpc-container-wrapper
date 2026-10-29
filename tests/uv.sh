@@ -1,4 +1,5 @@
-#!/bin/bash -u
+#!/bin/bash
+set -u
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # shellcheck source=setup.sh
 source "$SCRIPT_DIR/setup.sh"
