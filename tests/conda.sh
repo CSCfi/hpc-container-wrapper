@@ -16,6 +16,7 @@ channels:
   - conda-forge
 dependencies:
   - numpy
+  - pip
 " > conda_base.yml
 
 echo "
@@ -72,7 +73,7 @@ print(cluster.job_script())
 mkdir CONDA_INSTALL_DIR
 
 # Error reporting and logging
-t_run "containerize conda new conda_broken.yaml --prefix CONDA_INSTALL_DIR | tee conda_inst.out | grep 'ResolvePackageNotFound\|PackagesNotFoundError'" "Conda errors are propagated to the user"
+t_run "containerize conda new conda_broken.yaml --prefix CONDA_INSTALL_DIR | tee conda_inst.out | grep 'ResolvePackageNotFound\|PackagesNotFound'" "Conda errors are propagated to the user"
 t_run "grep ERROR conda_inst.out" "Failed run contains error"
 t_run "grep INFO conda_inst.out"  "Info is present"
 t_run "test -z \"\$(grep ' DEBUG ' conda_inst.out )\" "  "Default no debug message"
