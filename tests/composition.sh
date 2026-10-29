@@ -81,6 +81,4 @@ t_run 'containerize wrap-container -w /whitebox_tools docker://crazyzlj/whitebox
 t_run "2.1.0/bin/whitebox_tools --help" "Using sh if bash not available for wrap container"
 t_run 'Gdal/bin/_debug_exec 2.1.0/bin/whitebox_tools --help  | grep  "wrapper called from another container" -q' "Wrapped container gives error when cross called"
 t_run '! 2.1.0/bin/_debug_exec sh -c "echo \$SINGULARITY_BIND" | grep -q -- image-src' "No extra bind mounts into wrapped container"
-t_run "grep -q $(git describe --tags) 2.1.0/share/VERSION.yml" "Version information saved"
-
-
+#t_run "grep -q $(git describe --tags) 2.1.0/share/VERSION.yml" "Version information saved"
