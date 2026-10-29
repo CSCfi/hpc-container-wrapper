@@ -1,15 +1,18 @@
 #!/bin/bash -u
-
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source $SCRIPT_DIR/setup.sh
 
 t_workdir TEST_DIR_SLIM
+
+# Fixtures
 echo "distro" > requirements.txt
 echo "pip install lxml" > extra.txt
 
+# Tests
 t_run "containerize pip new --slim --prefix tykky_test requirements.txt" "Creating slim container works"
 t_run "tykky_test/bin/python -c 'import distro; print(distro.id())' | grep 'debian'" "Slim container is actually using debian"
 
 t_run "containerize pip update --post-install extra.txt tykky_test" "Updating a slim container works"
+
 t_run "containerize pip new --slim --pyver 3.13.2-slim-bullseye --prefix tykky_test2 requirements.txt" "--pyver flag does not break"
 t_run "tykky_test2/bin/python --version | grep 'Python 3.13.2'" "Correct python version used"
