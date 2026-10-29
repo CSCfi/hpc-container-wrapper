@@ -15,6 +15,21 @@ t_workdir TEST_DIR_LUMI
 echo "pyyaml" > req.txt
 echo "pip install requests" > post.sh
 
+# Base container, resolved by containerize from container_src: auto
+mkdir BASE
+t_run "containerize pip new --prefix BASE req.txt" "Base container can be fetched"
+cp BASE/container.sif test_container.sif
+
+# Config using the base container as a shared container
+sed "s@container_src.*\$@container_src: $PWD/test_container.sif@g" "$CONFIG_YAML" > my_config.yaml
+if grep -q share_container my_config.yaml; then
+    sed -i 's/share_container.*$/share_container: yes/g' my_config.yaml
+else
+    sed -i '/container_image.*$/a \ \ \ \ share_container: yes' my_config.yaml
+fi
+CW_GLOBAL_YAML=$(readlink -f my_config.yaml)
+export CW_GLOBAL_YAML
+
 # Site packages and shared container symlink
 mkdir PIP_INSTALL_DIR
 t_run "containerize pip new --system-site-packages --prefix PIP_INSTALL_DIR req.txt" "System site packages flag"
