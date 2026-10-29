@@ -1,6 +1,7 @@
 #!/bin/bash -u
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-source $SCRIPT_DIR/setup.sh
+# shellcheck source=setup.sh
+source "$SCRIPT_DIR/setup.sh"
 
 t_workdir TEST_DIR_SLIM
 

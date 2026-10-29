@@ -2,7 +2,8 @@
 M_SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 # Environment
-export PATH="$(realpath $M_SCRIPT_DIR/../build/bin):$PATH"
+PATH="$(realpath "$M_SCRIPT_DIR/../build/bin"):$PATH"
+export PATH
 rm -f test.log
 
 if [[ ! ${USE_COLOR+defined} ]]; then

@@ -1,6 +1,7 @@
 #!/bin/bash -u
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-source $SCRIPT_DIR/setup.sh
+# shellcheck source=setup.sh
+source "$SCRIPT_DIR/setup.sh"
 # Tests are run in current directory
 
 t_workdir TEST_DIR_CONDA
@@ -111,6 +112,7 @@ rm -fr CONDA_INSTALL_DIR && mkdir CONDA_INSTALL_DIR
 t_run "containerize conda new --mamba dask_env.yaml --prefix CONDA_INSTALL_DIR &>/dev/null" "yaml ending is also supported"
 OLD_PATH=$PATH
 PATH="CONDA_INSTALL_DIR/bin:$PATH"
+# shellcheck disable=SC2016
 t_run '[[ "$(which python)" == "$(_debug_exec which python)" ]]' "Which returns same in and out"
 
 str1="$(python -c "print('Hello world --a g -b \\\ ')" )"
@@ -121,5 +123,5 @@ t_run "python -c \"import os; os.environ['CONDA_DEFAULT_ENV']\"" "Conda is activ
 g=$(python -c "import dask;print(dask.__file__)" 2>/dev/null )
 t_run "[[ -n '$g' ]]" "Package found in container"
 t_run "[[ ! -f '$g' ]]" "Package not on host"
-t_run "python dask_test.py | grep \"$(realpath -s $PWD/CONDA_INSTALL_DIR/bin/python )\"" "Dask uses correct python path"
+t_run "python dask_test.py | grep \"$(realpath -s "$PWD"/CONDA_INSTALL_DIR/bin/python )\"" "Dask uses correct python path"
 PATH=$OLD_PATH

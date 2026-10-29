@@ -1,6 +1,7 @@
 #!/bin/bash -u
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-source $SCRIPT_DIR/setup.sh
+# shellcheck source=setup.sh
+source "$SCRIPT_DIR/setup.sh"
 # Tests are run in current directory
 
 t_workdir TEST_DIR_COMPOSITION
@@ -36,7 +37,8 @@ rule ghelp:
 ' > Snakefile
 
 sed "s@singularity_executable_path.*@singularity_executable_path: 'singularity'@g" "$CONFIG_YAML" > my_config.yaml
-export CW_GLOBAL_YAML=$( readlink -f my_config.yaml)
+CW_GLOBAL_YAML=$( readlink -f my_config.yaml)
+export CW_GLOBAL_YAML
 
 # Two conda envs, Gdal and S
 t_run "containerize conda new --mamba env2.yml --prefix S" "mamba works"
@@ -46,13 +48,15 @@ t_run "containerize conda new --mamba env.yml --prefix Gdal" "gdal installed"
 export OPATH=$PATH
 export PATH=$PWD/Gdal/bin:$PATH
 export PATH=$PWD/S/bin:$PATH
-export CW_EXTRA_BIND_MOUNTS=$PWD/Gdal/img.sqfs:$(Gdal/bin/_debug_exec bash -c "echo \$install_root"):image-src=/
+CW_EXTRA_BIND_MOUNTS=$PWD/Gdal/img.sqfs:$(Gdal/bin/_debug_exec bash -c "echo \$install_root"):image-src=/
+export CW_EXTRA_BIND_MOUNTS
 t_run "gdaladdo --help-general | grep -q 'Generic GDAL utility command options'" "Filter out own bind mount"
 t_run "snakemake -j1" "Composition works"
 t_run "Gdal/bin/_debug_exec Gdal/_bin/gdaladdo --help-general | grep -q 'Generic GDAL utility command options'" "_bin directory works"
 
 rm out.txt
-export CW_EXTRA_BIND_MOUNTS=$CW_EXTRA_BIND_MOUNTS:$PWD/S/img.sqfs:$(S/bin/_debug_exec bash -c "echo \$install_root"):image-src=/
+CW_EXTRA_BIND_MOUNTS=$CW_EXTRA_BIND_MOUNTS:$PWD/S/img.sqfs:$(S/bin/_debug_exec bash -c "echo \$install_root"):image-src=/
+export CW_EXTRA_BIND_MOUNTS
 t_run 'Gdal/bin/_debug_exec snakemake --help |  grep "usage: snakemake" -q' "Composition works other way around"
 
 # Conda activation
@@ -84,7 +88,8 @@ t_run "N/bin/PP | grep -q HELLO" "wrap-install without --mask works"
 t_run "N/bin/_debug_exec touch MyProg/A" "disk installation is not masked"
 
 # Composition with a wrapped install
-export CW_EXTRA_BIND_MOUNTS=$PWD/MyProg/img.sqfs:$PWD/MyProg:image-src=/,$PWD/S/img.sqfs:$(S/bin/_debug_exec bash -c "echo \$install_root"):image-src=/,$PWD/Gdal/img.sqfs:$(Gdal/bin/_debug_exec bash -c "echo \$install_root"):image-src=/
+CW_EXTRA_BIND_MOUNTS=$PWD/MyProg/img.sqfs:$PWD/MyProg:image-src=/,$PWD/S/img.sqfs:$(S/bin/_debug_exec bash -c "echo \$install_root"):image-src=/,$PWD/Gdal/img.sqfs:$(Gdal/bin/_debug_exec bash -c "echo \$install_root"):image-src=/
+export CW_EXTRA_BIND_MOUNTS
 rm -rf MyProg
 mv M MyProg
 t_run "S/bin/_debug_exec MyProg/bin/PP | grep -q HELLO" "Composition works into wrapped"
@@ -93,6 +98,7 @@ t_run 'MyProg/bin/_debug_exec S/bin/snakemake --help |  grep "usage: snakemake" 
 export PATH=$PWD/Gdal/bin:$PATH
 t_run "MyProg/bin/_debug_exec gdaladdo --help-general | grep -q 'Generic GDAL utility command options'" "Multi composition works"
 t_run 'MyProg/bin/_debug_exec S/bin/snakemake -j 1' "Nested composition works"
+# shellcheck disable=SC2016
 t_run 'MyProg/bin/_debug_exec bash -c "echo \$SINGULARITY_BIND" | grep -q "/$(echo $PWD | cut -d "/" -f2),"' "Top mount point is not excluded"
 
 # wrap-container from an external image
@@ -100,5 +106,6 @@ mkdir 2.1.0
 t_run 'containerize wrap-container -w /whitebox_tools docker://crazyzlj/whitebox-tools:2.1.0 --prefix 2.1.0' "Wrap container from external source"
 t_run "2.1.0/bin/whitebox_tools --help" "Using sh if bash not available for wrap container"
 t_run 'Gdal/bin/_debug_exec 2.1.0/bin/whitebox_tools --help  | grep  "wrapper called from another container" -q' "Wrapped container gives error when cross called"
+# shellcheck disable=SC2016
 t_run '! 2.1.0/bin/_debug_exec sh -c "echo \$SINGULARITY_BIND" | grep -q -- image-src' "No extra bind mounts into wrapped container"
 #t_run "grep -q $(git describe --tags) 2.1.0/share/VERSION.yml" "Version information saved"
