@@ -124,18 +124,27 @@ permissions on the `.sqfs` image itself.
 
 ## Environment variables
 
-Set these before running a command.
+### Build
+
+Read by `containerize` when creating or updating an installation.
 
 | Variable | Effect |
 |---|---|
 | `CW_GLOBAL_YAML` | Path to the config file to use. |
 | `CW_ENABLE_CONDARC` | Use the user's condarc during installation. |
 | `CW_DEBUG_KEEP_FILES` | Keep build files when the build fails. |
+| `CW_BUILD_TMPDIR` | Overrides `build_tmpdir_base` from the config. |
+| `CW_LOG_LEVEL` | Verbosity: `0` errors, `1` warnings, `2` general (default), `>2` debug. |
+
+### Runtime
+
+Read by the generated launchers when running a program from an installation.
+
+| Variable | Effect |
+|---|---|
 | `CW_FORCE_CONDA_ACTIVATE` | Activate conda even when called through a virtual environment. |
 | `CW_NO_CONDA_ACTIVATE` | Never activate conda in the launchers. |
-| `CW_BUILD_TMPDIR` | Overrides `build_tmpdir_base` from the config. |
 | `CW_EXTRA_BIND_MOUNTS` | Extra bind mounts for the launchers (not used for isolated installations). |
-| `CW_LOG_LEVEL` | Verbosity: `0` errors, `1` warnings, `2` general (default), `>2` debug. |
 
 ## Troubleshooting
 
