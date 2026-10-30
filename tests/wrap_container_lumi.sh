@@ -33,9 +33,9 @@ export CW_GLOBAL_YAML
 # Site packages and shared container symlink
 mkdir PIP_INSTALL_DIR
 t_run "containerize pip new --system-site-packages --prefix PIP_INSTALL_DIR req.txt" "System site packages flag"
-t_run "PIP_INSTALL_DIR/bin/python -c 'import site;import sys;sys.exit(not site.ENABLE_USER_SITE  )'" "Site packages can be enabled"
+t_run "env -u PYTHONNOUSERSITE PIP_INSTALL_DIR/bin/python -c 'import site;import sys;sys.exit(not site.ENABLE_USER_SITE  )'" "Site packages can be enabled"
 t_run "containerize pip new --prefix PIP_INSTALL_DIR req.txt" "Basic pip installation ok"
-t_run "PIP_INSTALL_DIR/bin/python -c 'import site;import sys;sys.exit(site.ENABLE_USER_SITE  )'" "Site packages disabled by default"
+t_run "env -u PYTHONNOUSERSITE PIP_INSTALL_DIR/bin/python -c 'import site;import sys;sys.exit(site.ENABLE_USER_SITE  )'" "Site packages disabled by default"
 t_run "containerize pip update PIP_INSTALL_DIR --post post.sh" "Basic update is ok with symlink"
 t_run "[[ -L PIP_INSTALL_DIR/container.sif  ]]" "Container is still symlink"
 c1=$(readlink -f test_container.sif )
