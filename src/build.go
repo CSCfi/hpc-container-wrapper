@@ -366,12 +366,8 @@ func (b *build) install() error {
 	}
 	// files in the image are world readable so others can update the installation;
 	// limit access with the permissions of the image file itself
-	if _, ok := os.LookupEnv("CW_NO_FIX_PERM"); !ok {
-		info(2, "Fixing permissions within squashfs image")
-		if err := b.cmd(nil, "chmod", "-R", "ugo+rwX", inst).Run(); err != nil {
-			return err
-		}
-	} else if err := b.cmd(nil, "chmod", "-R", "o+r", inst).Run(); err != nil {
+	info(2, "Fixing permissions within squashfs image")
+	if err := b.cmd(nil, "chmod", "-R", "ugo+rwX", inst).Run(); err != nil {
 		return err
 	}
 

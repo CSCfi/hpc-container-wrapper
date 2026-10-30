@@ -120,7 +120,7 @@ If `TYKKY_PATH` is set to a colon-separated list of directories,
 **Permissions:** installation files get their permissions from your umask and
 the target directory. Files inside the squashfs image are made world readable
 so that other users can update the installation; restrict access by setting
-permissions on the `.sqfs` image itself. Set `CW_NO_FIX_PERM` to disable this.
+permissions on the `.sqfs` image itself.
 
 ## Environment variables
 
@@ -134,7 +134,6 @@ Set these before running a command.
 | `CW_FORCE_CONDA_ACTIVATE` | Activate conda even when called through a virtual environment. |
 | `CW_NO_CONDA_ACTIVATE` | Never activate conda in the launchers. |
 | `CW_BUILD_TMPDIR` | Overrides `build_tmpdir_base` from the config. |
-| `CW_NO_FIX_PERM` | Don't make files inside the squashfs image world readable. |
 | `CW_EXTRA_BIND_MOUNTS` | Extra bind mounts for the launchers (not used for isolated installations). |
 | `CW_LOG_LEVEL` | Verbosity: `0` errors, `1` warnings, `2` general (default), `>2` debug. |
 
