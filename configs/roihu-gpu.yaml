@@ -5,7 +5,7 @@
 #
 # Values are merged with the user's settings (command line and user YAML)
 # in increasing priority:
-#   defaults < prepends + user < appends < force
+#   defaults < prepends + user < appends < force < CW_LOG_LEVEL, CW_BUILD_TMPDIR
 #
 # Value types:
 #   bool    yes | no

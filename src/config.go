@@ -172,6 +172,12 @@ func (c conf) check() error {
 // construct merges the configs and creates the build directory.
 func construct(globalPath string, global, user map[string]any) (conf, error) {
 	c := merge(global, user)
+	// environment overrides beat even force
+	for env, k := range map[string]string{"CW_LOG_LEVEL": "log_level", "CW_BUILD_TMPDIR": "build_tmpdir_base"} {
+		if v := os.Getenv(env); v != "" {
+			c[k] = v
+		}
+	}
 	if err := c.check(); err != nil {
 		return nil, err
 	}
@@ -204,9 +210,6 @@ func construct(globalPath string, global, user map[string]any) (conf, error) {
 		}
 		c["conda_arch"] = "Linux-" + strings.TrimSpace(string(m))
 	}
-	if d := os.Getenv("CW_BUILD_TMPDIR"); d != "" {
-		c["build_tmpdir_base"] = d
-	}
 	if active := installationsInPath(); len(active) > 0 {
 		if c.no("update_installation") {
 			return nil, fmt.Errorf("Remove %v from PATH before running the tool, otherwise the tool might not work correctly", active)
@@ -228,8 +231,7 @@ func construct(globalPath string, global, user map[string]any) (conf, error) {
 		return nil, err
 	}
 	c["build_tmpdir"] = dir
-	// main already applied CW_LOG_LEVEL, which wins over the config
-	if l, err := strconv.Atoi(c.get("log_level")); err == nil && os.Getenv("CW_LOG_LEVEL") == "" {
+	if l, err := strconv.Atoi(c.get("log_level")); err == nil {
 		logLevel = l
 	}
 	return c, nil

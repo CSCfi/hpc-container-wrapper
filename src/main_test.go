@@ -168,7 +168,7 @@ func TestConstruct(t *testing.T) {
 		dir + "/A/B/C":    "",
 	} {
 		t.Setenv("CW_BUILD_TMPDIR", env)
-		c, err := construct("g.yaml", nil, user)
+		c, err := construct("g.yaml", map[string]any{"force": map[string]any{"build_tmpdir_base": "/proc/not_a_dir"}}, user)
 		if want == "" {
 			if err != nil || !strings.HasPrefix(str(c["build_tmpdir"]), env+"/cw-") {
 				t.Errorf("%s: got %v, %v", env, c["build_tmpdir"], err)
