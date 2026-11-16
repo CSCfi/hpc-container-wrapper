@@ -1,6 +1,6 @@
 #!/bin/bash
 set -u
-SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 # shellcheck source=setup.sh
 source "$SCRIPT_DIR/setup.sh"
 # Tests are run in current directory
@@ -8,10 +8,10 @@ source "$SCRIPT_DIR/setup.sh"
 t_workdir TEST_DIR_UV
 
 # Fixtures
-echo "pyyaml" > req.txt
-echo "pyyyaml" > req_typo.txt
-echo "uv pip install requests" > post.sh
-sed 's/container_image.*$/container_image: My_very_cool_name.sif/g' "$CONFIG_YAML" > my_config.yaml
+echo "pyyaml" >req.txt
+echo "pyyyaml" >req_typo.txt
+echo "uv pip install requests" >post.sh
+sed 's/container_image.*$/container_image: My_very_cool_name.sif/g' "$CONFIG_YAML" >my_config.yaml
 export CW_GLOBAL_YAML=my_config.yaml
 
 # Tests

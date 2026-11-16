@@ -1,6 +1,6 @@
 #!/bin/bash
 set -u
-SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 # shellcheck source=setup.sh
 source "$SCRIPT_DIR/setup.sh"
 # Tests are run in current directory
@@ -17,7 +17,7 @@ echo 'channels:
 dependencies:
   - python>=3.10
   - snakemake
-' > env2.yml
+' >env2.yml
 
 echo '
 channels:
@@ -25,7 +25,7 @@ channels:
 dependencies:
   - python>=3.10
   - gdal
-' > env.yml
+' >env.yml
 
 echo 'rule all:
 	input: "out.txt"
@@ -35,10 +35,10 @@ rule ghelp:
         """
         gdaladdo --help-general | grep -q "Generic GDAL utility command options" > out.txt
         """
-' > Snakefile
+' >Snakefile
 
-sed "s@singularity_executable_path.*@singularity_executable_path: 'singularity'@g" "$CONFIG_YAML" > my_config.yaml
-CW_GLOBAL_YAML=$( readlink -f my_config.yaml)
+sed "s@singularity_executable_path.*@singularity_executable_path: 'singularity'@g" "$CONFIG_YAML" >my_config.yaml
+CW_GLOBAL_YAML=$(readlink -f my_config.yaml)
 export CW_GLOBAL_YAML
 
 # Two conda envs, Gdal and S
@@ -76,7 +76,7 @@ unset CW_EXTRA_BIND_MOUNTS
 
 # wrap-install with and without --mask
 mkdir -p M MyProg/bin N
-echo 'echo HELLO' > MyProg/bin/PP
+echo 'echo HELLO' >MyProg/bin/PP
 chmod +x MyProg/bin/PP
 export PATH=$OPATH
 

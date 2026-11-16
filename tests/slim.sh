@@ -1,14 +1,14 @@
 #!/bin/bash
 set -u
-SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 # shellcheck source=setup.sh
 source "$SCRIPT_DIR/setup.sh"
 
 t_workdir TEST_DIR_SLIM
 
 # Fixtures
-echo "distro" > requirements.txt
-echo "pip install lxml" > extra.txt
+echo "distro" >requirements.txt
+echo "pip install lxml" >extra.txt
 
 # Tests
 t_run "containerize pip new --slim --prefix tykky_test requirements.txt" "Creating slim container works"

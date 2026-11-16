@@ -1,5 +1,5 @@
 #!/bin/bash
-M_SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+M_SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 # Environment
 PATH="$(realpath "$M_SCRIPT_DIR/../build/bin"):$PATH"
@@ -32,15 +32,15 @@ else
 fi
 
 # Output
-_msg(){
+_msg() {
     echo -en "[ - ] $1\r"
 }
 
-_ok(){
+_ok() {
     echo -e "[ ${_GREEN}OK${_NC} ] $1"
 }
 
-_fail(){
+_fail() {
     echo -e "[ ${_RED}FAILED${_NC} ]  $1"
 }
 
@@ -48,11 +48,11 @@ _fail(){
 _failures=0
 trap 'exit $(( _failures > 0 ))' EXIT
 
-t_workdir(){
+t_workdir() {
     rm -fr "$1" && mkdir "$1" && cd "$1" || exit 1
 }
 
-t_run(){
+t_run() {
     _msg "$2"
     if eval "$1" &>>test.log; then
         _ok "$2"

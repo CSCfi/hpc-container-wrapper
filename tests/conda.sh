@@ -1,6 +1,6 @@
 #!/bin/bash
 set -u
-SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 # shellcheck source=setup.sh
 source "$SCRIPT_DIR/setup.sh"
 # Tests are run in current directory
@@ -8,10 +8,10 @@ source "$SCRIPT_DIR/setup.sh"
 t_workdir TEST_DIR_CONDA
 
 # Fixtures
-echo "pyyaml" > req.txt
-echo "pip install requests" > post.sh
-echo "conda config --show-sources;conda config --show pkgs_dirs;exit 1" > pre.sh
-echo "GARBAGE" > conda_env.txt
+echo "pyyaml" >req.txt
+echo "pip install requests" >post.sh
+echo "conda config --show-sources;conda config --show pkgs_dirs;exit 1" >pre.sh
+echo "GARBAGE" >conda_env.txt
 
 echo "
 channels:
@@ -19,7 +19,7 @@ channels:
 dependencies:
   - numpy
   - pip
-" > conda_base.yml
+" >conda_base.yml
 
 echo "
 channels:
@@ -27,14 +27,14 @@ channels:
 dependencies:
    - dask
    - dask-jobqueue
-" > dask_env.yaml
+" >dask_env.yaml
 
 echo "
 channels:
   - conda-forge
 dependencies:
   - this_is_not_a_package
-" > conda_broken.yaml
+" >conda_broken.yaml
 
 echo "
 channels:
@@ -44,7 +44,7 @@ dependencies:
   - uv
   - pip:
     - requests
-" > hybrid.yaml
+" >hybrid.yaml
 
 echo '
 import dask
@@ -70,15 +70,15 @@ cluster = dask_jobqueue.SLURMCluster(
     )
 print(cluster.job_script())
 
-' > dask_test.py
+' >dask_test.py
 
 mkdir CONDA_INSTALL_DIR
 
 # Error reporting and logging
 t_run "containerize conda new conda_broken.yaml --prefix CONDA_INSTALL_DIR | tee conda_inst.out | grep 'ResolvePackageNotFound\|PackagesNotFound'" "Conda errors are propagated to the user"
 t_run "grep ERROR conda_inst.out" "Failed run contains error"
-t_run "grep INFO conda_inst.out"  "Info is present"
-t_run "test -z \"\$(grep ' DEBUG ' conda_inst.out )\" "  "Default no debug message"
+t_run "grep INFO conda_inst.out" "Info is present"
+t_run "test -z \"\$(grep ' DEBUG ' conda_inst.out )\" " "Default no debug message"
 
 # User .condarc
 unset CW_ENABLE_CONDARC
@@ -94,7 +94,7 @@ t_run "CONDA_INSTALL_DIR/bin/python -m venv VE " "Virtual environment creation w
 t_run "VE/bin/python -c 'import sys;sys.exit( sys.prefix == sys.base_prefix )'" "Virtual environment is correct"
 t_run "VE/bin/pip install requests" "pip works for a venv"
 t_run "VE/bin/python -c 'import requests;print(requests.__file__)' | grep -q VE " "Package is installed correctly to venv"
-CONDA_INSTALL_DIR/bin/_debug_exec bash -c "\$(readlink -f \$env_root)/../../bin/conda list --explicit" > explicit_env.txt
+CONDA_INSTALL_DIR/bin/_debug_exec bash -c "\$(readlink -f \$env_root)/../../bin/conda list --explicit" >explicit_env.txt
 t_run "CONDA_INSTALL_DIR/bin/python -c 'import yaml'" "Package added by -r is there"
 t_run "containerize conda update CONDA_INSTALL_DIR --post-install post.sh" "Update works"
 t_run "CONDA_INSTALL_DIR/bin/python -c 'import requests'" "Package added by update is there"
@@ -116,13 +116,13 @@ PATH="CONDA_INSTALL_DIR/bin:$PATH"
 # shellcheck disable=SC2016
 t_run '[[ "$(which python)" == "$(_debug_exec which python)" ]]' "Which returns same in and out"
 
-str1="$(python -c "print('Hello world --a g -b \\\ ')" )"
+str1="$(python -c "print('Hello world --a g -b \\\ ')")"
 str2="Hello world --a g -b \ "
 t_run "\[ \"$str1\" = \"$str2\" \]" "Wrapper passed quotes correctly"
 t_run "python -c \"import os; os.environ['CONDA_DEFAULT_ENV']\"" "Conda is activated"
 
-g=$(python -c "import dask;print(dask.__file__)" 2>/dev/null )
+g=$(python -c "import dask;print(dask.__file__)" 2>/dev/null)
 t_run "[[ -n '$g' ]]" "Package found in container"
 t_run "[[ ! -f '$g' ]]" "Package not on host"
-t_run "python dask_test.py | grep \"$(realpath -s "$PWD"/CONDA_INSTALL_DIR/bin/python )\"" "Dask uses correct python path"
+t_run "python dask_test.py | grep \"$(realpath -s "$PWD"/CONDA_INSTALL_DIR/bin/python)\"" "Dask uses correct python path"
 PATH=$OLD_PATH
