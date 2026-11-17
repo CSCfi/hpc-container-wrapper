@@ -27,7 +27,7 @@ _O_SOURCE=$SOURCE
 [[ $SOURCE == */* ]] || SOURCE=./$SOURCE
 _venvd=${SOURCE%/*}
 # resolve $SOURCE until the file is no longer a symlink
-while [ -h "$SOURCE" ]; do
+while [[ -L $SOURCE ]]; do
     DIR="$(cd -P "${SOURCE%/*}" >/dev/null 2>&1 && pwd)"
     SOURCE="$(command -p readlink "$SOURCE")"
     # a relative symlink is resolved relative to the directory holding it
@@ -122,7 +122,7 @@ export SINGULARITYENV_LD_LIBRARY_PATH="$SINGULARITYENV_LD_LIBRARY_PATH:$LD_LIBRA
 		if c.has("excluded_mount_points") {
 			pr(`_excludes=(%s)
 for mp in "${_excludes[@]}"; do
-    _DIRS=("${_DIRS[@]/$mp}")
+    _DIRS=("${_DIRS[@]/$mp/}")
 done
 `, shqAll(c.list("excluded_mount_points")))
 		}
@@ -131,12 +131,16 @@ done
 # already inside a container: check that it is ours
 if [[ $(</proc/self/mountinfo) =~ (singularity|apptainer)/mnt/session ]]; then
     export _CW_IN_CONTAINER=Yes
-    if [[ %[1]s == "yes" && ! "$SINGULARITY_CONTAINER" -ef "$_C_DIR/$CONTAINER_IMAGE" ]]; then
-        echo "[ ERROR ] wrapper called from another container. Is $SINGULARITY_CONTAINER, should be $_C_DIR/$CONTAINER_IMAGE "
+`)
+	if isolate {
+		pr(`    if [[ ! "$SINGULARITY_CONTAINER" -ef "$_C_DIR/$CONTAINER_IMAGE" ]]; then
+        echo "[ ERROR ] wrapper called from another container. Is $SINGULARITY_CONTAINER, should be $_C_DIR/$CONTAINER_IMAGE " >&2
         exit 1
     fi
-    if [[ ! -e %[2]s ]]; then
-        echo "[ ERROR ] Installation for $_C_DIR/ is not mounted. Wrapper called from another container?"
+`)
+	}
+	pr(`    if [[ ! -e %[2]s ]]; then
+        echo "[ ERROR ] Installation for $_C_DIR/ is not mounted. Wrapper called from another container?" >&2
         exit 1
     fi
 else
@@ -145,19 +149,15 @@ else
 fi
 
 # settings left over from another container must not leak into ours
-if [[ ! ${_CW_IN_CONTAINER+defined} && ${SINGULARITY_NAME+defined} ]]; then
+if [[ -z ${_CW_IN_CONTAINER+defined} && -n ${SINGULARITY_NAME+defined} ]]; then
     unset {SINGULARITY,APPTAINER}_{NAME,COMMAND,ENVIRONMENT,BIND,CONTAINER}
 fi
 
 # bind the directories that exist, $TMPDIR as /tmp and the wrapper directories
 for d in "${_DIRS[@]}"; do
-    if [[ -z "$SINGULARITY_BIND" ]]; then
-        test -d "$d" && export SINGULARITY_BIND="$d"
-    else
-        test -d "$d" && export SINGULARITY_BIND="$SINGULARITY_BIND,$d"
-    fi
+    [[ -d $d ]] && SINGULARITY_BIND+=${SINGULARITY_BIND:+,}$d
 done
-if [[ "${TMPDIR+defined}" ]]; then
+if [[ -n ${TMPDIR+defined} ]]; then
     SINGULARITY_BIND="$SINGULARITY_BIND,$TMPDIR,$TMPDIR:/tmp"
 fi
 SINGULARITY_BIND="$SINGULARITY_BIND,$(cd -P "$_C_DIR/_bin" && pwd):$(cd -P "$_C_DIR/bin" && pwd)"
@@ -168,11 +168,13 @@ SINGULARITY_BIND="$SINGULARITY_BIND,$(cd -P "$_C_DIR/_bin" && pwd):$(cd -P "$_C_
 	} else {
 		pr("export SINGULARITY_BIND=$SINGULARITY_BIND,%s\n", imageBind("$DIR/../$SQFS_IMAGE", "$INSTALLATION_PATH"))
 	}
-	pr(`# user supplied extra binds, except image mounts onto the installation path
-if [[ ${CW_EXTRA_BIND_MOUNTS+defined} && %s == "no" ]]; then
+	if !isolate {
+		pr(`# user supplied extra binds, except image mounts onto the installation path
+if [[ -n ${CW_EXTRA_BIND_MOUNTS+defined} ]]; then
     export SINGULARITY_BIND=$SINGULARITY_BIND,${CW_EXTRA_BIND_MOUNTS//*([^,]):"$INSTALLATION_PATH":image-src=\//}
 fi
-`, shq(yesno(isolate)))
+`)
+	}
 
 	info(1, "Creating wrappers")
 	defaultCws := `bash -c "`
@@ -257,22 +259,20 @@ fi
 			continue
 		}
 		slices.Sort(groups[cws])
-		fmt.Fprintf(&arms, `%[8]s)
-    # activate the conda environment, unless running from a venv made on top of it
-    test -e "$_venvd/../pyvenv.cfg"
-    _v_in_use=$?
-    if [[ ( $_v_in_use -eq 0 && ! ${CW_FORCE_CONDA_ACTIVATE+defined} ) || ${CW_NO_CONDA_ACTIVATE+defined} ]]; then
-        %[1]s %[2]sexec -a %[6]s %[7]s/%[3]s %[4]s
-    else
-        _venv_act=":"
-        test 0 -eq $_v_in_use && _venv_act="source $(printf %%q "$_venvd")/activate"
-        %[1]s %[5]s$_venv_act && exec -a %[6]s %[7]s/%[3]s %[4]s
-    fi
-    ;;
-`, runCmd, defaultCws, qCmd, cwe, cws, qSrc, qDir, strings.Join(groups[cws], "|"))
+		fmt.Fprintf(&arms, `    %[8]s)
+        # activate the conda environment, unless running from a venv made on top of it
+        if [[ -e $_venvd/../pyvenv.cfg && -z ${CW_FORCE_CONDA_ACTIVATE+defined} || -n ${CW_NO_CONDA_ACTIVATE+defined} ]]; then
+            %[1]s %[2]sexec -a %[6]s %[7]s/%[3]s %[4]s
+        else
+            _venv_act=":"
+            [[ -e $_venvd/../pyvenv.cfg ]] && _venv_act="source $(printf %%q "$_venvd")/activate"
+            %[1]s %[5]s$_venv_act && exec -a %[6]s %[7]s/%[3]s %[4]s
+        fi
+        ;;
+`, runCmd, defaultCws, qCmd, cwe, cws, qSrc, qDir, strings.Join(groups[cws], " | "))
 	}
 	if _, ok := groups[defaultCws]; ok {
-		fmt.Fprintf(&arms, "*)\n    %s %sexec -a %s %s/%s %s\n    ;;\n", runCmd, defaultCws, qSrc, qDir, qCmd, cwe)
+		fmt.Fprintf(&arms, "    *)\n        %s %sexec -a %s %s/%s %s\n        ;;\n", runCmd, defaultCws, qSrc, qDir, qCmd, cwe)
 	}
 	bodies["_containerize_exec"] = fmt.Sprintf(`
 # the first argument is the wrapped command to run, the rest are its arguments
@@ -284,7 +284,7 @@ if [[ -z $_cmd || $_cmd == */* || ! -L "$DIR/../_bin/$_cmd" ]]; then
 fi
 export PATH="$OLD_PATH"
 # inside the container run it directly, otherwise start the container for it
-if [[ ${_CW_IN_CONTAINER+defined} ]]; then
+if [[ -n ${_CW_IN_CONTAINER+defined} ]]; then
     exec -a "$_O_SOURCE" "$DIR/../_bin/$_cmd" "$@"
 fi
 case $_cmd in
@@ -309,9 +309,7 @@ done
 `)
 	if wrapcont {
 		pr(`# a venv made on top of the wrapped container should keep finding its own python
-test -e "$_venvd/../pyvenv.cfg"
-_v_in_use=$?
-[[ $_v_in_use -eq 0 ]] && _py=$(command -p readlink -f "$_venvd/python") && [[ "${_py%%/*}" == "$(cd -P "$_C_DIR/bin" && pwd)" ]] && SINGULARITYENV_PATH="$(cd -P "$_venvd" >/dev/null && pwd):$SINGULARITYENV_PATH"
+[[ -e $_venvd/../pyvenv.cfg ]] && _py=$(command -p readlink -f "$_venvd/python") && [[ "${_py%%/*}" == "$(cd -P "$_C_DIR/bin" && pwd)" ]] && SINGULARITYENV_PATH="$(cd -P "$_venvd" >/dev/null && pwd):$SINGULARITYENV_PATH"
 `)
 	} else {
 		pr("export install_root=%s\n", shq(ipath))

@@ -63,6 +63,11 @@ func TestWrappersConda(t *testing.T) {
 			t.Errorf("%s: %s", p, out)
 		}
 	}
+	if _, err := exec.LookPath("shellcheck"); err == nil {
+		if out, err := exec.Command("shellcheck", b.deploy+"/bin/python", b.deploy+"/bin/_containerize_exec", b.deploy+"/bin/_debug_exec").CombinedOutput(); err != nil {
+			t.Errorf("shellcheck: %s", out)
+		}
+	}
 	os.WriteFile(b.deploy+"/"+b.c.get("container_image"), nil, 0o644)
 	run := exec.Command(b.deploy+"/bin/_debug_exec", "sh", "-c", `echo "$Q"`)
 	run.Env = append(os.Environ(), "SINGULARITY_NAME=")
@@ -81,7 +86,7 @@ func TestWrappersConda(t *testing.T) {
 		t.Errorf("_bin link %s", l)
 	}
 	py := read("bin/_containerize_exec")
-	if !strings.Contains(py, `'pip'|'python')`) || !strings.Contains(py, `eval \"\$('`+dir+`/INST/miniforge/bin/conda' shell.bash hook)\" && conda activate 'env1'`) {
+	if !strings.Contains(py, `'pip' | 'python')`) || !strings.Contains(py, `eval \"\$('`+dir+`/INST/miniforge/bin/conda' shell.bash hook)\" && conda activate 'env1'`) {
 		t.Errorf("no conda activation in wrapper:\n%s", py)
 	}
 	// the wrapper hands the path it was called by to _containerize_exec, also through a venv symlink

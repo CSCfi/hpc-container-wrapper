@@ -20,7 +20,13 @@ import (
 const stepStart, stepEnd = '\x1e', '\x1f'
 
 const scriptHeader = `set -e
-_cw_step(){ printf '\036'; local s=0; "$@" 2>&1 || s=$?; printf '\037'; return $s; }
+_cw_step() {
+    printf '\036'
+    local s=0
+    "$@" 2>&1 || s=$?
+    printf '\037'
+    return "$s"
+}
 `
 const preInstall = `cd "$CW_WORKDIR"
 source "$CW_INSTALLATION_PATH/_pre_install.sh"
